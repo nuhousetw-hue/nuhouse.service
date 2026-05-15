@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>新濠建設機構 | 後台管理</title>
+<style>
+:root{
+  --primary:#B01020;--primary-dk:#8C0D19;
+  --success:#1e8e3e;--danger:#c0392b;
+  --bg:#f0f2f5;--surface:#fff;--border:#e0e0e0;
+  --text:#3C3C3C;--text-muted:#888;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.08);
+  --shadow-md:0 4px 20px rgba(0,0,0,.14);
+  --radius:12px;--radius-sm:8px;--nav-h:60px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:15px;}
+body{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;}
+button{cursor:pointer;font:inherit;}
+input,select{font:inherit;}
+.hidden{display:none!important;}
+
+/* Loading */
+#loading-overlay{position:fixed;inset:0;background:rgba(140,13,25,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#fff;gap:1rem;}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:.7rem 1.4rem;border-radius:2rem;font-size:.88rem;z-index:8888;box-shadow:var(--shadow-md);max-width:90vw;text-align:center;}
+.toast.success{background:var(--success);}
+.toast.error{background:var(--danger);}
+
+/* Navbar */
+#navbar{position:fixed;top:0;left:0;right:0;background:var(--primary);height:var(--nav-h);z-index:1000;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.nav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:100%;padding:0 1.5rem;}
+.nav-brand{font-size:1rem;font-weight:700;color:#fff;letter-spacing:.05em;}
+.nav-brand span{font-size:.78rem;font-weight:400;color:rgba(255,255,255,.7);margin-left:.6rem;background:rgba(255,255,255,.15);padding:.1rem .5rem;border-radius:4px;}
+.nav-right{display:flex;align-items:center;gap:1rem;color:rgba(255,255,255,.85);font-size:.85rem;}
+.btn-logout{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:.3rem .9rem;border-radius:6px;font-size:.82rem;}
+.btn-logout:hover{background:rgba(255,255,255,.25);}
+
+/* Login */
+#screen-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+.login-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);padding:2.5rem 2rem;width:100%;max-width:360px;}
+.login-title{text-align:center;margin-bottom:1.75rem;}
+.login-title h1{font-size:1.15rem;color:var(--primary);font-weight:700;}
+.login-title p{font-size:.82rem;color:var(--text-muted);margin-top:.25rem;}
+.form-group{margin-bottom:1rem;}
+.form-group label{display:block;font-size:.85rem;color:var(--text-muted);margin-bottom:.4rem;}
+.form-group input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:.6rem .9rem;font-size:.95rem;outline:none;transition:border-color .2s;}
+.form-group input:focus{border-color:var(--primary);}
+.btn-login{width:100%;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:.75rem;font-size:1rem;font-weight:600;margin-top:.5rem;}
+.btn-login:hover{background:var(--primary-dk);}
+
+/* Main */
+#screen-main{padding-top:calc(var(--nav-h) + 1.25rem);padding-bottom:2rem;}
+.main-inner{max-width:1400px;margin:0 auto;padding:0 1.25rem;}
+
+/* Control bar */
+.control-bar{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:.85rem 1.25rem;margin-bottom:.85rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
+.control-bar label{font-size:.85rem;color:var(--text-muted);white-space:nowrap;}
+.control-bar select{border:1.5px solid var(--border);border-radius:6px;padding:.4rem .7rem;font-size:.9rem;background:#fff;outline:none;min-width:140px;}
+.control-bar select:focus{border-color:var(--primary);}
+.current-project{font-weight:700;color:var(--primary);font-size:.95rem;}
+
+/* Tabs */
+.tabs{display:flex;gap:.5rem;margin-bottom:.85rem;}
+.tab-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:.45rem 1.2rem;font-size:.9rem;color:var(--text-muted);transition:all .18s;}
+.tab-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600;}
+.tab-btn:hover:not(.active){border-color:var(--primary);color:var(--primary);}
+
+/* Filter bar */
+.filter-bar{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:.85rem 1.25rem;margin-bottom:.85rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.filter-bar label{font-size:.85rem;color:var(--text-muted);white-space:nowrap;}
+.filter-bar select,.filter-bar input[type=date]{border:1.5px solid var(--border);border-radius:6px;padding:.38rem .65rem;font-size:.88rem;background:#fff;outline:none;}
+.filter-bar select:focus,.filter-bar input[type=date]:focus{border-color:var(--primary);}
+.filter-sep{color:var(--text-muted);}
+.btn-query{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.4rem 1.1rem;font-size:.88rem;white-space:nowrap;}
+.btn-query:hover{background:var(--primary-dk);}
+.btn-reset{background:#f5f5f5;color:var(--text-muted);border:1.5px solid var(--border);border-radius:6px;padding:.38rem .85rem;font-size:.88rem;}
+.btn-reset:hover{border-color:#aaa;}
+
+/* Result bar */
+.result-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:.5rem;}
+.result-count{font-size:.9rem;color:var(--text-muted);}
+.result-count strong{color:var(--text);font-size:1rem;}
+.btn-export{background:var(--success);color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.85rem;display:flex;align-items:center;gap:.4rem;}
+.btn-export:hover{background:#176d30;}
+
+/* Table */
+.table-wrap{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:auto;max-height:calc(100vh - 280px);}
+table{width:100%;border-collapse:collapse;font-size:.86rem;}
+thead th{background:var(--primary);color:#fff;padding:.7rem 1rem;text-align:left;white-space:nowrap;position:sticky;top:0;z-index:1;}
+tbody tr:nth-child(even){background:#fafafa;}
+tbody tr:hover{background:#fff3f3;}
+tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+.badge{display:inline-block;padding:.18rem .6rem;border-radius:1rem;font-size:.78rem;font-weight:600;}
+.badge-booked{background:#e8f5e9;color:#1a7a33;}
+.badge-cancelled{background:#fdecea;color:#c0392b;}
+.empty-row td{text-align:center;color:var(--text-muted);padding:3rem 1rem;font-size:.9rem;}
+
+/* Responsive */
+@media(max-width:768px){
+  .filter-bar{gap:.5rem;}
+  thead th{font-size:.78rem;padding:.55rem .65rem;}
+  tbody td{font-size:.78rem;padding:.5rem .65rem;}
+  .table-wrap{max-height:calc(100vh - 320px);}
+}
+
+/* 複選下拉 */
+.ms-wrap{position:relative;display:inline-block;}
+.ms-btn{border:1.5px solid var(--border);border-radius:6px;padding:.38rem .7rem;background:#fff;cursor:pointer;display:flex;align-items:center;gap:.5rem;min-width:110px;font-size:.88rem;color:var(--text);}
+.ms-btn:focus,.ms-btn:hover{border-color:var(--primary);}
+.ms-btn .ms-label{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;}
+.ms-btn svg{flex-shrink:0;transition:transform .18s;}
+.ms-btn.open svg{transform:rotate(180deg);}
+.ms-dropdown{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1.5px solid var(--border);border-radius:8px;box-shadow:var(--shadow-md);z-index:200;min-width:140px;padding:.3rem 0;max-height:220px;overflow-y:auto;}
+.ms-item{display:flex;align-items:center;gap:.6rem;padding:.38rem .85rem;cursor:pointer;font-size:.88rem;user-select:none;}
+.ms-item:hover{background:#f5f5f5;}
+.ms-item input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--primary);}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay" class="hidden">
+  <div class="spinner"></div>
+  <div>處理中，請稍候…</div>
+</div>
+<div id="toast" class="toast hidden"></div>
+
+<!-- Navbar -->
+<nav id="navbar" class="hidden">
+  <div class="nav-inner">
+    <div class="nav-brand">新濠建設機構<span>後台管理</span></div>
+    <div class="nav-right">
+      <span id="nav-admin-info"></span>
+      <button class="btn-logout" onclick="Admin.logout()">登出</button>
+    </div>
+  </div>
+</nav>
+
+<!-- 登入畫面 -->
+<div id="screen-login">
+  <div class="login-card">
+    <div class="login-title">
+      <h1>新濠建設機構</h1>
+      <p>後台管理系統</p>
+    </div>
+    <form onsubmit="Admin.login(event)">
+      <div class="form-group">
+        <label>帳號</label>
+        <input type="text" id="input-username" placeholder="請輸入帳號" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label>密碼</label>
+        <input type="password" id="input-password" placeholder="請輸入密碼" autocomplete="current-password"/>
+      </div>
+      <button type="submit" class="btn-login">登入</button>
+    </form>
+  </div>
+</div>
+
+<!-- 主畫面 -->
+<div id="screen-main" class="hidden">
+  <div class="main-inner">
+
+    <!-- 建案選擇 -->
+    <div class="control-bar">
+      <label>建案選擇</label>
+      <select id="select-project">
+        <option value="">— 請選擇建案 —</option>
+      </select>
+      <span class="filter-sep" style="margin-left:.25rem">目前：</span>
+      <span class="current-project" id="current-project-name">尚未選擇</span>
+    </div>
+
+    <!-- 分頁 -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-booking"  onclick="Admin.switchTab('booking')">📋 預約紀錄</button>
+      <button class="tab-btn"        id="tab-upload"   onclick="Admin.switchTab('upload')">📁 上傳紀錄</button>
+      <button class="tab-btn"        id="tab-unbooked" onclick="Admin.switchTab('unbooked')">👤 未預約客戶</button>
+    </div>
+
+    <!-- 預約篩選 -->
+    <div id="filter-booking" class="filter-bar">
+      <label>預約日期</label>
+      <input type="date" id="booking-date-from"/>
+      <span class="filter-sep">～</span>
+      <input type="date" id="booking-date-to"/>
+      <label style="margin-left:.5rem">狀態</label>
+      <select id="booking-status">
+        <option value="">全部</option>
+        <option value="已預約">已預約</option>
+        <option value="已取消">已取消</option>
+      </select>
+      <label style="margin-left:.5rem">服務項目</label>
+      <select id="booking-service">
+        <option value="">全部</option>
+      </select>
+      <button class="btn-query" onclick="Admin.query()">查詢</button>
+      <button class="btn-reset" onclick="Admin.resetFilters()">清除</button>
+    </div>
+
+    <!-- 上傳篩選 -->
+    <div id="filter-upload" class="filter-bar hidden">
+      <label>上傳日期</label>
+      <input type="date" id="upload-date-from"/>
+      <span class="filter-sep">～</span>
+      <input type="date" id="upload-date-to"/>
+      <button class="btn-query" onclick="Admin.query()">查詢</button>
+      <button class="btn-reset" onclick="Admin.resetFilters()">清除</button>
+    </div>
+
+    <!-- 未預約篩選 -->
+    <div id="filter-unbooked" class="filter-bar hidden">
+      <label>服務項目</label>
+      <select id="unbooked-service"><option value="">全部</option></select>
+      <label style="margin-left:.5rem">戶型</label>
+      <div class="ms-wrap" id="ms-unittype">
+        <button type="button" class="ms-btn" onclick="Admin.toggleMs('unittype')">
+          <span class="ms-label">全部</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ms-dropdown hidden" id="ms-unittype-dropdown"></div>
+      </div>
+      <label style="margin-left:.5rem">樓層</label>
+      <div class="ms-wrap" id="ms-floor">
+        <button type="button" class="ms-btn" onclick="Admin.toggleMs('floor')">
+          <span class="ms-label">全部</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ms-dropdown hidden" id="ms-floor-dropdown"></div>
+      </div>
+      <button class="btn-query" onclick="Admin.query()">查詢</button>
+      <button class="btn-reset" onclick="Admin.resetFilters()">清除</button>
+    </div>
+
+    <!-- 結果列 -->
+    <div class="result-bar">
+      <div class="result-count">共 <strong id="result-count">0</strong> 筆</div>
+      <button class="btn-export" onclick="Admin.exportCsv()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        匯出 CSV
+      </button>
+    </div>
+
+    <!-- 資料表格 -->
+    <div class="table-wrap">
+      <table>
+        <thead id="table-head"></thead>
+        <tbody id="table-body">
+          <tr class="empty-row"><td colspan="9">請先選擇建案，再按查詢</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
+
+var Admin = (function() {
+  var state = { username: null, tab: 'booking', data: [], projects: [] };
+  var SESSION_KEY = 'xh_admin_session';
+
+  function callServer(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function(resolve, reject) {
+      var done = false;
+      var timer = setTimeout(function() {
+        if (!done) { done = true; reject(new Error('連線逾時')); }
+      }, 30000);
+      fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ fn: fn, args: args }) })
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(d) { if (!done) { done = true; clearTimeout(timer); resolve(d); } })
+        .catch(function(e) { if (!done) { done = true; clearTimeout(timer); reject(e); } });
+    });
+  }
+
+  function init() {
+    try {
+      var saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) { state.username = JSON.parse(saved).username; enterMain(); return; }
+    } catch(e) {}
+    showScreen('login');
+  }
+
+  function login(e) {
+    e.preventDefault();
+    var username = document.getElementById('input-username').value.trim();
+    var password = document.getElementById('input-password').value;
+    if (!username || !password) { showToast('請輸入帳號及密碼', 'error'); return; }
+    showLoading(true);
+    callServer('serverAdminLogin', username, password)
+      .then(function(res) {
+        if (res.success) {
+          state.username = username;
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: username }));
+          enterMain();
+        } else {
+          showToast(res.message || '帳號或密碼錯誤', 'error');
+        }
+      })
+      .catch(function() { showToast('連線失敗，請稍後再試', 'error'); })
+      .then(function() { showLoading(false); });
+  }
+
+  function logout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    state.username = null; state.data = [];
+    document.getElementById('navbar').classList.add('hidden');
+    document.getElementById('input-username').value = '';
+    document.getElementById('input-password').value = '';
+    showScreen('login');
+  }
+
+  function enterMain() {
+    document.getElementById('nav-admin-info').textContent = state.username;
+    document.getElementById('navbar').classList.remove('hidden');
+    showScreen('main');
+    loadProjects();
+  }
+
+  function loadProjects() {
+    callServer('serverGetProjects').then(function(projects) {
+      state.projects = projects;
+      var sel = document.getElementById('select-project');
+      sel.innerHTML = '<option value="">— 請選擇建案 —</option>';
+      projects.forEach(function(p) {
+        var opt = document.createElement('option');
+        opt.value = p.code; opt.textContent = p.name;
+        sel.appendChild(opt);
+      });
+      sel.onchange = function() {
+        var idx = sel.selectedIndex;
+        var name = idx > 0 ? sel.options[idx].text : '尚未選擇';
+        document.getElementById('current-project-name').textContent = name;
+        resetTable();
+        if (sel.value) loadUnitOptions(sel.value);
+      };
+    });
+  }
+
+  function switchTab(tab) {
+    state.tab = tab;
+    document.getElementById('tab-booking').classList.toggle('active', tab === 'booking');
+    document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
+    document.getElementById('tab-unbooked').classList.toggle('active', tab === 'unbooked');
+    document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
+    document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
+    document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
+    resetTable();
+  }
+
+  function resetFilters() {
+    if (state.tab === 'booking') {
+      document.getElementById('booking-date-from').value = '';
+      document.getElementById('booking-date-to').value = '';
+      document.getElementById('booking-status').value = '';
+      document.getElementById('booking-service').value = '';
+    } else if (state.tab === 'upload') {
+      document.getElementById('upload-date-from').value = '';
+      document.getElementById('upload-date-to').value = '';
+    } else if (state.tab === 'unbooked') {
+      document.getElementById('unbooked-service').value = '';
+      resetMs('unittype');
+      resetMs('floor');
+    }
+  }
+
+  function resetTable() {
+    state.data = [];
+    document.getElementById('result-count').textContent = '0';
+    document.getElementById('table-head').innerHTML = '';
+    document.getElementById('table-body').innerHTML = '<tr class="empty-row"><td colspan="9">請先選擇建案，再按查詢</td></tr>';
+  }
+
+  function query() {
+    var projectCode = document.getElementById('select-project').value;
+    if (!projectCode) { showToast('請先選擇建案', 'error'); return; }
+    showLoading(true);
+    var p;
+    if (state.tab === 'booking') {
+      var df = document.getElementById('booking-date-from').value.replace(/-/g, '/');
+      var dt = document.getElementById('booking-date-to').value.replace(/-/g, '/');
+      var st = document.getElementById('booking-status').value;
+      p = callServer('serverAdminGetBookings', projectCode, df, dt, st);
+    } else if (state.tab === 'upload') {
+      var df2 = document.getElementById('upload-date-from').value.replace(/-/g, '/');
+      var dt2 = document.getElementById('upload-date-to').value.replace(/-/g, '/');
+      p = callServer('serverAdminGetUploads', projectCode, df2, dt2);
+    } else {
+      var svc = document.getElementById('unbooked-service').value;
+      p = callServer('serverAdminGetUnbooked', projectCode, svc, msSelected.unittype, msSelected.floor);
+    }
+    p.then(function(data) {
+        console.log('GAS 回傳:', JSON.stringify(data));
+        if (!Array.isArray(data)) {
+          showToast('伺服器回傳錯誤：' + (data && data.message ? data.message : JSON.stringify(data)), 'error');
+          resetTable();
+          return;
+        }
+        state.data = data;
+        renderTable(data);
+        if (state.tab === 'booking') buildServiceFilter(data);
+      })
+      .catch(function(err) { showToast('查詢失敗：' + err.message, 'error'); })
+      .then(function() { showLoading(false); });
+  }
+
+  var msSelected = { unittype: [], floor: [] };
+
+  function toggleMs(id) {
+    var btn      = document.querySelector('#ms-' + id + ' .ms-btn');
+    var dropdown = document.getElementById('ms-' + id + '-dropdown');
+    var isOpen   = !dropdown.classList.contains('hidden');
+    closeAllMs();
+    if (!isOpen) { dropdown.classList.remove('hidden'); btn.classList.add('open'); }
+  }
+
+  function closeAllMs() {
+    ['unittype','floor'].forEach(function(id) {
+      var dropdown = document.getElementById('ms-' + id + '-dropdown');
+      var btn = document.querySelector('#ms-' + id + ' .ms-btn');
+      if (dropdown) dropdown.classList.add('hidden');
+      if (btn) btn.classList.remove('open');
+    });
+  }
+
+  function buildMsDropdown(id, values) {
+    msSelected[id] = [];
+    var container = document.getElementById('ms-' + id + '-dropdown');
+    container.innerHTML = '';
+    values.forEach(function(v) {
+      var item = document.createElement('label');
+      item.className = 'ms-item';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = v;
+      cb.addEventListener('change', function() { updateMsState(id); });
+      item.appendChild(cb);
+      item.appendChild(document.createTextNode(v));
+      container.appendChild(item);
+    });
+    updateMsLabel(id);
+  }
+
+  function updateMsState(id) {
+    var checkboxes = document.querySelectorAll('#ms-' + id + '-dropdown input[type=checkbox]');
+    msSelected[id] = [];
+    checkboxes.forEach(function(cb) { if (cb.checked) msSelected[id].push(cb.value); });
+    updateMsLabel(id);
+  }
+
+  function updateMsLabel(id) {
+    var label = document.querySelector('#ms-' + id + ' .ms-label');
+    label.textContent = msSelected[id].length ? msSelected[id].join(', ') : '全部';
+  }
+
+  function resetMs(id) {
+    msSelected[id] = [];
+    var checkboxes = document.querySelectorAll('#ms-' + id + '-dropdown input[type=checkbox]');
+    checkboxes.forEach(function(cb) { cb.checked = false; });
+    updateMsLabel(id);
+  }
+
+  function loadUnitOptions(projectCode) {
+    callServer('serverAdminGetUnitOptions', projectCode).then(function(opts) {
+      buildMsDropdown('unittype', opts.unitTypes || []);
+      buildMsDropdown('floor', opts.floors || []);
+      var svcSel = document.getElementById('unbooked-service');
+      svcSel.innerHTML = '<option value="">全部</option>';
+      (opts.serviceTypes || []).forEach(function(v) {
+        var o = document.createElement('option'); o.value = v; o.textContent = v; svcSel.appendChild(o);
+      });
+    });
+  }
+
+  function buildServiceFilter(data) {
+    var seen = {};
+    data.forEach(function(r) { if (r.serviceType) seen[r.serviceType] = 1; });
+    var sel = document.getElementById('booking-service');
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">全部</option>';
+    Object.keys(seen).sort().forEach(function(s) {
+      var o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+  }
+
+  function renderTable(data) {
+    document.getElementById('result-count').textContent = data.length;
+    var head = document.getElementById('table-head');
+    var body = document.getElementById('table-body');
+    head.innerHTML = ''; body.innerHTML = '';
+    if (!data.length) {
+      var cols = state.tab === 'booking' ? 9 : state.tab === 'unbooked' ? 6 : 6;
+      body.innerHTML = '<tr class="empty-row"><td colspan="' + cols + '">查無符合條件的資料</td></tr>';
+      return;
+    }
+    if (state.tab === 'booking') {
+      head.innerHTML = '<tr><th>#</th><th>建立時間</th><th>客戶姓名</th><th>戶號</th><th>身份證字號</th><th>服務項目</th><th>預約日期</th><th>預約時段</th><th>狀態</th></tr>';
+      data.forEach(function(r, i) {
+        var tr = document.createElement('tr');
+        var cls = r.status === '已預約' ? 'badge-booked' : 'badge-cancelled';
+        tr.innerHTML =
+          '<td>' + (i+1) + '</td>' +
+          '<td>' + esc(r.createdAt) + '</td>' +
+          '<td>' + esc(r.name) + '</td>' +
+          '<td>' + esc(r.unit) + '</td>' +
+          '<td>' + esc(r.idCard) + '</td>' +
+          '<td>' + esc(r.serviceType) + '</td>' +
+          '<td>' + esc(r.date) + '</td>' +
+          '<td>' + esc(r.time) + '</td>' +
+          '<td><span class="badge ' + cls + '">' + esc(r.status) + '</span></td>';
+        body.appendChild(tr);
+      });
+    } else if (state.tab === 'upload') {
+      head.innerHTML = '<tr><th>#</th><th>上傳時間</th><th>客戶姓名</th><th>戶號</th><th>身份證字號</th><th>檔案名稱</th></tr>';
+      data.forEach(function(r, i) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + (i+1) + '</td>' +
+          '<td>' + esc(r.createdAt) + '</td>' +
+          '<td>' + esc(r.name) + '</td>' +
+          '<td>' + esc(r.unit) + '</td>' +
+          '<td>' + esc(r.idCard) + '</td>' +
+          '<td>' + esc(r.fileName) + '</td>';
+        body.appendChild(tr);
+      });
+    } else {
+      head.innerHTML = '<tr><th>#</th><th>客戶姓名</th><th>戶號</th><th>戶型</th><th>樓層</th><th>身份證字號</th></tr>';
+      data.forEach(function(r, i) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + (i+1) + '</td>' +
+          '<td>' + esc(r.name) + '</td>' +
+          '<td>' + esc(r.unit) + '</td>' +
+          '<td>' + esc(r.unitType) + '</td>' +
+          '<td>' + esc(r.floor) + '</td>' +
+          '<td>' + esc(r.idCard) + '</td>';
+        body.appendChild(tr);
+      });
+    }
+  }
+
+  function exportCsv() {
+    if (!state.data.length) { showToast('沒有資料可以匯出', 'error'); return; }
+    var projectCode = document.getElementById('select-project').value;
+    var projectName = '';
+    state.projects.forEach(function(p) { if (p.code === projectCode) projectName = p.name; });
+    var rows = [];
+    if (state.tab === 'booking') {
+      rows.push(['#', '建立時間', '客戶姓名', '戶號', '身份證字號', '服務項目', '預約日期', '預約時段', '狀態']);
+      state.data.forEach(function(r, i) {
+        rows.push([i+1, r.createdAt, r.name, r.unit, r.idCard, r.serviceType, r.date, r.time, r.status]);
+      });
+    } else if (state.tab === 'upload') {
+      rows.push(['#', '上傳時間', '客戶姓名', '戶號', '身份證字號', '檔案名稱']);
+      state.data.forEach(function(r, i) {
+        rows.push([i+1, r.createdAt, r.name, r.unit, r.idCard, r.fileName]);
+      });
+    } else {
+      rows.push(['#', '客戶姓名', '戶號', '戶型', '樓層', '身份證字號']);
+      state.data.forEach(function(r, i) {
+        rows.push([i+1, r.name, r.unit, r.unitType, r.floor, r.idCard]);
+      });
+    }
+    var csv = '﻿' + rows.map(function(row) {
+      return row.map(function(cell) {
+        var s = String(cell == null ? '' : cell);
+        if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0)
+          s = '"' + s.replace(/"/g, '""') + '"';
+        return s;
+      }).join(',');
+    }).join('\r\n');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var dateStr = new Date().toISOString().slice(0, 10);
+    var tabName = state.tab === 'booking' ? '預約紀錄' : state.tab === 'upload' ? '上傳紀錄' : '未預約客戶';
+    a.href = url;
+    a.download = projectName + '_' + tabName + '_' + dateStr + '.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    showToast('已匯出 CSV', 'success');
+  }
+
+  function showScreen(name) {
+    document.getElementById('screen-login').style.display = name === 'login' ? 'flex' : 'none';
+    document.getElementById('screen-main').classList.toggle('hidden', name !== 'main');
+  }
+  function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('hidden', !v); }
+  var _t;
+  function showToast(msg, type) {
+    var el = document.getElementById('toast');
+    el.textContent = msg; el.className = 'toast ' + (type||''); el.classList.remove('hidden');
+    clearTimeout(_t); _t = setTimeout(function() { el.classList.add('hidden'); }, 3500);
+  }
+  var esc = function(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  };
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.ms-wrap')) closeAllMs();
+  });
+
+  return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs };
+})();
+
+document.addEventListener('DOMContentLoaded', Admin.init);
+</script>
+</body>
+</html>
