@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>新濠建設機構 | 客戶服務平台</title>
+<script>
+(function(){
+  var sw = Math.min(screen.width, screen.availWidth || screen.width);
+  var ua = navigator.userAgent || '';
+  if (/iPhone|Android.*Mobile|Mobile.*Android|Windows Phone/i.test(ua) || sw <= 640)
+    document.documentElement.classList.add('is-mobile');
+  if (sw <= 380)
+    document.documentElement.classList.add('is-xs');
+})();
+</script>
+<style>
+:root{
+  --primary:#B01020;--primary-lt:#C81828;--primary-dk:#8C0D19;
+  --charcoal:#3C3C3C;--success:#1e8e3e;--danger:#c0392b;
+  --bg:#f5f5f5;--surface:#fff;--border:#e0e0e0;
+  --text:#3C3C3C;--text-muted:#888;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.08);
+  --shadow-md:0 4px 20px rgba(0,0,0,.14);
+  --radius:12px;--radius-sm:8px;--nav-h:64px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;overflow-x:hidden;}
+img{max-width:100%;display:block;}
+button{cursor:pointer;font:inherit;}
+input,select{font:inherit;}
+a{color:var(--primary);text-decoration:none;}
+.hidden{display:none!important;}
+.text-muted{color:var(--text-muted);font-size:.9rem;}
+.text-center{text-align:center;}
+
+#loading-overlay{position:fixed;inset:0;background:rgba(140,13,25,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#fff;gap:1rem;}
+.spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:.75rem 1.5rem;border-radius:2rem;font-size:.9rem;z-index:8888;box-shadow:var(--shadow-md);max-width:90vw;text-align:center;}
+.toast.success{background:var(--success);}
+.toast.error{background:var(--danger);}
+
+#navbar{position:fixed;top:0;left:0;right:0;background:var(--primary);height:var(--nav-h);z-index:1000;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:100%;padding:0 1.5rem;}
+.nav-brand{display:flex;align-items:center;gap:.75rem;}
+.nav-logo{height:36px;width:auto;filter:brightness(0) invert(1);}
+.nav-subtitle{font-size:.82rem;color:rgba(255,255,255,.75);letter-spacing:.1em;}
+.nav-user{display:flex;align-items:center;gap:1rem;}
+#nav-user-info{color:rgba(255,255,255,.85);font-size:.88rem;}
+.btn-logout{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);padding:.35rem .9rem;border-radius:6px;font-size:.85rem;}
+.btn-logout:hover{background:rgba(255,255,255,.22);}
+
+.screen{display:none;}
+#screen-select-unit,#screen-dashboard,#screen-drawings,#screen-booking,#screen-docs{padding-top:var(--nav-h);}
+.container{max-width:900px;margin:0 auto;padding:2rem 1.25rem;}
+.btn-back{display:inline-flex;align-items:center;gap:.4rem;background:none;border:none;color:var(--primary);font-size:.9rem;padding:0;margin-bottom:1.25rem;}
+.btn-back:hover{text-decoration:underline;}
+.page-title{font-size:1.5rem;font-weight:700;color:var(--primary);margin-bottom:1.5rem;}
+
+.screen-login{min-height:100vh;background:linear-gradient(150deg,var(--primary-dk) 0%,var(--primary) 50%,#6B0010 100%);}
+.login-hero{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem 1.25rem;}
+.login-card{background:var(--surface);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:100%;max-width:440px;padding:2.5rem 2rem;}
+.login-header{text-align:center;margin-bottom:2rem;}
+.login-logo-wrap{width:180px;margin:0 auto .75rem;}
+.login-logo{width:100%;height:auto;}
+.login-tagline{font-size:1.25rem;font-weight:700;color:var(--charcoal);letter-spacing:.08em;margin-top:.4rem;}
+.login-form{display:flex;flex-direction:column;gap:1.25rem;}
+.form-group{display:flex;flex-direction:column;gap:.5rem;}
+.form-group label{font-size:.88rem;font-weight:600;color:var(--primary);}
+.select-wrap{position:relative;}
+.select-wrap::after{content:"▾";position:absolute;right:1rem;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;}
+select,input[type="text"]{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s;}
+select{appearance:none;padding-right:2.5rem;}
+select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(176,16,32,.15);}
+.field-hint{font-size:.78rem;color:var(--text-muted);}
+.btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;background:var(--primary);color:#fff;border:none;padding:.85rem 1.5rem;border-radius:var(--radius-sm);font-size:.95rem;font-weight:600;transition:background .2s,transform .1s;box-shadow:0 4px 14px rgba(176,16,32,.3);}
+.btn-primary:hover{background:var(--primary-lt);}
+.btn-primary:active{transform:scale(.98);}
+.btn-full{width:100%;}
+.login-note{margin-top:1.5rem;text-align:center;font-size:.85rem;color:var(--text-muted);padding-top:1.25rem;border-top:1px solid var(--border);}
+
+.unit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;}
+.unit-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:2rem 1rem;text-align:center;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .15s;box-shadow:var(--shadow-sm);}
+.unit-card:hover{border-color:var(--primary);box-shadow:0 6px 24px rgba(176,16,32,.15);transform:translateY(-3px);}
+.unit-card-icon{width:56px;height:56px;background:rgba(176,16,32,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;color:var(--primary);}
+.unit-card h4{font-size:1.1rem;font-weight:700;color:var(--text);}
+
+.welcome-banner{background:linear-gradient(120deg,var(--primary-dk),var(--primary));color:#fff;border-radius:var(--radius);padding:1.75rem 2rem;margin-bottom:2rem;box-shadow:var(--shadow-md);}
+.welcome-banner h2{font-size:1.4rem;font-weight:700;}
+.welcome-banner .sub{color:rgba(255,255,255,.75);margin-top:.3rem;font-size:.9rem;}
+.section-title{font-size:1rem;font-weight:600;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem;}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;}
+.menu-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;align-items:center;gap:1.25rem;text-align:left;transition:border-color .2s,box-shadow .2s,transform .15s;box-shadow:var(--shadow-sm);width:100%;}
+.menu-card:not(.menu-card-disabled):hover{border-color:var(--primary);box-shadow:0 6px 24px rgba(176,16,32,.15);transform:translateY(-2px);}
+.menu-card-disabled{opacity:.5;cursor:default;}
+.menu-card-icon{width:60px;height:60px;flex-shrink:0;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;}
+.icon-red{background:rgba(176,16,32,.1);color:var(--primary);}
+.menu-card-body{flex:1;}
+.menu-card-body h4{font-size:1rem;font-weight:700;margin-bottom:.25rem;}
+.menu-card-body p{font-size:.82rem;color:var(--text-muted);line-height:1.5;}
+.menu-card-arrow{color:var(--text-muted);flex-shrink:0;}
+
+.card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.5rem;}
+.card-header{display:flex;align-items:center;gap:.75rem;padding:1.25rem 1.5rem;background:var(--primary);color:#fff;}
+.card-header h3{font-size:1rem;font-weight:700;}
+.card-desc{padding:1rem 1.5rem .5rem;font-size:.9rem;color:var(--text-muted);}
+.file-list{padding:1rem 1.5rem 1.25rem;display:flex;flex-direction:column;gap:.75rem;}
+.file-item{display:flex;align-items:center;gap:1rem;padding:.9rem 1.1rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);transition:border-color .2s,background .2s;}
+.file-item:hover{border-color:var(--primary);background:rgba(176,16,32,.04);}
+.file-icon{width:40px;height:40px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;}
+.file-icon.cad{background:#e8f0fe;color:#1a73e8;}
+.file-icon.pdf{background:#fce8e6;color:#d93025;}
+.file-icon.other{background:#e6f4ea;color:#1e8e3e;}
+.file-name{flex:1;font-size:.9rem;font-weight:500;}
+.file-size{font-size:.78rem;color:var(--text-muted);flex-shrink:0;}
+.btn-download{display:inline-flex;align-items:center;gap:.4rem;background:var(--primary);color:#fff;border:none;padding:.45rem .9rem;border-radius:6px;font-size:.82rem;font-weight:600;flex-shrink:0;text-decoration:none;transition:background .2s;}
+.btn-download:hover{background:var(--primary-lt);}
+.drop-zone{margin:.5rem 1.5rem 1rem;border:2px dashed var(--border);border-radius:var(--radius);padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;color:var(--text-muted);}
+.drop-zone svg{margin:0 auto .75rem;color:var(--primary);}
+.drop-zone p{font-size:.95rem;font-weight:500;color:var(--text);}
+.drop-zone span{font-size:.8rem;}
+.drop-zone.drag-over,.drop-zone:hover{border-color:var(--primary);background:rgba(176,16,32,.04);}
+#upload-queue{padding:0 1.5rem;display:flex;flex-direction:column;gap:.6rem;}
+.upload-item{background:#f8faff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:.75rem 1rem;}
+.upload-item-top{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;}
+.upload-item-name{flex:1;font-size:.88rem;font-weight:500;}
+.upload-item-status{font-size:.78rem;padding:.2rem .6rem;border-radius:2rem;}
+.status-uploading{background:#e8f0fe;color:#1a73e8;}
+.status-done{background:#e6f4ea;color:#1e8e3e;}
+.status-error{background:#fce8e6;color:#d93025;}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--primary);border-radius:2px;transition:width .3s ease;}
+.upload-history-wrap{padding:1rem 1.5rem 1.25rem;border-top:1px solid var(--border);}
+.upload-history-title{font-size:.88rem;font-weight:600;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.75rem;}
+#upload-history{display:flex;flex-direction:column;gap:.5rem;}
+.history-item{display:flex;align-items:center;gap:.75rem;font-size:.85rem;}
+.history-item-name{flex:1;color:var(--text);}
+.history-date{color:var(--text-muted);}
+
+/* ── 預約系統 ── */
+.booking-wrap{padding:1.5rem;}
+.booking-tabs{display:flex;gap:.5rem;margin-bottom:1.75rem;flex-wrap:wrap;}
+.booking-tab{padding:.55rem 1.4rem;border-radius:2rem;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-weight:600;font-size:.92rem;transition:all .2s;color:var(--text);}
+.booking-tab:hover{border-color:var(--primary);color:var(--primary);}
+.booking-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.booking-tab.booked{border-color:var(--success);color:var(--success);}
+.booking-tab.booked.active{background:var(--success);color:#fff;border-color:var(--success);}
+.booking-confirmed{background:linear-gradient(135deg,#f0fdf4,#e6fbee);border:2px solid #86efac;border-radius:var(--radius);padding:1.5rem 1.75rem;}
+.booking-status-badge{display:inline-flex;align-items:center;gap:.4rem;background:var(--success);color:#fff;padding:.35rem .9rem;border-radius:2rem;font-size:.82rem;font-weight:600;margin-bottom:1.25rem;}
+.booking-detail-grid{display:grid;gap:.55rem;margin-bottom:1.25rem;}
+.booking-detail-row{display:flex;gap:1rem;align-items:baseline;}
+.booking-detail-label{font-size:.82rem;color:#555;min-width:5rem;flex-shrink:0;}
+.booking-detail-value{font-size:.95rem;font-weight:700;color:var(--text);}
+.booking-actions{display:flex;gap:.75rem;flex-wrap:wrap;padding-top:1rem;border-top:1px solid #c6f6d5;}
+.btn-outline{display:inline-flex;align-items:center;gap:.4rem;border:2px solid var(--primary);color:var(--primary);background:transparent;padding:.5rem 1.1rem;border-radius:var(--radius-sm);font-size:.88rem;font-weight:600;transition:all .2s;}
+.btn-outline:hover{background:rgba(176,16,32,.07);}
+.btn-danger-outline{display:inline-flex;align-items:center;gap:.4rem;border:2px solid var(--danger);color:var(--danger);background:transparent;padding:.5rem 1.1rem;border-radius:var(--radius-sm);font-size:.88rem;font-weight:600;transition:all .2s;}
+.btn-danger-outline:hover{background:rgba(192,57,43,.07);}
+.cancel-confirm-box{background:#fff5f5;border:2px solid #fca5a5;border-radius:var(--radius-sm);padding:1rem 1.25rem;margin-top:1rem;}
+.cancel-confirm-box p{font-size:.9rem;color:var(--danger);margin-bottom:.75rem;font-weight:600;}
+.cancel-confirm-box .btn-row{display:flex;gap:.6rem;}
+.btn-danger{display:inline-flex;align-items:center;gap:.4rem;background:var(--danger);color:#fff;border:none;padding:.5rem 1.1rem;border-radius:var(--radius-sm);font-size:.88rem;font-weight:600;transition:background .2s;}
+.btn-danger:hover{background:#a93226;}
+.btn-ghost{display:inline-flex;align-items:center;gap:.4rem;background:#e5e7eb;color:var(--text);border:none;padding:.5rem 1.1rem;border-radius:var(--radius-sm);font-size:.88rem;font-weight:600;transition:background .2s;}
+.btn-ghost:hover{background:#d1d5db;}
+.booking-confirm-bar{position:sticky;bottom:0;z-index:10;background:var(--surface);display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:1.25rem;padding:1rem 1.25rem;border-top:2px solid var(--border);flex-wrap:wrap;box-shadow:0 -4px 12px rgba(0,0,0,.06);}
+.selected-slot-text{font-size:.88rem;color:var(--text-muted);}
+.selected-slot-text.picked{color:var(--primary);font-weight:600;}
+.booking-empty{padding:3rem 1.5rem;text-align:center;color:var(--text-muted);}
+.docs-empty{padding:2.5rem 1.5rem;text-align:center;color:var(--text-muted);}
+
+/* ── 日曆 ── */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0 .75rem;}
+.cal-nav-title{font-size:.95rem;font-weight:700;color:var(--text);}
+.cal-nav-btn{background:none;border:1px solid var(--border);border-radius:6px;width:2.2rem;height:2.2rem;font-size:1.4rem;line-height:1;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.cal-nav-btn:hover:not([disabled]){background:var(--bg);}
+.cal-nav-btn[disabled]{opacity:.3;cursor:default;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-dow{text-align:center;font-size:.68rem;font-weight:700;color:var(--text-muted);padding:.3rem 0;}
+.cal-cell{min-height:60px;border:1px solid var(--border);border-radius:5px;padding:.3rem .2rem;background:var(--surface);overflow:hidden;cursor:pointer;transition:background .15s,border-color .15s;}
+.cal-cell.cal-empty{background:transparent;border-color:transparent;cursor:default;}
+.cal-cell:not(.cal-empty):hover{background:rgba(176,16,32,.05);}
+.cal-cell.cal-sel{border-color:var(--primary)!important;background:rgba(176,16,32,.08);}
+.cal-cell.cal-today{border-color:var(--primary);}
+.cal-cell.cal-today .cal-day-num{color:var(--primary);}
+.cal-day-num{font-size:.72rem;font-weight:700;color:var(--text-muted);line-height:1;margin-bottom:.2rem;}
+.cal-dots{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;padding:.1rem 0;}
+.cal-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cal-dot.avail{background:#4caf50;}
+.cal-dot.low{background:#ff9800;}
+.cal-dot.full{background:#ccc;}
+.cal-date-panel{margin-top:1rem;border:2px solid var(--primary);border-radius:var(--radius);overflow:hidden;}
+.cal-date-panel-title{background:var(--primary);color:#fff;padding:.65rem 1.1rem;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:.5rem;}
+.cal-slot-list{padding:.85rem;display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;}
+.cal-slot-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.75rem .5rem;border-radius:var(--radius-sm);border:2px solid;font-size:1rem;font-weight:600;cursor:pointer;transition:all .15s;width:100%;text-align:center;background:var(--surface);}
+.cal-slot-btn.avail{border-color:#4caf50;color:#1b5e20;}
+.cal-slot-btn.avail:hover{background:#e8f5e9;}
+.cal-slot-btn.low{border-color:#ff9800;color:#bf360c;}
+.cal-slot-btn.low:hover{background:#fff3e0;}
+.cal-slot-btn.sel{background:var(--primary);color:#fff;border-color:var(--primary-dk);}
+.cal-slot-btn.full{border-color:#e0e0e0;color:#bbb;cursor:not-allowed;background:#f9f9f9;}
+.cal-slot-time{font-size:1.1rem;font-weight:700;letter-spacing:.03em;margin-bottom:.25rem;}
+.cal-slot-remain{font-size:.78rem;padding:.15rem .5rem;border-radius:2rem;white-space:nowrap;}
+.cal-slot-btn.avail .cal-slot-remain{background:#e8f5e9;}
+.cal-slot-btn.low .cal-slot-remain{background:#fff3e0;}
+.cal-slot-btn.sel .cal-slot-remain{background:rgba(255,255,255,.25);}
+.cal-slot-btn.full .cal-slot-remain{background:#f0f0f0;}
+.cal-no-slot{padding:1rem 1.1rem;color:var(--text-muted);font-size:.9rem;}
+.modify-banner{display:flex;align-items:center;justify-content:space-between;gap:.75rem;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);padding:.65rem 1rem;margin-bottom:.75rem;}
+.modify-banner-info{font-size:.9rem;font-weight:600;color:#92400e;flex:1;}
+.modify-banner-cancel{font-size:.85rem;padding:.3rem .8rem;white-space:nowrap;}
+
+/* ── RWD ── */
+@media(max-width:640px){
+  :root{--nav-h:52px;}
+  html{font-size:15px;}
+  .nav-inner{padding:0 .9rem;}
+  .nav-logo{height:26px;}
+  .nav-subtitle,#nav-user-info{display:none;}
+  .btn-logout{padding:.3rem .65rem;font-size:.78rem;}
+  .login-card{padding:1.75rem 1.25rem;border-radius:16px;}
+  .login-logo-wrap{width:150px;}
+  select,input[type="text"]{font-size:16px;}
+  .container{padding:1rem .9rem;}
+  .page-title{font-size:1.2rem;margin-bottom:1rem;}
+  .welcome-banner{padding:1rem 1.15rem;margin-bottom:1.25rem;}
+  .welcome-banner h2{font-size:1.1rem;}
+  .menu-grid{grid-template-columns:1fr;gap:.75rem;}
+  .menu-card{padding:1rem 1.1rem;gap:.9rem;}
+  .menu-card-icon{width:48px;height:48px;}
+  .unit-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem;}
+  .unit-card{padding:1.5rem .75rem;}
+  .file-list{padding:.75rem 1rem 1rem;}
+  .file-item{flex-wrap:wrap;gap:.65rem;padding:.8rem .9rem;}
+  .btn-download{width:100%;justify-content:center;min-height:44px;}
+  .drop-zone{margin:.5rem .75rem 1rem;padding:1.75rem 1rem;}
+  #upload-queue,.upload-history-wrap{padding:0 .75rem;}
+  .booking-wrap{padding:.85rem;}
+  .booking-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:.35rem;margin-bottom:1.25rem;gap:.4rem;scrollbar-width:none;}
+  .booking-tabs::-webkit-scrollbar{display:none;}
+  .booking-tab{white-space:nowrap;flex-shrink:0;padding:.5rem 1.1rem;font-size:.88rem;min-height:40px;}
+  .booking-actions{gap:.5rem;flex-direction:column;}
+  .btn-outline,.btn-danger-outline{padding:.6rem 1rem;font-size:.88rem;min-height:44px;width:100%;justify-content:center;}
+  .btn-danger,.btn-ghost{padding:.6rem 1rem;font-size:.88rem;min-height:44px;}
+  .cancel-confirm-box .btn-row{flex-direction:column;}
+  .cancel-confirm-box .btn-row button{width:100%;justify-content:center;min-height:44px;}
+  .booking-confirm-bar{flex-direction:column;align-items:stretch;padding:.85rem 1rem;gap:.6rem;}
+  .booking-confirm-bar .btn-primary{width:100%;justify-content:center;min-height:48px;font-size:1rem;}
+  .selected-slot-text{text-align:center;}
+  .cal-nav-btn{width:2.4rem;height:2.4rem;font-size:1.5rem;}
+  .cal-cell{min-height:66px;padding:.22rem .12rem;}
+  .cal-day-num{font-size:.68rem;}
+  .cal-slot-list{grid-template-columns:repeat(2,1fr);gap:.5rem;}
+}
+@media(max-width:380px){.cal-cell{min-height:58px;}}
+@media(min-width:641px) and (max-width:1024px){
+  .menu-grid{grid-template-columns:repeat(2,1fr);}
+  .unit-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}
+}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay" class="hidden">
+  <div class="spinner"></div>
+  <p>處理中，請稍候…</p>
+</div>
+<div id="toast" class="toast hidden"></div>
+
+<nav id="navbar" class="hidden">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <img src="https://raw.githubusercontent.com/nuhousetw-hue/nuhouse-service/main/logo.png" alt="新濠建設機構" class="nav-logo"/>
+      <span class="nav-subtitle">客戶服務平台</span>
+    </div>
+    <div class="nav-user">
+      <span id="nav-user-info"></span>
+      <button class="btn-logout" onclick="App.logout()">登出</button>
+    </div>
+  </div>
+</nav>
+
+<!-- 登入 -->
+<section id="screen-login" class="screen screen-login" style="display:flex">
+  <div class="login-hero">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo-wrap">
+          <img src="https://raw.githubusercontent.com/nuhousetw-hue/nuhouse-service/main/logo.png" alt="新濠建設機構" class="login-logo"/>
+        </div>
+        <p class="login-tagline">客戶服務平台</p>
+      </div>
+      <form class="login-form" onsubmit="App.login(event)">
+        <div class="form-group">
+          <label>選擇建案</label>
+          <div class="select-wrap">
+            <select id="select-project" required>
+              <option value="">── 請選擇建案 ──</option>
+              <option value="P001">新濠一滙</option>
+              <option value="P002">新濠岳</option>
+              <option value="P003">英倫公園</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>身份證字號</label>
+          <input type="text" id="input-id" placeholder="請輸入身份證字號（例：A123456789）" maxlength="10" autocomplete="off" required/>
+          <span class="field-hint">大寫字母開頭，共 10 碼</span>
+        </div>
+        <button type="submit" class="btn-primary btn-full">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          登入
+        </button>
+      </form>
+      <p class="login-note">若有任何問題，請於 LINE@ 洽詢客服人員</p>
+    </div>
+  </div>
+</section>
+
+<!-- 戶別選擇 -->
+<section id="screen-select-unit" class="screen">
+  <div class="container">
+    <div class="welcome-banner">
+      <h2 id="select-unit-name"></h2>
+      <p id="select-unit-project" class="sub"></p>
+    </div>
+    <h3 class="section-title">請選擇您的戶別</h3>
+    <div id="unit-grid" class="unit-grid"></div>
+  </div>
+</section>
+
+<!-- 主選單 -->
+<section id="screen-dashboard" class="screen">
+  <div class="container">
+    <button id="btn-back-units" class="btn-back hidden" onclick="App.backToUnits()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      返回戶別選擇
+    </button>
+    <div class="welcome-banner">
+      <h2 id="dashboard-welcome">歡迎您回來</h2>
+      <p id="dashboard-info" class="sub"></p>
+    </div>
+    <h3 class="section-title">服務項目</h3>
+    <div class="menu-grid">
+      <button class="menu-card" onclick="App.goTo('drawings')">
+        <div class="menu-card-icon icon-red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="menu-card-body"><h4>客變圖資</h4><p>下載客變 CAD / PDF<br>上傳設計師圖面</p></div>
+        <svg class="menu-card-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="menu-card" onclick="App.goTo('booking')">
+        <div class="menu-card-icon icon-red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
+        </div>
+        <div class="menu-card-body"><h4>線上預約</h4><p>預約客變、對保、驗屋<br>等各項服務</p></div>
+        <svg class="menu-card-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="menu-card" onclick="App.goTo('docs')">
+        <div class="menu-card-icon icon-red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="menu-card-body"><h4>相關檔案</h4><p>合約、規約等<br>重要文件下載</p></div>
+        <svg class="menu-card-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- 線上預約 -->
+<section id="screen-booking" class="screen">
+  <div class="container">
+    <button class="btn-back" onclick="App.goTo('dashboard')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      返回主選單
+    </button>
+    <h2 class="page-title">線上預約</h2>
+    <div class="card">
+      <div class="card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <h3>選擇服務與時段</h3>
+      </div>
+      <div id="booking-content" class="booking-wrap"><p class="text-muted text-center">載入中…</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 相關檔案 -->
+<section id="screen-docs" class="screen">
+  <div class="container">
+    <button class="btn-back" onclick="App.goTo('dashboard')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      返回主選單
+    </button>
+    <h2 class="page-title">相關檔案</h2>
+    <div class="card">
+      <div class="card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <h3>重要文件</h3>
+      </div>
+      <p class="card-desc">合約、規約、注意事項等相關文件，點擊下載。</p>
+      <div id="docs-list" class="file-list"><p class="text-muted text-center">載入中…</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 客變圖資 -->
+<section id="screen-drawings" class="screen">
+  <div class="container">
+    <button class="btn-back" onclick="App.goTo('dashboard')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      返回主選單
+    </button>
+    <h2 class="page-title">客變圖資</h2>
+    <div class="card">
+      <div class="card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <h3>下載區</h3>
+      </div>
+      <p class="card-desc">以下為您的戶型客變圖資，請下載後交予設計師參考。</p>
+      <div id="download-list" class="file-list"><p class="text-muted text-center">載入中…</p></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <h3>上傳區</h3>
+      </div>
+      <p class="card-desc">請將您與設計師討論後的圖面上傳，支援所有格式（DWG、PDF、JPG 等）。</p>
+      <div id="drop-zone" class="drop-zone"
+        onclick="document.getElementById('file-input').click()"
+        ondragover="App.onDragOver(event)"
+        ondragleave="App.onDragLeave(event)"
+        ondrop="App.onDrop(event)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p>點擊或拖曳檔案至此處</p>
+        <span>支援所有檔案格式，單檔上限 20 MB</span>
+      </div>
+      <input type="file" id="file-input" style="display:none" multiple onchange="App.onFileSelect(event)"/>
+      <div id="upload-queue"></div>
+      <div class="upload-history-wrap">
+        <h4 class="upload-history-title">已上傳紀錄</h4>
+        <div id="upload-history"><p class="text-muted text-center">載入中…</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ★ 請將下方網址換成您部署後的 GAS /exec 網址 ★ */
+var GAS_URL = 'https://script.google.com/macros/s/AKfycby9zjPb3lmNZzOEsWT-89OtqH1mTnMWpoKOPqvCGaCnWLfH5ulQzVpQaQdicimMTOpY/exec';
+
+var App = (function() {
+  var state = { user: null, customer: null };
+  var bState = { slots: [], myBookings: [], activeService: null, selectedSlot: null, pendingCancel: null, calMonth: null, selectedDate: null, modifyingBooking: null };
+  var SESSION_KEY = 'xh_session';
+  var MAX_SIZE = 20 * 1024 * 1024;
+
+  function callServer(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function(resolve, reject) {
+      var done = false;
+      var timer = setTimeout(function() {
+        if (!done) { done = true; reject(new Error('連線逾時，請稍後再試')); }
+      }, 30000);
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ fn: fn, args: args })
+      })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data) {
+        if (!done) { done = true; clearTimeout(timer); resolve(data); }
+      })
+      .catch(function(err) {
+        if (!done) { done = true; clearTimeout(timer); reject(err); }
+      });
+    });
+  }
+
+  var SCREENS = ['login','select-unit','dashboard','drawings','booking','docs'];
+
+  function showScreen(name) {
+    SCREENS.forEach(function(n) {
+      var el = document.getElementById('screen-' + n);
+      if (el) el.style.display = 'none';
+    });
+    var target = document.getElementById('screen-' + name);
+    if (!target) { showToast('找不到畫面', 'error'); document.getElementById('screen-login').style.display = 'flex'; return false; }
+    target.style.display = (name === 'login') ? 'flex' : 'block';
+    return true;
+  }
+
+  function init() {
+    showScreen('login');
+    try {
+      var saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) { state.user = JSON.parse(saved); enterApp(); return; }
+    } catch(e) { sessionStorage.removeItem(SESSION_KEY); }
+  }
+
+  function login(e) {
+    e.preventDefault();
+    var projectCode = document.getElementById('select-project').value;
+    var idCard = document.getElementById('input-id').value.trim().toUpperCase();
+    if (!projectCode) { showToast('請先選擇建案', 'error'); return; }
+    if (!idCard) { showToast('請輸入身份證字號', 'error'); return; }
+    if (!validateIdCard(idCard)) { showToast('身份證字號格式不正確', 'error'); return; }
+    showLoading(true);
+    callServer('serverLogin', projectCode, idCard)
+      .then(function(data) {
+        if (data.success) {
+          state.customer = { idCard: data.idCard, name: data.name, projectCode: data.projectCode, projectName: data.projectName, units: data.units };
+          if (data.units.length === 1) { selectUnit(data.units[0]); }
+          else { showUnitSelect(); }
+        } else { showToast(data.message || '查無此客戶資料', 'error'); }
+      })
+      .catch(function() { showToast('登入失敗，請稍後再試', 'error'); })
+      .then(function() { showLoading(false); });
+  }
+
+  function showUnitSelect() {
+    var c = state.customer;
+    document.getElementById('select-unit-name').textContent = '歡迎您，' + c.name;
+    document.getElementById('select-unit-project').textContent = c.projectName;
+    document.getElementById('navbar').classList.remove('hidden');
+    document.getElementById('nav-user-info').textContent = c.projectName + '｜' + c.name;
+    var grid = document.getElementById('unit-grid');
+    grid.innerHTML = '';
+    c.units.forEach(function(u) {
+      var card = document.createElement('div');
+      card.className = 'unit-card';
+      card.innerHTML = '<div class="unit-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><h4>' + esc(u.unit) + '</h4>';
+      card.onclick = function() { selectUnit(u); };
+      grid.appendChild(card);
+    });
+    goTo('select-unit');
+  }
+
+  function selectUnit(unit) {
+    var c = state.customer;
+    state.user = { idCard: c.idCard, name: c.name, projectCode: c.projectCode, projectName: c.projectName, unit: unit.unit, folderId: unit.folderId };
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(state.user));
+    enterApp();
+  }
+
+  function logout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    state.user = null; state.customer = null;
+    goTo('login');
+    document.getElementById('input-id').value = '';
+  }
+
+  function enterApp() {
+    var u = state.user;
+    if (!u) { showToast('請重新登入', 'error'); showScreen('login'); return; }
+    document.getElementById('nav-user-info').textContent = (u.projectName||'') + '｜' + (u.unit||'') + '｜' + (u.name||'');
+    document.getElementById('navbar').classList.remove('hidden');
+    document.getElementById('dashboard-welcome').textContent = '歡迎您，' + (u.name||'');
+    document.getElementById('dashboard-info').textContent = (u.projectName||'') + ' ' + (u.unit||'');
+    var hasMulti = !!(state.customer && state.customer.units && state.customer.units.length > 1);
+    document.getElementById('btn-back-units').classList.toggle('hidden', !hasMulti);
+    goTo('dashboard');
+  }
+
+  function backToUnits() { showUnitSelect(); }
+
+  function goTo(screen) {
+    if (screen === 'login') document.getElementById('navbar').classList.add('hidden');
+    if (!showScreen(screen)) return;
+    document.body.scrollTop = 0; document.documentElement.scrollTop = 0;
+    if (screen === 'drawings') { loadDownloads(); loadUploadHistory(); }
+    if (screen === 'booking')  { loadBooking(); }
+    if (screen === 'docs')     { loadProjectDocs(); }
+  }
+
+  /* ── 預約 ── */
+  function loadBooking() {
+    var el = document.getElementById('booking-content');
+    el.innerHTML = '<p class="text-muted text-center" style="padding:2.5rem">載入中…</p>';
+    Promise.all([
+      callServer('serverGetBookingSlots', state.user.projectCode),
+      callServer('serverGetMyBookings', state.user.projectCode, state.user.idCard, state.user.unit)
+    ]).then(function(results) {
+      bState.slots = results[0]; bState.myBookings = results[1]; bState.pendingCancel = null;
+      var services = [];
+      bState.slots.forEach(function(s) { if (services.indexOf(s.serviceType) < 0) services.push(s.serviceType); });
+      bState.myBookings.forEach(function(b) { if (services.indexOf(b.serviceType) < 0) services.push(b.serviceType); });
+      if (!services.length) { el.innerHTML = '<div class="booking-empty"><p>目前尚無開放預約的服務項目，請稍後查詢。</p></div>'; return; }
+      if (!bState.activeService || services.indexOf(bState.activeService) < 0) bState.activeService = services[0];
+      renderBooking(services);
+    }).catch(function() { el.innerHTML = '<div class="booking-empty"><p>載入失敗，請稍後再試</p></div>'; });
+  }
+
+  function getServices() {
+    var services = [];
+    bState.slots.forEach(function(s) { if (services.indexOf(s.serviceType) < 0) services.push(s.serviceType); });
+    bState.myBookings.forEach(function(b) { if (services.indexOf(b.serviceType) < 0) services.push(b.serviceType); });
+    return services;
+  }
+
+  function renderBooking(services) {
+    var el = document.getElementById('booking-content');
+    var tabs = '';
+    services.forEach(function(svc) {
+      var isBooked = bState.myBookings.some(function(b) { return b.serviceType === svc; });
+      var isActive = bState.activeService === svc;
+      var cls = 'booking-tab' + (isBooked ? ' booked' : '') + (isActive ? ' active' : '');
+      tabs += '<button class="' + cls + '" onclick="App.switchService(\'' + esc(svc) + '\')">' + esc(svc) + (isBooked ? ' (已預約)' : '') + '</button>';
+    });
+    el.innerHTML = '<div class="booking-tabs">' + tabs + '</div><div id="booking-panel"></div>';
+    renderBookingPanel();
+  }
+
+  function renderBookingPanel() {
+    var panel = document.getElementById('booking-panel');
+    if (!panel) return;
+    var svc = bState.activeService;
+    var isModifying = !!(bState.modifyingBooking && bState.modifyingBooking.serviceType === svc);
+    if (isModifying) { panel.innerHTML = renderSlotPicker(svc); return; }
+    var myBooking = null;
+    bState.myBookings.forEach(function(b) { if (b.serviceType === svc) myBooking = b; });
+    panel.innerHTML = myBooking ? renderConfirmed(myBooking) : renderSlotPicker(svc);
+  }
+
+  function renderConfirmed(booking) {
+    var svc = esc(booking.serviceType);
+    var isPending = bState.pendingCancel === booking.serviceType;
+    var h = '<div class="booking-confirmed">';
+    h += '<div class="booking-status-badge"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 預約確認</div>';
+    h += '<div class="booking-detail-grid">';
+    h += '<div class="booking-detail-row"><span class="booking-detail-label">服務項目</span><span class="booking-detail-value">' + svc + '</span></div>';
+    h += '<div class="booking-detail-row"><span class="booking-detail-label">預約日期</span><span class="booking-detail-value">' + fmtBookingDate(booking.date) + '</span></div>';
+    h += '<div class="booking-detail-row"><span class="booking-detail-label">預約時間</span><span class="booking-detail-value">' + esc(booking.time) + '</span></div>';
+    h += '<div class="booking-detail-row"><span class="booking-detail-label">戶別</span><span class="booking-detail-value">' + esc(state.user.unit) + '</span></div>';
+    h += '</div>';
+    if (isPending) {
+      h += '<div class="cancel-confirm-box"><p>確定要取消「' + svc + '」的預約嗎？</p><div class="btn-row">';
+      h += '<button class="btn-danger" onclick="App.doCancelBooking(\'' + svc + '\')">確定取消</button>';
+      h += '<button class="btn-ghost" onclick="App.clearCancel()">返回</button></div></div>';
+    } else {
+      h += '<div class="booking-actions">';
+      h += '<button class="btn-outline" onclick="App.modifyBooking(\'' + svc + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 修改預約</button>';
+      h += '<button class="btn-danger-outline" onclick="App.showCancelConfirm(\'' + svc + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> 取消預約</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderSlotPicker(svc) {
+    var isModifying = !!(bState.modifyingBooking && bState.modifyingBooking.serviceType === svc);
+    var slots = bState.slots.filter(function(s) { return s.serviceType === svc; });
+    if (!slots.length) return '<div class="booking-empty"><p>此服務項目目前尚無開放時段，請稍後查詢。</p></div>';
+    var months = {}; var monthOrder = [];
+    slots.forEach(function(s) {
+      var p = s.date.split('/'); var mk = p[0] + '/' + p[1];
+      if (!months[mk]) { months[mk] = {}; monthOrder.push(mk); }
+      if (!months[mk][s.date]) months[mk][s.date] = [];
+      months[mk][s.date].push(s);
+    });
+    monthOrder.sort();
+    monthOrder.forEach(function(mk) {
+      Object.keys(months[mk]).forEach(function(dk) {
+        months[mk][dk].sort(function(a, b) {
+          function m(t) { var x = String(t).split(':'); return parseInt(x[0]||0,10)*60+parseInt(x[1]||0,10); }
+          return m(a.time) - m(b.time);
+        });
+      });
+    });
+    if (!bState.calMonth || monthOrder.indexOf(bState.calMonth) < 0) bState.calMonth = monthOrder[0];
+    var mk = bState.calMonth;
+    var idx = monthOrder.indexOf(mk);
+    var prevMk = idx > 0 ? monthOrder[idx-1] : null;
+    var nextMk = idx < monthOrder.length-1 ? monthOrder[idx+1] : null;
+    var hasSel = !!(bState.selectedSlot && bState.selectedSlot.serviceType === svc);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var p = mk.split('/');
+    var year = parseInt(p[0],10); var month = parseInt(p[1],10);
+    var firstDow = new Date(year, month-1, 1).getDay();
+    var lastDate = new Date(year, month, 0).getDate();
+
+    var h = '';
+    if (isModifying) {
+      var ob = bState.modifyingBooking;
+      h += '<div class="modify-banner"><div class="modify-banner-info">修改預約中｜原預約：' + esc(ob.date) + '　' + esc(ob.time) + '</div>';
+      h += '<button class="btn-ghost modify-banner-cancel" onclick="App.cancelModify()">放棄修改</button></div>';
+    }
+    h += '<div class="cal-nav">';
+    h += '<button class="cal-nav-btn"' + (prevMk ? ' onclick="App.switchCalMonth(\'' + prevMk + '\')"' : ' disabled') + '>&#8249;</button>';
+    h += '<span class="cal-nav-title">' + year + ' 年 ' + month + ' 月</span>';
+    h += '<button class="cal-nav-btn"' + (nextMk ? ' onclick="App.switchCalMonth(\'' + nextMk + '\')"' : ' disabled') + '>&#8250;</button>';
+    h += '</div><div class="cal-month"><div class="cal-grid">';
+    var dows = ['日','一','二','三','四','五','六'];
+    for (var di = 0; di < 7; di++) h += '<div class="cal-dow">' + dows[di] + '</div>';
+    for (var i = 0; i < firstDow; i++) h += '<div class="cal-cell cal-empty"></div>';
+    for (var d = 1; d <= lastDate; d++) {
+      var dd = d < 10 ? '0'+d : ''+d;
+      var dateKey = p[0]+'/'+p[1]+'/'+dd;
+      var daySlots = months[mk][dateKey] || [];
+      var cellDate = new Date(year, month-1, d); cellDate.setHours(0,0,0,0);
+      var isToday = (cellDate.getTime() === today.getTime());
+      var isSel = (bState.selectedDate === dateKey);
+      var cellCls = 'cal-cell' + (isToday ? ' cal-today' : '') + (isSel ? ' cal-sel' : '');
+      h += daySlots.length ? '<div class="' + cellCls + '" onclick="App.selectDate(\'' + dateKey + '\')">' : '<div class="' + cellCls + ' cal-empty">';
+      h += '<div class="cal-day-num">' + d + '</div>';
+      if (daySlots.length) {
+        h += '<div class="cal-dots">';
+        daySlots.forEach(function(s) {
+          var remain = s.capacity - s.booked;
+          var dc = !s.available ? 'full' : remain <= 2 ? 'low' : 'avail';
+          h += '<span class="cal-dot ' + dc + '"></span>';
+        });
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+    h += '</div></div>';
+
+    if (bState.selectedDate && months[mk] && months[mk][bState.selectedDate]) {
+      var panelSlots = months[mk][bState.selectedDate];
+      h += '<div class="cal-date-panel"><div class="cal-date-panel-title"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ' + fmtBookingDate(bState.selectedDate) + '　可預約時段</div>';
+      h += '<div class="cal-slot-list">';
+      panelSlots.forEach(function(s) {
+        var isFull = !s.available;
+        var remain = s.capacity - s.booked;
+        var isSlotSel = hasSel && bState.selectedSlot.date === s.date && bState.selectedSlot.time === s.time;
+        var bc = isSlotSel ? 'sel' : isFull ? 'full' : remain <= 2 ? 'low' : 'avail';
+        var remainTxt = isFull ? '額滿' : '剩餘 ' + remain + ' 位';
+        if (isFull) { h += '<div class="cal-slot-btn full">'; }
+        else { h += '<div class="cal-slot-btn ' + bc + '" onclick="App.selectSlot(\'' + esc(svc) + '\',\'' + esc(s.date) + '\',\'' + esc(s.time) + '\')">'; }
+        h += '<span class="cal-slot-time">' + esc(s.time) + '</span><span class="cal-slot-remain">' + remainTxt + '</span></div>';
+      });
+      h += '</div></div>';
+    } else if (bState.selectedDate) {
+      h += '<div class="cal-date-panel"><div class="cal-no-slot">此日期無可預約時段</div></div>';
+    } else {
+      h += '<p style="text-align:center;color:var(--text-muted);font-size:.9rem;margin-top:.75rem;">↑ 請點選日曆中有圓點的日期查看時段</p>';
+    }
+
+    var selTxt = hasSel ? '已選：' + bState.selectedSlot.date + '　' + bState.selectedSlot.time : '請選擇時段';
+    var confirmLabel = isModifying ? '確認修改' : '確認預約';
+    h += '<div class="booking-confirm-bar"><span class="selected-slot-text' + (hasSel ? ' picked' : '') + '">' + selTxt + '</span>';
+    h += '<button class="btn-primary"' + (hasSel ? '' : ' disabled style="opacity:.45;cursor:default"') + ' onclick="App.confirmBooking()">' + confirmLabel + '</button></div>';
+    return h;
+  }
+
+  function switchCalMonth(mk) { bState.calMonth = mk; bState.selectedDate = null; renderBookingPanel(); }
+  function selectDate(date) { bState.selectedDate = (bState.selectedDate === date) ? null : date; renderBookingPanel(); }
+  function switchService(svc) { bState.activeService = svc; bState.selectedSlot = null; bState.pendingCancel = null; bState.calMonth = null; bState.selectedDate = null; bState.modifyingBooking = null; renderBooking(getServices()); }
+  function selectSlot(svc, date, time) { bState.selectedSlot = { serviceType: svc, date: date, time: time }; renderBookingPanel(); }
+
+  function confirmBooking() {
+    if (!bState.selectedSlot || bState.selectedSlot.serviceType !== bState.activeService) { showToast('請先選擇時段', 'error'); return; }
+    var s = bState.selectedSlot;
+    var oldBooking = bState.modifyingBooking;
+    var isModifying = !!(oldBooking && oldBooking.serviceType === s.serviceType);
+    showLoading(true);
+    callServer('serverCreateBooking', state.user.projectCode, state.user.idCard, state.user.unit, s.serviceType, s.date, s.time, state.user.name, isModifying ? oldBooking.date : null, isModifying ? oldBooking.time : null)
+      .then(function(res) {
+        if (!res.success) { showToast(res.message || '預約失敗', 'error'); return; }
+        if (isModifying) {
+          return callServer('serverCancelBooking', state.user.projectCode, state.user.idCard, state.user.unit, oldBooking.serviceType, oldBooking.date, oldBooking.time)
+            .then(function() { showToast('預約已修改！', 'success'); bState.selectedSlot = null; bState.modifyingBooking = null; loadBooking(); });
+        }
+        showToast('預約成功！', 'success'); bState.selectedSlot = null; loadBooking();
+      })
+      .catch(function() { showToast('操作失敗，請稍後再試', 'error'); })
+      .then(function() { showLoading(false); });
+  }
+
+  function cancelModify() { bState.modifyingBooking = null; bState.selectedSlot = null; renderBookingPanel(); }
+  function showCancelConfirm(svc) { bState.pendingCancel = svc; renderBookingPanel(); }
+  function clearCancel() { bState.pendingCancel = null; renderBookingPanel(); }
+
+  function doCancelBooking(svc) {
+    showLoading(true);
+    callServer('serverCancelBooking', state.user.projectCode, state.user.idCard, state.user.unit, svc)
+      .then(function(res) {
+        if (res.success) { showToast('預約已取消', 'success'); loadBooking(); }
+        else { showToast(res.message || '取消失敗', 'error'); }
+      })
+      .catch(function() { showToast('取消失敗，請稍後再試', 'error'); })
+      .then(function() { showLoading(false); });
+  }
+
+  function modifyBooking(svc) {
+    var booking = null;
+    bState.myBookings.forEach(function(b) { if (b.serviceType === svc) booking = b; });
+    if (!booking) { showToast('找不到預約紀錄', 'error'); return; }
+    bState.modifyingBooking = { serviceType: booking.serviceType, date: booking.date, time: booking.time };
+    bState.selectedSlot = null; bState.calMonth = null; bState.selectedDate = null;
+    renderBookingPanel();
+  }
+
+  function fmtBookingDate(dateStr) {
+    if (!dateStr) return '';
+    var parts = dateStr.split('/');
+    if (parts.length !== 3) return dateStr;
+    var d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+    var days = ['週日','週一','週二','週三','週四','週五','週六'];
+    return parts[0] + '年' + parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日（' + days[d.getDay()] + '）';
+  }
+
+  function loadProjectDocs() {
+    var el = document.getElementById('docs-list');
+    el.innerHTML = '<p class="text-muted text-center">載入中…</p>';
+    callServer('serverGetProjectFiles', state.user.projectCode)
+      .then(function(files) {
+        if (!files.length) { el.innerHTML = '<div class="docs-empty"><p>目前尚無相關檔案，請聯絡客服</p></div>'; return; }
+        el.innerHTML = ''; files.forEach(function(f) { el.appendChild(buildFileItem(f)); });
+      })
+      .catch(function() { el.innerHTML = '<p class="text-muted text-center">載入失敗，請稍後再試</p>'; });
+  }
+
+  function loadDownloads() {
+    var el = document.getElementById('download-list');
+    el.innerHTML = '<p class="text-muted text-center">載入中…</p>';
+    callServer('serverGetFiles', state.user.folderId)
+      .then(function(files) {
+        if (!files.length) { el.innerHTML = '<p class="text-muted text-center">目前尚無可下載的圖資，請聯絡客服</p>'; return; }
+        el.innerHTML = ''; files.forEach(function(f) { el.appendChild(buildFileItem(f)); });
+      })
+      .catch(function() { el.innerHTML = '<p class="text-muted text-center">載入失敗，請稍後再試</p>'; });
+  }
+
+  function buildFileItem(f) {
+    var ext = (f.ext || '').toLowerCase();
+    var cls = ext === 'pdf' ? 'pdf' : (ext === 'dwg' || ext === 'dxf') ? 'cad' : 'other';
+    var div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML =
+      '<div class="file-icon ' + cls + '">' + (ext.toUpperCase() || 'FILE') + '</div>' +
+      '<span class="file-name">' + esc(f.name) + '</span>' +
+      (f.size ? '<span class="file-size">' + fmtSize(f.size) + '</span>' : '') +
+      '<a href="' + f.downloadUrl + '" target="_blank" rel="noopener" class="btn-download"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下載</a>';
+    return div;
+  }
+
+  var onDragOver  = function(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); };
+  var onDragLeave = function() { document.getElementById('drop-zone').classList.remove('drag-over'); };
+  var onDrop = function(e) { e.preventDefault(); onDragLeave(); handleFiles(Array.prototype.slice.call(e.dataTransfer.files)); };
+  var onFileSelect = function(e) { handleFiles(Array.prototype.slice.call(e.target.files)); e.target.value = ''; };
+
+  function handleFiles(files) {
+    files.forEach(function(f) {
+      if (f.size > MAX_SIZE) { showToast(f.name + ' 超過 20 MB，略過', 'error'); return; }
+      uploadFile(f);
+    });
+  }
+
+  function uploadFile(file) {
+    var queue = document.getElementById('upload-queue');
+    var item = document.createElement('div');
+    item.className = 'upload-item';
+    item.innerHTML = '<div class="upload-item-top"><span class="upload-item-name">' + esc(file.name) + '</span><span class="upload-item-status status-uploading">上傳中</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>';
+    queue.prepend(item);
+    var statusEl = item.querySelector('.upload-item-status');
+    var progressEl = item.querySelector('.progress-fill');
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      progressEl.style.width = '40%';
+      var base64 = ev.target.result.split(',')[1];
+      progressEl.style.width = '70%';
+      callServer('serverUploadFile', state.user.idCard, state.user.name, state.user.projectCode, state.user.unit, state.user.folderId, file.name, file.type || 'application/octet-stream', base64)
+        .then(function(res) {
+          progressEl.style.width = '100%';
+          if (res.success) { statusEl.textContent = '完成'; statusEl.className = 'upload-item-status status-done'; showToast(file.name + ' 上傳成功', 'success'); setTimeout(function() { item.remove(); loadUploadHistory(); }, 3000); }
+          else { throw new Error('failed'); }
+        })
+        .catch(function() { statusEl.textContent = '失敗'; statusEl.className = 'upload-item-status status-error'; showToast(file.name + ' 上傳失敗', 'error'); });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function loadUploadHistory() {
+    var el = document.getElementById('upload-history');
+    el.innerHTML = '<p class="text-muted text-center">載入中…</p>';
+    callServer('serverGetUploadHistory', state.user.idCard, state.user.projectCode)
+      .then(function(records) {
+        if (!records.length) { el.innerHTML = '<p class="text-muted text-center">尚無上傳紀錄</p>'; return; }
+        el.innerHTML = '';
+        records.slice(0, 20).forEach(function(r) {
+          var div = document.createElement('div');
+          div.className = 'history-item';
+          div.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="history-item-name">' + esc(r.fileName) + '</span><span class="history-date">' + r.date + '</span>';
+          el.appendChild(div);
+        });
+      })
+      .catch(function() { el.innerHTML = '<p class="text-muted text-center">無法載入紀錄</p>'; });
+  }
+
+  function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('hidden', !v); }
+  var _t;
+  function showToast(msg, type) {
+    var el = document.getElementById('toast');
+    el.textContent = msg; el.className = 'toast ' + (type || ''); el.classList.remove('hidden');
+    clearTimeout(_t); _t = setTimeout(function() { el.classList.add('hidden'); }, 3500);
+  }
+  var fmtSize = function(b) { return b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB'; };
+  var esc = function(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  function validateIdCard(id) { return /^[A-Z][0-9]{9}$/.test(id); }
+
+  return { init, login, logout, goTo, backToUnits, onDragOver, onDragLeave, onDrop, onFileSelect,
+           switchService, selectSlot, confirmBooking, showCancelConfirm, clearCancel, doCancelBooking,
+           modifyBooking, cancelModify, switchCalMonth, selectDate };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);
+</script>
+</body>
+</html>
