@@ -587,7 +587,7 @@ var App = (function() {
     var el = document.getElementById('booking-content');
     el.innerHTML = '<p class="text-muted text-center" style="padding:2.5rem">載入中…</p>';
     Promise.all([
-      callServer('serverGetBookingSlots', state.user.projectCode),
+      callServer('serverGetBookingSlots', state.user.projectCode, state.user.unit),
       callServer('serverGetMyBookings', state.user.projectCode, state.user.idCard, state.user.unit)
     ]).then(function(results) {
       bState.slots = results[0]; bState.myBookings = results[1]; bState.pendingCancel = null;
