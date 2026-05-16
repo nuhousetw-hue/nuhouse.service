@@ -170,6 +170,11 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .selected-slot-text.picked{color:var(--primary);font-weight:600;}
 .booking-empty{padding:3rem 1.5rem;text-align:center;color:var(--text-muted);}
 .docs-empty{padding:2.5rem 1.5rem;text-align:center;color:var(--text-muted);}
+.booking-notice{background:#fffbe6;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);padding:1rem 1.25rem;margin-top:1rem;}
+.booking-notice-title{font-weight:700;color:#92400e;margin-bottom:.6rem;font-size:.95rem;}
+.booking-notice p{font-size:.87rem;color:#78350f;line-height:1.75;margin-bottom:.55rem;}
+.booking-notice p:last-child{margin-bottom:0;}
+.booking-notice strong{font-weight:700;color:#b45309;}
 
 /* ── 日曆 ── */
 .cal-nav{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0 .75rem;}
@@ -637,6 +642,14 @@ var App = (function() {
     h += '<div class="booking-detail-row"><span class="booking-detail-label">預約時間</span><span class="booking-detail-value">' + esc(booking.time) + '</span></div>';
     h += '<div class="booking-detail-row"><span class="booking-detail-label">戶別</span><span class="booking-detail-value">' + esc(state.user.unit) + '</span></div>';
     h += '</div>';
+    if (booking.serviceType.indexOf('客變') >= 0) {
+      h += '<div class="booking-notice">';
+      h += '<div class="booking-notice-title">【重要】</div>';
+      h += '<p>客變地點：新濠一滙工務所一樓</p>';
+      h += '<p>客變每組時段 1.5小時（依預約時間起算），請您 <strong>提前 10 分鐘抵達</strong>完成報到。若遲到，將不順延、不補時，遲到時間將直接計入您的客變時段，敬請提早到場以確保討論完整。</p>';
+      h += '<p><strong>客變規則：</strong><br>當日客變與選材選色完成後，將會在圖面或表格上簽認，簽認後將視同客變完成，若有需要再次變動，視為二次客變，將收取手續費3萬元，依次類推。</p>';
+      h += '</div>';
+    }
     if (isPending) {
       h += '<div class="cancel-confirm-box"><p>確定要取消「' + svc + '」的預約嗎？</p><div class="btn-row">';
       h += '<button class="btn-danger" onclick="App.doCancelBooking(\'' + svc + '\')">確定取消</button>';
