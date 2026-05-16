@@ -547,7 +547,7 @@ var App = (function() {
 
   function selectUnit(unit) {
     var c = state.customer;
-    state.user = { idCard: c.idCard, name: c.name, projectCode: c.projectCode, projectName: c.projectName, unit: unit.unit, folderId: unit.folderId };
+    state.user = { idCard: c.idCard, name: c.name, projectCode: c.projectCode, projectName: c.projectName, unit: unit.unit, folderId: unit.folderId, units: c.units };
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(state.user));
     enterApp();
   }
@@ -566,12 +566,18 @@ var App = (function() {
     document.getElementById('navbar').classList.remove('hidden');
     document.getElementById('dashboard-welcome').textContent = '歡迎您，' + (u.name||'');
     document.getElementById('dashboard-info').textContent = (u.projectName||'') + ' ' + (u.unit||'');
-    var hasMulti = !!(state.customer && state.customer.units && state.customer.units.length > 1);
+    var hasMulti = !!(state.customer && state.customer.units && state.customer.units.length > 1) ||
+                   !!(state.user && state.user.units && state.user.units.length > 1);
     document.getElementById('btn-back-units').classList.toggle('hidden', !hasMulti);
     goTo('dashboard');
   }
 
-  function backToUnits() { showUnitSelect(); }
+  function backToUnits() {
+    if (!state.customer && state.user && state.user.units) {
+      state.customer = { idCard: state.user.idCard, name: state.user.name, projectCode: state.user.projectCode, projectName: state.user.projectName, units: state.user.units };
+    }
+    showUnitSelect();
+  }
 
   function goTo(screen) {
     if (screen === 'login') document.getElementById('navbar').classList.add('hidden');
