@@ -217,7 +217,33 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .modify-banner-info{font-size:.9rem;font-weight:600;color:#92400e;flex:1;}
 .modify-banner-cancel{font-size:.85rem;padding:.3rem .8rem;white-space:nowrap;}
 
-/* ── 工程進度 ── */
+/* ── 工程進度時間軸 ── */
+.progress-overview{padding:1.25rem 1.5rem 1rem;border-bottom:1px solid var(--border);}
+.prog-bar-wrap{display:flex;align-items:center;gap:.85rem;}
+.prog-bar-label{font-size:.88rem;font-weight:600;color:var(--text);white-space:nowrap;}
+.prog-bar-track{flex:1;height:10px;background:var(--border);border-radius:5px;overflow:hidden;}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,#1e8e3e,#4caf50);border-radius:5px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.prog-bar-count{font-size:.88rem;font-weight:700;color:#1e8e3e;white-space:nowrap;min-width:3.5rem;text-align:right;}
+.timeline-wrap{padding:1.5rem 1rem 1.25rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.timeline-wrap::-webkit-scrollbar{display:none;}
+.timeline-inner{display:flex;align-items:flex-start;min-width:max-content;padding:0 .75rem;}
+.tl-item{display:flex;flex-direction:column;align-items:center;position:relative;min-width:88px;}
+.tl-item:not(:last-child)::after{content:'';position:absolute;top:19px;left:50%;width:100%;height:2px;z-index:0;}
+.tl-done:not(:last-child)::after{background:#4caf50;}
+.tl-ongoing:not(:last-child)::after,.tl-pending:not(:last-child)::after{background:#ddd;}
+.tl-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:1;position:relative;border:3px solid;font-size:1rem;}
+.tl-done .tl-dot{background:#e6f4ea;border-color:#4caf50;color:#1e8e3e;}
+.tl-ongoing .tl-dot{background:#fff3e0;border-color:#ff9800;color:#e65100;animation:tl-pulse 1.6s ease-in-out infinite;}
+.tl-pending .tl-dot{background:#f5f5f5;border-color:#ddd;color:#bbb;}
+@keyframes tl-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,152,0,.45);}60%{box-shadow:0 0 0 9px rgba(255,152,0,0);}}
+.tl-phase{font-size:.76rem;font-weight:700;color:var(--text);margin-top:.55rem;text-align:center;max-width:80px;line-height:1.35;}
+.tl-status{font-size:.7rem;margin-top:.2rem;text-align:center;font-weight:600;}
+.tl-done .tl-status{color:#1e8e3e;}
+.tl-ongoing .tl-status{color:#e65100;}
+.tl-pending .tl-status{color:#bbb;}
+.progress-table-title{padding:.85rem 1.5rem .4rem;font-size:.82rem;font-weight:600;color:var(--text-muted);letter-spacing:.06em;border-top:1px solid var(--border);}
+
+/* ── 工程進度表格 ── */
 .progress-table{width:100%;border-collapse:collapse;table-layout:fixed;}
 .progress-table th{background:var(--primary);color:#fff;padding:.7rem 1rem;text-align:center;font-size:.88rem;white-space:nowrap;letter-spacing:.04em;}
 .progress-table th:nth-child(2){text-align:left;}
@@ -994,7 +1020,34 @@ var App = (function() {
     callServer('serverGetProgress', state.user.projectCode)
       .then(function(phases) {
         if (!phases.length) { el.innerHTML = '<p class="text-muted text-center" style="padding:2rem">目前尚無工程進度資料</p>'; return; }
-        var h = '<table class="progress-table"><thead><tr><th>期別</th><th>工程項目</th><th>預計完成</th><th>狀態</th><th></th></tr></thead><tbody>';
+
+        // 整體進度條
+        var total = phases.length;
+        var done  = phases.filter(function(p) { return p.status === '已完成'; }).length;
+        var pct   = total ? Math.round(done / total * 100) : 0;
+        var h = '<div class="progress-overview">';
+        h += '<div class="prog-bar-wrap">';
+        h += '<span class="prog-bar-label">整體進度</span>';
+        h += '<div class="prog-bar-track"><div class="prog-bar-fill" id="prog-bar-fill" style="width:0%"></div></div>';
+        h += '<span class="prog-bar-count">' + done + '&thinsp;/&thinsp;' + total + ' 期</span>';
+        h += '</div></div>';
+
+        // 時間軸
+        h += '<div class="timeline-wrap"><div class="timeline-inner">';
+        phases.forEach(function(p) {
+          var cls  = p.status === '已完成' ? 'tl-done' : p.status === '進行中' ? 'tl-ongoing' : 'tl-pending';
+          var icon = p.status === '已完成' ? '✓' : p.status === '進行中' ? '▶' : '○';
+          h += '<div class="tl-item ' + cls + '">';
+          h += '<div class="tl-dot">' + icon + '</div>';
+          h += '<div class="tl-phase">' + esc(p.phase) + '</div>';
+          h += '<div class="tl-status">' + esc(p.status) + '</div>';
+          h += '</div>';
+        });
+        h += '</div></div>';
+
+        // 詳細進度表
+        h += '<div class="progress-table-title">詳細進度</div>';
+        h += '<table class="progress-table"><thead><tr><th>期別</th><th>工程項目</th><th>預計完成</th><th>狀態</th><th></th></tr></thead><tbody>';
         phases.forEach(function(p, i) {
           var sc = p.status === '已完成' ? 'prog-done' : p.status === '進行中' ? 'prog-ongoing' : 'prog-pending';
           h += '<tr>';
@@ -1007,7 +1060,13 @@ var App = (function() {
           h += '<tr class="photo-row hidden" id="prow-' + i + '"><td colspan="5" style="padding:0;background:#fafafa"><div id="pcarousel-' + i + '"></div></td></tr>';
         });
         h += '</tbody></table>';
+
         el.innerHTML = h;
+        // 進度條動畫（待 DOM 更新後觸發）
+        setTimeout(function() {
+          var bar = document.getElementById('prog-bar-fill');
+          if (bar) bar.style.width = pct + '%';
+        }, 80);
       })
       .catch(function() { el.innerHTML = '<p class="text-muted text-center" style="padding:2rem">載入失敗，請稍後再試</p>'; });
   }
