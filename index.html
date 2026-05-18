@@ -217,8 +217,35 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .modify-banner-info{font-size:.9rem;font-weight:600;color:#92400e;flex:1;}
 .modify-banner-cancel{font-size:.85rem;padding:.3rem .8rem;white-space:nowrap;}
 
+/* ── 工程進度 ── */
+.progress-table{width:100%;border-collapse:collapse;}
+.progress-table th{background:var(--primary);color:#fff;padding:.65rem 1rem;text-align:left;font-size:.85rem;white-space:nowrap;}
+.progress-table td{padding:.7rem 1rem;border-bottom:1px solid var(--border);font-size:.9rem;vertical-align:middle;}
+.progress-table tr:last-child td{border-bottom:none;}
+.progress-table tbody tr:hover{background:rgba(176,16,32,.03);}
+.prog-status{display:inline-block;padding:.2rem .65rem;border-radius:2rem;font-size:.78rem;font-weight:600;white-space:nowrap;}
+.prog-done{background:#e6f4ea;color:#1e8e3e;}
+.prog-ongoing{background:#fff3e0;color:#e65100;}
+.prog-pending{background:#f1f3f4;color:#666;}
+.btn-photo{background:rgba(176,16,32,.08);color:var(--primary);border:1.5px solid rgba(176,16,32,.2);padding:.3rem .75rem;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;}
+.btn-photo:hover{background:rgba(176,16,32,.15);}
+.btn-photo.open{background:var(--primary);color:#fff;border-color:var(--primary);}
+.photo-row td{padding:0!important;background:#fafafa;}
+.progress-carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:.75rem;padding:.85rem 1rem;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.progress-carousel::-webkit-scrollbar{display:none;}
+.progress-photo{flex:0 0 46%;scroll-snap-align:start;border-radius:var(--radius-sm);overflow:hidden;aspect-ratio:4/3;cursor:zoom-in;background:#eee;}
+.progress-photo img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s;}
+.progress-photo img:hover{transform:scale(1.03);}
+#photo-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9500;display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
+#photo-lightbox img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,.5);}
+.lightbox-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.15);border:none;color:#fff;width:2.75rem;height:2.75rem;border-radius:50%;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.lightbox-close:hover{background:rgba(255,255,255,.3);}
+
 /* ── RWD ── */
 @media(max-width:640px){
+  .progress-photo{flex:0 0 82%;}
+  .progress-table th,.progress-table td{padding:.55rem .65rem;font-size:.82rem;}
+}
   :root{--nav-h:52px;}
   html{font-size:15px;}
   .nav-inner{padding:0 .9rem;}
@@ -374,6 +401,13 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
         <div class="menu-card-body"><h4>相關檔案</h4><p>合約、規約等<br>重要文件下載</p></div>
         <svg class="menu-card-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
+      <button class="menu-card" onclick="App.goTo('progress')">
+        <div class="menu-card-icon icon-red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="menu-card-body"><h4>工程進度</h4><p>查看各期工程進度<br>及現場施工照片</p></div>
+        <svg class="menu-card-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
     </div>
   </div>
 </section>
@@ -414,6 +448,32 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
     </div>
   </div>
 </section>
+
+<!-- 工程進度 -->
+<section id="screen-progress" class="screen">
+  <div class="container">
+    <button class="btn-back" onclick="App.goTo('dashboard')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      返回主選單
+    </button>
+    <h2 class="page-title">工程進度</h2>
+    <div class="card">
+      <div class="card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <h3>各期工程進度</h3>
+      </div>
+      <p class="card-desc" style="font-weight:700;color:var(--text);font-size:.95rem;">工程期表</p>
+      <div id="progress-list" style="overflow-x:auto;padding:.5rem 0"><p class="text-muted text-center">載入中…</p></div>
+      <p style="padding:.85rem 1.5rem;font-size:.82rem;color:var(--text-muted);border-top:1px solid var(--border);">說明：進度內容僅供參考，實際時程仍需依現況做調整</p>
+    </div>
+  </div>
+</section>
+
+<!-- 照片 Lightbox -->
+<div id="photo-lightbox" class="hidden" onclick="App.closeLightbox()">
+  <img id="lightbox-img" src="" alt=""/>
+  <button class="lightbox-close" onclick="App.closeLightbox()">✕</button>
+</div>
 
 <!-- 客變圖資 -->
 <section id="screen-drawings" class="screen">
@@ -490,7 +550,7 @@ var App = (function() {
     });
   }
 
-  var SCREENS = ['login','select-unit','dashboard','drawings','booking','docs'];
+  var SCREENS = ['login','select-unit','dashboard','drawings','booking','docs','progress'];
 
   function showScreen(name) {
     SCREENS.forEach(function(n) {
@@ -590,6 +650,7 @@ var App = (function() {
     if (screen === 'drawings') { loadDownloads(); loadUploadHistory(); }
     if (screen === 'booking')  { loadBooking(); }
     if (screen === 'docs')     { loadProjectDocs(); }
+    if (screen === 'progress') { loadProgress(); }
   }
 
   /* ── 預約 ── */
@@ -916,6 +977,73 @@ var App = (function() {
       .catch(function() { el.innerHTML = '<p class="text-muted text-center">無法載入紀錄</p>'; });
   }
 
+  /* ── 工程進度 ── */
+  var _photoCache = {};
+
+  function loadProgress() {
+    var el = document.getElementById('progress-list');
+    el.innerHTML = '<p class="text-muted text-center" style="padding:2.5rem">載入中…</p>';
+    _photoCache = {};
+    callServer('serverGetProgress', state.user.projectCode)
+      .then(function(phases) {
+        if (!phases.length) { el.innerHTML = '<p class="text-muted text-center" style="padding:2rem">目前尚無工程進度資料</p>'; return; }
+        var h = '<table class="progress-table"><thead><tr><th>期別</th><th>工程項目</th><th>預計完成</th><th>狀態</th><th></th></tr></thead><tbody>';
+        phases.forEach(function(p, i) {
+          var sc = p.status === '已完成' ? 'prog-done' : p.status === '進行中' ? 'prog-ongoing' : 'prog-pending';
+          h += '<tr>';
+          h += '<td>' + esc(p.phase) + '</td>';
+          h += '<td>' + esc(p.item) + '</td>';
+          h += '<td>' + esc(p.dueDate) + '</td>';
+          h += '<td><span class="prog-status ' + sc + '">' + esc(p.status) + '</span></td>';
+          h += '<td>' + (p.folderId ? '<button class="btn-photo" id="pbtn-' + i + '" onclick="App.togglePhotos(' + i + ',\'' + esc(p.folderId) + '\')">📷 照片</button>' : '') + '</td>';
+          h += '</tr>';
+          h += '<tr class="photo-row hidden" id="prow-' + i + '"><td colspan="5" style="padding:0;background:#fafafa"><div id="pcarousel-' + i + '"></div></td></tr>';
+        });
+        h += '</tbody></table>';
+        el.innerHTML = h;
+      })
+      .catch(function() { el.innerHTML = '<p class="text-muted text-center" style="padding:2rem">載入失敗，請稍後再試</p>'; });
+  }
+
+  function togglePhotos(idx, folderId) {
+    var row = document.getElementById('prow-' + idx);
+    var btn = document.getElementById('pbtn-' + idx);
+    if (!row) return;
+    var isHidden = row.classList.contains('hidden');
+    if (!isHidden) { row.classList.add('hidden'); btn.classList.remove('open'); btn.textContent = '📷 照片'; return; }
+    row.classList.remove('hidden');
+    btn.classList.add('open'); btn.textContent = '▲ 收合';
+    var carousel = document.getElementById('pcarousel-' + idx);
+    if (_photoCache[folderId]) { renderCarousel(carousel, _photoCache[folderId]); return; }
+    carousel.innerHTML = '<p class="text-muted text-center" style="padding:1rem">載入中…</p>';
+    callServer('serverGetProgressPhotos', folderId)
+      .then(function(photos) { _photoCache[folderId] = photos; renderCarousel(carousel, photos); })
+      .catch(function() { carousel.innerHTML = '<p class="text-muted text-center" style="padding:1rem">照片載入失敗</p>'; });
+  }
+
+  function renderCarousel(el, photos) {
+    if (!photos.length) { el.innerHTML = '<p class="text-muted text-center" style="padding:1rem">此期尚無照片</p>'; return; }
+    var h = '<div class="progress-carousel">';
+    photos.forEach(function(p) {
+      h += '<div class="progress-photo"><img src="' + p.url + '" alt="' + esc(p.name) + '" loading="lazy" onclick="App.openLightbox(\'' + p.url + '\')"/></div>';
+    });
+    h += '</div>';
+    el.innerHTML = h;
+  }
+
+  function openLightbox(url) {
+    var lb = document.getElementById('photo-lightbox');
+    document.getElementById('lightbox-img').src = url;
+    lb.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    document.getElementById('photo-lightbox').classList.add('hidden');
+    document.getElementById('lightbox-img').src = '';
+    document.body.style.overflow = '';
+  }
+
   function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('hidden', !v); }
   var _t;
   function showToast(msg, type) {
@@ -929,7 +1057,8 @@ var App = (function() {
 
   return { init, login, logout, goTo, backToUnits, onDragOver, onDragLeave, onDrop, onFileSelect,
            switchService, selectSlot, confirmBooking, showCancelConfirm, clearCancel, doCancelBooking,
-           modifyBooking, cancelModify, switchCalMonth, selectDate };
+           modifyBooking, cancelModify, switchCalMonth, selectDate,
+           togglePhotos, openLightbox, closeLightbox };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
