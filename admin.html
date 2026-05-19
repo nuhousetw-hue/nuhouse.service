@@ -620,7 +620,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
 
 var Admin = (function() {
-  var state = { username: null, tab: 'booking', data: [], projects: [], settingsServiceTypes: [] };
+  var state = { username: null, role: 'user', tab: 'booking', data: [], projects: [], settingsServiceTypes: [] };
   var SESSION_KEY = 'xh_admin_session';
 
   function callServer(fn) {
@@ -640,7 +640,13 @@ var Admin = (function() {
   function init() {
     try {
       var saved = sessionStorage.getItem(SESSION_KEY);
-      if (saved) { state.username = JSON.parse(saved).username; enterMain(); return; }
+      if (saved) {
+        var s = JSON.parse(saved);
+        state.username = s.username;
+        state.role = s.role || 'user';
+        enterMain();
+        return;
+      }
     } catch(e) {}
     showScreen('login');
   }
@@ -655,7 +661,8 @@ var Admin = (function() {
       .then(function(res) {
         if (res.success) {
           state.username = username;
-          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: username }));
+          state.role = res.role || 'user';
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: username, role: state.role }));
           enterMain();
         } else {
           showToast(res.message || '帳號或密碼錯誤', 'error');
@@ -667,17 +674,29 @@ var Admin = (function() {
 
   function logout() {
     sessionStorage.removeItem(SESSION_KEY);
-    state.username = null; state.data = [];
+    state.username = null; state.role = 'user'; state.data = [];
     document.getElementById('navbar').classList.add('hidden');
     document.getElementById('input-username').value = '';
     document.getElementById('input-password').value = '';
     showScreen('login');
   }
 
+  function applyRolePermissions() {
+    var isAdmin = state.role === 'admin';
+    var tabEl = document.getElementById('tab-settings');
+    if (isAdmin) {
+      tabEl.classList.remove('hidden');
+    } else {
+      tabEl.classList.add('hidden');
+      if (state.tab === 'settings') switchTab('booking');
+    }
+  }
+
   function enterMain() {
     document.getElementById('nav-admin-info').textContent = state.username;
     document.getElementById('navbar').classList.remove('hidden');
     showScreen('main');
+    applyRolePermissions();
     loadProjects();
   }
 
