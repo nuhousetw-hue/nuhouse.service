@@ -274,6 +274,29 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 .btn-slot-cancel2:hover{border-color:#aaa;}
 .btn-add-slot-day{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.4rem 1.1rem;font-size:.86rem;cursor:pointer;margin-top:.75rem;}
 .btn-add-slot-day:hover{background:var(--primary-dk);}
+/* ── 批次新增 ── */
+.batch-toggle-btn{background:#fff;border:1.5px solid var(--primary);color:var(--primary);border-radius:6px;padding:.4rem 1.1rem;font-size:.88rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.4rem;}
+.batch-toggle-btn:hover{background:#fff3f3;}
+.batch-form-wrap{background:#f0f4ff;border:1.5px solid #90b0e8;border-radius:10px;padding:1rem 1.1rem;margin-bottom:.9rem;}
+.batch-form-title{font-weight:700;font-size:.9rem;color:#1a3a7a;margin-bottom:.75rem;}
+.batch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.6rem;margin-bottom:.65rem;}
+.batch-field{display:flex;flex-direction:column;gap:.2rem;}
+.batch-field label{font-size:.76rem;color:#555;}
+.batch-field input,.batch-field select{border:1.5px solid #b0c4e8;border-radius:6px;padding:.36rem .6rem;font-size:.86rem;background:#fff;outline:none;width:100%;}
+.batch-field input:focus,.batch-field select:focus{border-color:var(--primary);}
+.batch-field.full{grid-column:1/-1;}
+.batch-dow-row{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:.65rem;}
+.batch-dow-row label{font-size:.76rem;color:#555;margin-right:.25rem;}
+.dow-check{display:flex;align-items:center;gap:.2rem;font-size:.82rem;cursor:pointer;}
+.dow-check input{width:14px;height:14px;accent-color:var(--primary);cursor:pointer;}
+.dow-check.sun{color:#e53935;}
+.dow-check.sat{color:#1565c0;}
+.batch-btns{display:flex;gap:.5rem;margin-top:.5rem;align-items:center;}
+.btn-batch-submit{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.42rem 1.4rem;font-size:.88rem;font-weight:700;cursor:pointer;}
+.btn-batch-submit:hover{background:var(--primary-dk);}
+.btn-batch-cancel{background:#fff;color:var(--text-muted);border:1.5px solid var(--border);border-radius:6px;padding:.4rem 1rem;font-size:.88rem;cursor:pointer;}
+.btn-batch-cancel:hover{border-color:#aaa;}
+.batch-preview{font-size:.8rem;color:#555;}
 @media(max-width:640px){
   .slotcal-cell{min-height:52px;}
   .slotcal-chip{display:none;}
@@ -453,6 +476,66 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 
       <!-- 日期時間設定 -->
       <div id="stg-pane-slots" class="settings-card hidden">
+
+        <!-- 批次新增 -->
+        <div style="margin-bottom:.85rem">
+          <button class="batch-toggle-btn" onclick="Admin.toggleBatchForm()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            批次新增時段
+          </button>
+        </div>
+        <div id="batch-form-wrap" class="batch-form-wrap hidden">
+          <div class="batch-form-title">批次新增 — 一次建立多個日期的相同時段</div>
+          <div class="batch-grid">
+            <div class="batch-field">
+              <label>服務項目</label>
+              <select id="bf-svc"></select>
+            </div>
+            <div class="batch-field">
+              <label>時間</label>
+              <input type="time" id="bf-time"/>
+            </div>
+            <div class="batch-field">
+              <label>容量（人數）</label>
+              <input type="number" id="bf-capacity" min="1" max="99" value="1"/>
+            </div>
+            <div class="batch-field">
+              <label>起始日期</label>
+              <input type="date" id="bf-date-from"/>
+            </div>
+            <div class="batch-field">
+              <label>結束日期</label>
+              <input type="date" id="bf-date-to"/>
+            </div>
+            <div class="batch-field" style="justify-content:flex-end;padding-top:.3rem">
+              <label>&nbsp;</label>
+              <div class="slot-form-check">
+                <input type="checkbox" id="bf-open" checked/>
+                <span>立即開放</span>
+              </div>
+            </div>
+            <div class="batch-field full">
+              <label>開放戶別/樓層（空＝全部；多組用逗號分隔）</label>
+              <input type="text" id="bf-allowed" placeholder="例：B01-B08:17-30, B09:17-20, A01-A11:2-5"/>
+            </div>
+          </div>
+          <div class="batch-dow-row">
+            <label>只建立以下星期：</label>
+            <label class="dow-check sun"><input type="checkbox" id="bf-dow-0" checked/>日</label>
+            <label class="dow-check"><input type="checkbox" id="bf-dow-1" checked/>一</label>
+            <label class="dow-check"><input type="checkbox" id="bf-dow-2" checked/>二</label>
+            <label class="dow-check"><input type="checkbox" id="bf-dow-3" checked/>三</label>
+            <label class="dow-check"><input type="checkbox" id="bf-dow-4" checked/>四</label>
+            <label class="dow-check"><input type="checkbox" id="bf-dow-5" checked/>五</label>
+            <label class="dow-check sat"><input type="checkbox" id="bf-dow-6" checked/>六</label>
+          </div>
+          <div class="batch-btns">
+            <button class="btn-batch-submit" onclick="Admin.submitBatch()">建立時段</button>
+            <button class="btn-batch-cancel" onclick="Admin.toggleBatchForm()">取消</button>
+            <span class="batch-preview" id="batch-preview"></span>
+          </div>
+        </div>
+
         <div class="slotcal-toolbar">
           <div class="slotcal-nav">
             <button class="slotcal-nav-btn" onclick="Admin.slotCalNav(-1)">&#8249;</button>
@@ -488,13 +571,9 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
                   <label>容量（人數）</label>
                   <input type="number" id="sf-capacity" min="1" max="99" value="1"/>
                 </div>
-                <div class="slot-form-field">
-                  <label>開放戶別（空＝全部）</label>
-                  <input type="text" id="sf-units" placeholder="例：B01-B08"/>
-                </div>
-                <div class="slot-form-field">
-                  <label>開放樓層（空＝不限）</label>
-                  <input type="text" id="sf-floors" placeholder="例：17-30"/>
+                <div class="slot-form-field" style="grid-column:span 2">
+                  <label>開放戶別/樓層（空＝全部；多組用逗號分隔）</label>
+                  <input type="text" id="sf-allowed" placeholder="例：B01-B08:17-30, B09:17-20, A01-A11:2-5"/>
                 </div>
                 <div class="slot-form-field">
                   <label>&nbsp;</label>
@@ -1154,7 +1233,6 @@ var Admin = (function() {
     slotStg.editRowIdx = rowIdx || null;
     var form = document.getElementById('slot-edit-form');
     form.classList.remove('hidden');
-    // populate service type dropdown
     var sel = document.getElementById('sf-svc');
     sel.innerHTML = '';
     slotStg.svcTypes.forEach(function(t) {
@@ -1168,16 +1246,18 @@ var Admin = (function() {
         document.getElementById('sf-time').value     = s.time;
         document.getElementById('sf-capacity').value = s.capacity;
         document.getElementById('sf-open').checked   = s.open;
-        document.getElementById('sf-units').value    = s.allowedUnits;
-        document.getElementById('sf-floors').value   = s.allowedFloors;
+        // 還原合併格式
+        var allowedStr = (s.allowedUnits || s.allowedFloors)
+          ? (s.allowedUnits ? s.allowedUnits + ':' + (s.allowedFloors || '') : s.allowedFloors)
+          : '';
+        document.getElementById('sf-allowed').value = allowedStr;
       }
     } else {
       document.getElementById('slot-form-title').textContent = '新增時段';
       document.getElementById('sf-time').value     = '';
       document.getElementById('sf-capacity').value = '1';
       document.getElementById('sf-open').checked   = true;
-      document.getElementById('sf-units').value    = '';
-      document.getElementById('sf-floors').value   = '';
+      document.getElementById('sf-allowed').value  = '';
     }
     form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -1190,14 +1270,13 @@ var Admin = (function() {
   function saveSlotEdit() {
     var pc = document.getElementById('select-project').value;
     if (!pc) { showToast('請先選擇建案', 'error'); return; }
-    var svc  = document.getElementById('sf-svc').value;
-    var time = document.getElementById('sf-time').value;
-    var cap  = parseInt(document.getElementById('sf-capacity').value) || 1;
-    var open = document.getElementById('sf-open').checked;
-    var units  = document.getElementById('sf-units').value.trim();
-    var floors = document.getElementById('sf-floors').value.trim();
+    var svc     = document.getElementById('sf-svc').value;
+    var time    = document.getElementById('sf-time').value;
+    var cap     = parseInt(document.getElementById('sf-capacity').value) || 1;
+    var open    = document.getElementById('sf-open').checked;
+    var allowed = document.getElementById('sf-allowed').value.trim();
     if (!svc || !time) { showToast('請填寫服務項目及時間', 'error'); return; }
-    var slot = { serviceType: svc, date: slotStg.selectedDate, time: time, capacity: cap, open: open, allowedUnits: units, allowedFloors: floors };
+    var slot = { serviceType: svc, date: slotStg.selectedDate, time: time, capacity: cap, open: open, allowedStr: allowed };
     if (slotStg.editRowIdx) slot.rowIdx = slotStg.editRowIdx;
     showLoading(true);
     callServer('serverAdminSaveSlot', pc, slot)
@@ -1209,6 +1288,88 @@ var Admin = (function() {
         } else { showToast((r && r.message) || '儲存失敗', 'error'); showLoading(false); }
       })
       .catch(function() { showToast('儲存失敗', 'error'); showLoading(false); });
+  }
+
+  function toggleBatchForm() {
+    var wrap = document.getElementById('batch-form-wrap');
+    var isHidden = wrap.classList.toggle('hidden');
+    if (!isHidden) {
+      // 開啟時初始化服務項目下拉
+      var sel = document.getElementById('bf-svc');
+      sel.innerHTML = '';
+      FIXED_SVC_TYPES.forEach(function(t) {
+        var o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o);
+      });
+      document.getElementById('batch-preview').textContent = '';
+    }
+  }
+
+  function _batchPreviewCount() {
+    var from = document.getElementById('bf-date-from').value;
+    var to   = document.getElementById('bf-date-to').value;
+    if (!from || !to) { document.getElementById('batch-preview').textContent = ''; return; }
+    var dows = [];
+    for (var i = 0; i < 7; i++) { if (document.getElementById('bf-dow-' + i).checked) dows.push(i); }
+    var count = 0, cur = new Date(from), end = new Date(to);
+    while (cur <= end) { if (dows.indexOf(cur.getDay()) >= 0) count++; cur.setDate(cur.getDate() + 1); }
+    document.getElementById('batch-preview').textContent = count > 0 ? '將建立 ' + count + ' 筆時段' : '日期範圍內無符合條件的日期';
+  }
+
+  // 讓日期/星期改變時即時更新預覽
+  (function() {
+    function _hookBatch() {
+      ['bf-date-from','bf-date-to'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', _batchPreviewCount);
+      });
+      for (var i = 0; i < 7; i++) {
+        (function(ii) {
+          var cb = document.getElementById('bf-dow-' + ii);
+          if (cb) cb.addEventListener('change', _batchPreviewCount);
+        })(i);
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _hookBatch);
+    else _hookBatch();
+  })();
+
+  function submitBatch() {
+    var pc      = document.getElementById('select-project').value;
+    var svc     = document.getElementById('bf-svc').value;
+    var time    = document.getElementById('bf-time').value;
+    var cap     = parseInt(document.getElementById('bf-capacity').value) || 1;
+    var open    = document.getElementById('bf-open').checked;
+    var allowed = document.getElementById('bf-allowed').value.trim();
+    var from    = document.getElementById('bf-date-from').value;
+    var to      = document.getElementById('bf-date-to').value;
+    if (!pc)   { showToast('請先選擇建案', 'error'); return; }
+    if (!svc || !time) { showToast('請填寫服務項目及時間', 'error'); return; }
+    if (!from || !to)  { showToast('請填寫日期範圍', 'error'); return; }
+    if (from > to)     { showToast('起始日期不能晚於結束日期', 'error'); return; }
+    var dows = [];
+    for (var i = 0; i < 7; i++) { if (document.getElementById('bf-dow-' + i).checked) dows.push(i); }
+    if (!dows.length) { showToast('請至少選擇一個星期', 'error'); return; }
+    // 產生所有符合條件的日期
+    var slots = [], cur = new Date(from + 'T00:00:00'), end = new Date(to + 'T00:00:00');
+    while (cur <= end) {
+      if (dows.indexOf(cur.getDay()) >= 0) {
+        var ds = cur.getFullYear() + '/' + _pad2(cur.getMonth()+1) + '/' + _pad2(cur.getDate());
+        slots.push({ serviceType: svc, date: ds, time: time, capacity: cap, open: open, allowedStr: allowed });
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    if (!slots.length) { showToast('日期範圍內無符合條件的日期', 'error'); return; }
+    if (!confirm('將新增 ' + slots.length + ' 筆「' + svc + ' ' + time + '」時段，確定？')) return;
+    showLoading(true);
+    callServer('serverAdminBatchAddSlots', pc, slots)
+      .then(function(r) {
+        if (r && r.success) {
+          showToast('已新增 ' + r.count + ' 筆時段', 'success');
+          document.getElementById('batch-form-wrap').classList.add('hidden');
+          loadSlotCal();
+        } else { showToast((r && r.message) || '建立失敗', 'error'); showLoading(false); }
+      })
+      .catch(function() { showToast('建立失敗', 'error'); showLoading(false); });
   }
 
   function deleteSlotItem(rowIdx, bookedCount, svcType, time) {
@@ -1363,6 +1524,7 @@ var Admin = (function() {
            saveSettings, switchStgTab,
            loadSlotCal, slotCalNav, selectSlotDate, closeDayPanel,
            showSlotEditForm, hideSlotEditForm, saveSlotEdit, deleteSlotItem,
+           toggleBatchForm, submitBatch,
            loadCalendar, calNav, exportCalPdf };
 })();
 
