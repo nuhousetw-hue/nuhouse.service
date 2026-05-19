@@ -169,6 +169,17 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .selected-slot-text{font-size:.88rem;color:var(--text-muted);}
 .selected-slot-text.picked{color:var(--primary);font-weight:600;}
 .booking-empty{padding:3rem 1.5rem;text-align:center;color:var(--text-muted);}
+.inspection-wrap{margin:.85rem 1.25rem 0;padding:.85rem 1rem;background:#f8f9fc;border:1.5px solid var(--border);border-radius:var(--radius-sm);}
+.inspection-title{font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:.6rem;}
+.inspection-btns{display:flex;gap:.65rem;}
+.inspection-btn{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:.6rem .5rem;background:#fff;cursor:pointer;font:inherit;text-align:center;line-height:1.4;transition:border-color .18s,background .18s;}
+.inspection-btn .ib-main{font-size:.88rem;color:var(--text);font-weight:500;}
+.inspection-btn .ib-sub{display:block;font-size:.75rem;color:var(--text-muted);margin-top:.1rem;}
+.inspection-btn.active{border-color:var(--primary);background:#fff5f5;}
+.inspection-btn.active .ib-main{color:var(--primary);font-weight:700;}
+.inspection-btn.active .ib-sub{color:var(--primary);}
+.inspection-btn:hover:not(.active){border-color:#aaa;}
+@media(max-width:480px){.inspection-btns{flex-direction:column;}.inspection-btn{padding:.55rem .75rem;}}
 .booking-locked{display:flex;flex-direction:column;align-items:center;gap:.6rem;}
 .booking-locked .lock-icon{font-size:2.2rem;margin-bottom:.25rem;}
 .booking-locked .lock-title{font-size:1rem;font-weight:700;color:var(--text);}
@@ -589,7 +600,7 @@ var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP
 
 var App = (function() {
   var state = { user: null, customer: null };
-  var bState = { slots: [], myBookings: [], bookingSettings: [], activeService: null, selectedSlot: null, pendingCancel: null, calMonth: null, selectedDate: null, modifyingBooking: null };
+  var bState = { slots: [], myBookings: [], bookingSettings: [], activeService: null, selectedSlot: null, pendingCancel: null, calMonth: null, selectedDate: null, modifyingBooking: null, method: null };
   var SESSION_KEY = 'xh_session';
   var MAX_SIZE = 20 * 1024 * 1024;
 
@@ -782,6 +793,9 @@ var App = (function() {
     h += '<div class="booking-detail-row"><span class="booking-detail-label">預約日期</span><span class="booking-detail-value">' + fmtBookingDate(booking.date) + '</span></div>';
     h += '<div class="booking-detail-row"><span class="booking-detail-label">預約時間</span><span class="booking-detail-value">' + esc(booking.time) + '</span></div>';
     h += '<div class="booking-detail-row"><span class="booking-detail-label">戶別</span><span class="booking-detail-value">' + esc(state.user.unit) + '</span></div>';
+    if (booking.method) {
+      h += '<div class="booking-detail-row"><span class="booking-detail-label">方式</span><span class="booking-detail-value">' + esc(booking.method) + '</span></div>';
+    }
     h += '</div>';
     if (booking.serviceType.indexOf('客變') >= 0) {
       h += '<div class="booking-notice">';
@@ -931,25 +945,49 @@ var App = (function() {
       h += '<p style="text-align:center;color:var(--text-muted);font-size:.9rem;margin-top:.75rem;">↑ 請點選日曆中有圓點的日期查看時段</p>';
     }
 
+    var methodOptions = svc.indexOf('驗屋') >= 0
+      ? [['自行驗屋（營造廠陪同）','自行驗屋','（營造廠陪同）'],['驗屋公司（代驗自行處理）','驗屋公司','（代驗自行處理）']]
+      : svc.indexOf('客變') >= 0
+      ? [['僅選材選色（不客變）','僅選材選色','（不客變）'],['自行客變','自行客變',''],['設計師陪同','設計師陪同','']]
+      : [];
+    var needsMethod = methodOptions.length > 0;
+    if (needsMethod && hasSel) {
+      var m = bState.method;
+      h += '<div class="inspection-wrap">';
+      h += '<div class="inspection-title">請選擇方式</div>';
+      h += '<div class="inspection-btns">';
+      methodOptions.forEach(function(opt) {
+        var val = opt[0]; var main = opt[1]; var sub = opt[2];
+        h += '<button class="inspection-btn' + (m === val ? ' active' : '') + '" onclick="App.selectMethod(\'' + esc(val) + '\')">';
+        h += '<span class="ib-main">' + esc(main) + '</span>';
+        if (sub) h += '<span class="ib-sub">' + esc(sub) + '</span>';
+        h += '</button>';
+      });
+      h += '</div></div>';
+    }
     var selTxt = hasSel ? '已選：' + bState.selectedSlot.date + '　' + bState.selectedSlot.time : '請選擇時段';
     var confirmLabel = isModifying ? '確認修改' : '確認預約';
+    var canConfirm = hasSel && (!needsMethod || bState.method);
     h += '<div class="booking-confirm-bar"><span class="selected-slot-text' + (hasSel ? ' picked' : '') + '">' + selTxt + '</span>';
-    h += '<button class="btn-primary"' + (hasSel ? '' : ' disabled style="opacity:.45;cursor:default"') + ' onclick="App.confirmBooking()">' + confirmLabel + '</button></div>';
+    h += '<button class="btn-primary"' + (canConfirm ? '' : ' disabled style="opacity:.45;cursor:default"') + ' onclick="App.confirmBooking()">' + confirmLabel + '</button></div>';
     return h;
   }
 
   function switchCalMonth(mk) { bState.calMonth = mk; bState.selectedDate = null; renderBookingPanel(); }
   function selectDate(date) { bState.selectedDate = (bState.selectedDate === date) ? null : date; renderBookingPanel(); }
-  function switchService(svc) { bState.activeService = svc; bState.selectedSlot = null; bState.pendingCancel = null; bState.calMonth = null; bState.selectedDate = null; bState.modifyingBooking = null; renderBooking(getServices()); }
-  function selectSlot(svc, date, time) { bState.selectedSlot = { serviceType: svc, date: date, time: time }; renderBookingPanel(); }
+  function switchService(svc) { bState.activeService = svc; bState.selectedSlot = null; bState.pendingCancel = null; bState.calMonth = null; bState.selectedDate = null; bState.modifyingBooking = null; bState.method = null; renderBooking(getServices()); }
+  function selectSlot(svc, date, time) { bState.selectedSlot = { serviceType: svc, date: date, time: time }; bState.method = null; renderBookingPanel(); }
+  function selectMethod(method) { bState.method = method; renderBookingPanel(); }
 
   function confirmBooking() {
     if (!bState.selectedSlot || bState.selectedSlot.serviceType !== bState.activeService) { showToast('請先選擇時段', 'error'); return; }
     var s = bState.selectedSlot;
+    var needsMethod = s.serviceType.indexOf('驗屋') >= 0 || s.serviceType.indexOf('客變') >= 0;
+    if (needsMethod && !bState.method) { showToast('請選擇方式', 'error'); return; }
     var oldBooking = bState.modifyingBooking;
     var isModifying = !!(oldBooking && oldBooking.serviceType === s.serviceType);
     showLoading(true);
-    callServer('serverCreateBooking', state.user.projectCode, state.user.idCard, state.user.unit, s.serviceType, s.date, s.time, state.user.name, isModifying ? oldBooking.date : null, isModifying ? oldBooking.time : null)
+    callServer('serverCreateBooking', state.user.projectCode, state.user.idCard, state.user.unit, s.serviceType, s.date, s.time, state.user.name, isModifying ? oldBooking.date : null, isModifying ? oldBooking.time : null, bState.method || '')
       .then(function(res) {
         if (!res.success) { showToast(res.message || '預約失敗', 'error'); return; }
         if (isModifying) {

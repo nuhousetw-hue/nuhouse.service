@@ -281,7 +281,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       <table>
         <thead id="table-head"></thead>
         <tbody id="table-body">
-          <tr class="empty-row"><td colspan="9">請先選擇建案，再按查詢</td></tr>
+          <tr class="empty-row"><td colspan="10">請先選擇建案，再按查詢</td></tr>
         </tbody>
       </table>
     </div>
@@ -418,7 +418,7 @@ var Admin = (function() {
     state.data = [];
     document.getElementById('result-count').textContent = '0';
     document.getElementById('table-head').innerHTML = '';
-    document.getElementById('table-body').innerHTML = '<tr class="empty-row"><td colspan="9">請先選擇建案，再按查詢</td></tr>';
+    document.getElementById('table-body').innerHTML = '<tr class="empty-row"><td colspan="10">請先選擇建案，再按查詢</td></tr>';
   }
 
   function query() {
@@ -603,12 +603,12 @@ var Admin = (function() {
     var body = document.getElementById('table-body');
     head.innerHTML = ''; body.innerHTML = '';
     if (!data.length) {
-      var cols = state.tab === 'booking' ? 9 : state.tab === 'unbooked' ? 6 : 6;
+      var cols = state.tab === 'booking' ? 10 : state.tab === 'unbooked' ? 6 : 6;
       body.innerHTML = '<tr class="empty-row"><td colspan="' + cols + '">查無符合條件的資料</td></tr>';
       return;
     }
     if (state.tab === 'booking') {
-      head.innerHTML = '<tr><th>#</th><th>建立時間</th><th>客戶姓名</th><th>戶號</th><th>身份證字號</th><th>服務項目</th><th>預約日期</th><th>預約時段</th><th>狀態</th></tr>';
+      head.innerHTML = '<tr><th>#</th><th>建立時間</th><th>客戶姓名</th><th>戶號</th><th>身份證字號</th><th>服務項目</th><th>方式</th><th>預約日期</th><th>預約時段</th><th>狀態</th></tr>';
       data.forEach(function(r, i) {
         var tr = document.createElement('tr');
         var cls = r.status === '已預約' ? 'badge-booked' : 'badge-cancelled';
@@ -619,6 +619,7 @@ var Admin = (function() {
           '<td>' + esc(r.unit) + '</td>' +
           '<td>' + esc(r.idCard) + '</td>' +
           '<td>' + esc(r.serviceType) + '</td>' +
+          '<td>' + esc(r.method || '—') + '</td>' +
           '<td>' + esc(r.date) + '</td>' +
           '<td>' + esc(r.time) + '</td>' +
           '<td><span class="badge ' + cls + '">' + esc(r.status) + '</span></td>';
@@ -660,9 +661,9 @@ var Admin = (function() {
     state.projects.forEach(function(p) { if (p.code === projectCode) projectName = p.name; });
     var rows = [];
     if (state.tab === 'booking') {
-      rows.push(['#', '建立時間', '客戶姓名', '戶號', '身份證字號', '服務項目', '預約日期', '預約時段', '狀態']);
+      rows.push(['#', '建立時間', '客戶姓名', '戶號', '身份證字號', '服務項目', '方式', '預約日期', '預約時段', '狀態']);
       state.data.forEach(function(r, i) {
-        rows.push([i+1, r.createdAt, r.name, r.unit, r.idCard, r.serviceType, r.date, r.time, r.status]);
+        rows.push([i+1, r.createdAt, r.name, r.unit, r.idCard, r.serviceType, r.method || '', r.date, r.time, r.status]);
       });
     } else if (state.tab === 'upload') {
       rows.push(['#', '上傳時間', '客戶姓名', '戶號', '身份證字號', '檔案名稱']);
