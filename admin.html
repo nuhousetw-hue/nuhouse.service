@@ -161,6 +161,10 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 .cal-method{color:#777;font-style:italic;}
 .cal-more{font-size:.65rem;color:var(--text-muted);margin-top:.1rem;}
 .cal-empty-msg{text-align:center;color:var(--text-muted);padding:3rem 0;font-size:.9rem;}
+.btn-cal-export{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.35rem .85rem;font-size:.85rem;cursor:pointer;}
+.btn-cal-export:hover{background:var(--primary-dk);}
+.cal-updated{font-size:.75rem;color:var(--text-muted);text-align:right;margin-bottom:.5rem;min-height:1.1em;}
+#cal-print-header{display:none;text-align:center;font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:.6rem;}
 @media(max-width:900px){
   .cal-cell{min-height:80px;}
   .cal-item{font-size:.62rem;}
@@ -169,6 +173,22 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .cal-cell{min-height:56px;padding:.2rem;}
   .cal-day-num{font-size:.72rem;}
   .cal-item{font-size:.58rem;padding:.1rem .2rem;}
+}
+@media print{
+  body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  #navbar,.control-bar,.tabs,#filter-booking,#filter-upload,#filter-unbooked,
+  #result-bar,#table-wrap,#settings-panel,
+  .cal-nav-btn,.cal-filters,#cal-export-btn{display:none!important;}
+  #screen-main{padding-top:0!important;}
+  .main-inner{padding:0!important;max-width:100%!important;}
+  #calendar-panel{display:block!important;}
+  .cal-card{box-shadow:none!important;padding:.5rem 0!important;}
+  #cal-print-header{display:block!important;}
+  .cal-nav-wrap{justify-content:center!important;}
+  .cal-updated{text-align:right;margin-bottom:.3rem;}
+  .cal-cell{min-height:80px!important;break-inside:avoid;}
+  .cal-grid{gap:2px!important;}
+  .cal-item.svc-kv,.cal-item.svc-yy,.cal-item.svc-other{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
 
 /* 複選下拉 */
@@ -304,6 +324,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <!-- 行事曆面板 -->
     <div id="calendar-panel" class="hidden">
       <div class="cal-card">
+        <div id="cal-print-header"></div>
         <div class="cal-toolbar">
           <div class="cal-nav-wrap">
             <button class="cal-nav-btn" onclick="Admin.calNav(-1)">&#8249;</button>
@@ -313,8 +334,10 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
           <div class="cal-filters">
             <select id="cal-svc-filter"><option value="">全部服務</option></select>
             <button class="btn-cal-refresh" onclick="Admin.loadCalendar()">重新整理</button>
+            <button class="btn-cal-export" id="cal-export-btn" onclick="Admin.exportCalPdf()">匯出 PDF</button>
           </div>
         </div>
+        <div class="cal-updated" id="cal-updated"></div>
         <div class="cal-weekdays">
           <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
         </div>
@@ -810,11 +833,24 @@ var Admin = (function() {
         calState.data = Array.isArray(data) ? data : [];
         buildCalSvcFilter(calState.data);
         renderCalendar(calState.data);
+        var now = new Date();
+        var upd = now.getFullYear() + '/' + _pad2(now.getMonth()+1) + '/' + _pad2(now.getDate()) +
+                  ' ' + _pad2(now.getHours()) + ':' + _pad2(now.getMinutes()) + ':' + _pad2(now.getSeconds());
+        var el = document.getElementById('cal-updated');
+        if (el) el.textContent = '最後更新：' + upd;
       })
       .catch(function() {
         document.getElementById('cal-grid').innerHTML = '<div class="cal-empty-msg">載入失敗，請重新整理</div>';
       })
       .then(function() { showLoading(false); });
+  }
+
+  function exportCalPdf() {
+    var projectName = document.getElementById('current-project-name').textContent;
+    var monthTitle  = document.getElementById('cal-title').textContent;
+    var ph = document.getElementById('cal-print-header');
+    if (ph) ph.textContent = projectName + '　' + monthTitle + '　預約行事曆';
+    window.print();
   }
 
   function calNav(dir) {
@@ -899,7 +935,7 @@ var Admin = (function() {
     if (!e.target.closest('.ms-wrap')) closeAllMs();
   });
 
-  return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, saveSettings, loadCalendar, calNav };
+  return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, saveSettings, loadCalendar, calNav, exportCalPdf };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
