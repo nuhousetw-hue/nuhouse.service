@@ -1061,7 +1061,7 @@ var App = (function() {
           h += '<td>' + esc(p.item) + '</td>';
           h += '<td>' + esc(p.dueDate) + '</td>';
           h += '<td><span class="prog-status ' + sc + '">' + esc(p.status) + '</span></td>';
-          h += '<td>' + (p.folderId ? '<button class="btn-photo" id="pbtn-' + i + '" onclick="App.togglePhotos(' + i + ',\'' + esc(p.folderId) + '\')">📷 照片</button>' : '') + '</td>';
+          h += '<td>' + (p.folderId ? '<button class="btn-photo" id="pbtn-' + i + '" onclick="App.togglePhotos(' + i + ',\'' + esc(p.folderId) + '\')">📷</button>' : '') + '</td>';
           h += '</tr>';
           h += '<tr class="photo-row hidden" id="prow-' + i + '"><td colspan="5" style="padding:0;background:#fafafa"><div id="pcarousel-' + i + '"></div></td></tr>';
         });
@@ -1082,9 +1082,9 @@ var App = (function() {
     var btn = document.getElementById('pbtn-' + idx);
     if (!row) return;
     var isHidden = row.classList.contains('hidden');
-    if (!isHidden) { row.classList.add('hidden'); btn.classList.remove('open'); btn.textContent = '📷 照片'; return; }
+    if (!isHidden) { row.classList.add('hidden'); btn.classList.remove('open'); btn.textContent = '📷'; return; }
     row.classList.remove('hidden');
-    btn.classList.add('open'); btn.textContent = '▲ 收合';
+    btn.classList.add('open'); btn.textContent = '🔼';
     var carousel = document.getElementById('pcarousel-' + idx);
     if (_photoCache[folderId]) { renderCarousel(carousel, _photoCache[folderId]); return; }
     carousel.innerHTML = '<p class="text-muted text-center" style="padding:1rem">載入中…</p>';
