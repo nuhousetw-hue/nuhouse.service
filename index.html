@@ -735,13 +735,10 @@ var App = (function() {
   function loadBooking() {
     var el = document.getElementById('booking-content');
     el.innerHTML = '<p class="text-muted text-center" style="padding:2.5rem">載入中…</p>';
-    Promise.all([
-      callServer('serverGetBookingSlots', state.user.projectCode, state.user.unit),
-      callServer('serverGetMyBookings', state.user.projectCode, state.user.idCard, state.user.unit),
-      callServer('serverGetBookingSettings', state.user.projectCode)
-    ]).then(function(results) {
-      bState.slots = results[0]; bState.myBookings = results[1];
-      bState.bookingSettings = Array.isArray(results[2]) ? results[2] : [];
+    callServer('serverGetBookingData', state.user.projectCode, state.user.idCard, state.user.unit)
+    .then(function(result) {
+      bState.slots = result.slots || []; bState.myBookings = result.myBookings || [];
+      bState.bookingSettings = result.settings || [];
       bState.pendingCancel = null;
       var services = [];
       bState.slots.forEach(function(s) { if (services.indexOf(s.serviceType) < 0) services.push(s.serviceType); });
