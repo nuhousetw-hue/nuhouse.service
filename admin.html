@@ -108,6 +108,25 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .table-wrap{max-height:calc(100vh - 320px);}
 }
 
+/* 預約設定面板 */
+.settings-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1.25rem 1.5rem;}
+.settings-intro{font-size:.85rem;color:var(--text-muted);margin-bottom:1.2rem;}
+.settings-row{display:grid;grid-template-columns:130px 1fr 1fr;align-items:center;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--border);}
+.settings-row:last-of-type{border-bottom:none;}
+.settings-svc{font-weight:600;font-size:.9rem;}
+.settings-field{display:flex;flex-direction:column;gap:.25rem;}
+.settings-field label{font-size:.78rem;color:var(--text-muted);}
+.settings-field input[type=datetime-local]{border:1.5px solid var(--border);border-radius:6px;padding:.38rem .6rem;font-size:.85rem;background:#fff;outline:none;width:100%;}
+.settings-field input[type=datetime-local]:focus{border-color:var(--primary);}
+.settings-footer{margin-top:1.2rem;display:flex;justify-content:flex-end;}
+.btn-save-settings{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.5rem 1.5rem;font-size:.92rem;font-weight:600;}
+.btn-save-settings:hover{background:var(--primary-dk);}
+.settings-empty{color:var(--text-muted);font-size:.9rem;text-align:center;padding:2rem 0;}
+@media(max-width:640px){
+  .settings-row{grid-template-columns:1fr;gap:.4rem;}
+  .settings-svc{font-size:.85rem;}
+}
+
 /* 複選下拉 */
 .ms-wrap{position:relative;display:inline-block;}
 .ms-btn{border:1.5px solid var(--border);border-radius:6px;padding:.38rem .7rem;background:#fff;cursor:pointer;display:flex;align-items:center;gap:.5rem;min-width:110px;font-size:.88rem;color:var(--text);}
@@ -179,7 +198,8 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <div class="tabs">
       <button class="tab-btn active" id="tab-booking"  onclick="Admin.switchTab('booking')">📋 預約紀錄</button>
       <button class="tab-btn"        id="tab-upload"   onclick="Admin.switchTab('upload')">📁 上傳紀錄</button>
-      <button class="tab-btn"        id="tab-unbooked" onclick="Admin.switchTab('unbooked')">👤 未預約客戶</button>
+      <button class="tab-btn"        id="tab-unbooked"  onclick="Admin.switchTab('unbooked')">👤 未預約客戶</button>
+      <button class="tab-btn"        id="tab-settings"  onclick="Admin.switchTab('settings')">⚙️ 預約設定</button>
     </div>
 
     <!-- 預約篩選 -->
@@ -236,8 +256,19 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       <button class="btn-reset" onclick="Admin.resetFilters()">清除</button>
     </div>
 
+    <!-- 預約設定面板 -->
+    <div id="settings-panel" class="hidden">
+      <div class="settings-card">
+        <p class="settings-intro">設定各服務項目的可預約時間區間。未填寫則表示不限制，客戶隨時可預約。</p>
+        <div id="settings-form"><p class="settings-empty">請先選擇建案</p></div>
+        <div class="settings-footer">
+          <button class="btn-save-settings" onclick="Admin.saveSettings()">儲存設定</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 結果列 -->
-    <div class="result-bar">
+    <div class="result-bar" id="result-bar">
       <div class="result-count">共 <strong id="result-count">0</strong> 筆</div>
       <button class="btn-export" onclick="Admin.exportCsv()">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -246,7 +277,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     </div>
 
     <!-- 資料表格 -->
-    <div class="table-wrap">
+    <div class="table-wrap" id="table-wrap">
       <table>
         <thead id="table-head"></thead>
         <tbody id="table-body">
@@ -262,7 +293,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
 
 var Admin = (function() {
-  var state = { username: null, tab: 'booking', data: [], projects: [] };
+  var state = { username: null, tab: 'booking', data: [], projects: [], settingsServiceTypes: [] };
   var SESSION_KEY = 'xh_admin_session';
 
   function callServer(fn) {
@@ -337,7 +368,11 @@ var Admin = (function() {
         var idx = sel.selectedIndex;
         var name = idx > 0 ? sel.options[idx].text : '尚未選擇';
         document.getElementById('current-project-name').textContent = name;
-        resetTable();
+        if (state.tab === 'settings') {
+          if (sel.value) loadSettings(sel.value);
+        } else {
+          resetTable();
+        }
         if (sel.value) loadUnitOptions(sel.value);
       };
     });
@@ -345,13 +380,22 @@ var Admin = (function() {
 
   function switchTab(tab) {
     state.tab = tab;
-    document.getElementById('tab-booking').classList.toggle('active', tab === 'booking');
-    document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
-    document.getElementById('tab-unbooked').classList.toggle('active', tab === 'unbooked');
+    ['booking','upload','unbooked','settings'].forEach(function(t) {
+      document.getElementById('tab-' + t).classList.toggle('active', tab === t);
+    });
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
-    resetTable();
+    var isSettings = tab === 'settings';
+    document.getElementById('settings-panel').classList.toggle('hidden', !isSettings);
+    document.getElementById('result-bar').classList.toggle('hidden', isSettings);
+    document.getElementById('table-wrap').classList.toggle('hidden', isSettings);
+    if (isSettings) {
+      var projectCode = document.getElementById('select-project').value;
+      if (projectCode) loadSettings(projectCode);
+    } else {
+      resetTable();
+    }
   }
 
   function resetFilters() {
@@ -475,6 +519,70 @@ var Admin = (function() {
         var o = document.createElement('option'); o.value = v; o.textContent = v; svcSel.appendChild(o);
       });
     });
+  }
+
+  function storedToInput(str) {
+    if (!str) return '';
+    return str.replace(/(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/, '$1-$2-$3T$4:$5');
+  }
+  function inputToStored(str) {
+    if (!str) return '';
+    return str.replace(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/, '$1/$2/$3 $4:$5');
+  }
+
+  function loadSettings(projectCode) {
+    var form = document.getElementById('settings-form');
+    form.innerHTML = '<p class="settings-empty">載入中…</p>';
+    Promise.all([
+      callServer('serverAdminGetUnitOptions', projectCode),
+      callServer('serverGetBookingSettings', projectCode)
+    ]).then(function(results) {
+      var serviceTypes = (results[0] && results[0].serviceTypes) || [];
+      var currentSettings = Array.isArray(results[1]) ? results[1] : [];
+      state.settingsServiceTypes = serviceTypes;
+      if (!serviceTypes.length) {
+        form.innerHTML = '<p class="settings-empty">此建案尚無服務項目（請先在預約時段工作表新增資料）</p>';
+        return;
+      }
+      var html = '';
+      serviceTypes.forEach(function(svc) {
+        var cur = null;
+        currentSettings.forEach(function(s) { if (s.serviceType === svc) cur = s; });
+        var openVal  = cur ? storedToInput(cur.openTime)  : '';
+        var closeVal = cur ? storedToInput(cur.closeTime) : '';
+        var safeId = svc.replace(/[^a-zA-Z0-9]/g, '_');
+        html += '<div class="settings-row">';
+        html += '<div class="settings-svc">' + esc(svc) + '</div>';
+        html += '<div class="settings-field"><label>開放預約時間</label><input type="datetime-local" id="st-open-' + safeId + '" value="' + openVal + '"/></div>';
+        html += '<div class="settings-field"><label>結束預約時間</label><input type="datetime-local" id="st-close-' + safeId + '" value="' + closeVal + '"/></div>';
+        html += '</div>';
+      });
+      form.innerHTML = html;
+    }).catch(function() { form.innerHTML = '<p class="settings-empty">載入失敗，請稍後再試</p>'; });
+  }
+
+  function saveSettings() {
+    var projectCode = document.getElementById('select-project').value;
+    if (!projectCode) { showToast('請先選擇建案', 'error'); return; }
+    var settings = [];
+    state.settingsServiceTypes.forEach(function(svc) {
+      var safeId = svc.replace(/[^a-zA-Z0-9]/g, '_');
+      var openEl  = document.getElementById('st-open-'  + safeId);
+      var closeEl = document.getElementById('st-close-' + safeId);
+      settings.push({
+        serviceType: svc,
+        openTime:    openEl  ? inputToStored(openEl.value)  : '',
+        closeTime:   closeEl ? inputToStored(closeEl.value) : '',
+      });
+    });
+    showLoading(true);
+    callServer('serverSaveBookingSettings', projectCode, settings)
+      .then(function(res) {
+        if (res && res.success) showToast('設定已儲存', 'success');
+        else showToast('儲存失敗：' + ((res && res.message) || '未知錯誤'), 'error');
+      })
+      .catch(function() { showToast('儲存失敗，請稍後再試', 'error'); })
+      .then(function() { showLoading(false); });
   }
 
   function buildServiceFilter(data) {
@@ -606,7 +714,7 @@ var Admin = (function() {
     if (!e.target.closest('.ms-wrap')) closeAllMs();
   });
 
-  return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs };
+  return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, saveSettings };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);

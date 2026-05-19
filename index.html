@@ -169,6 +169,11 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .selected-slot-text{font-size:.88rem;color:var(--text-muted);}
 .selected-slot-text.picked{color:var(--primary);font-weight:600;}
 .booking-empty{padding:3rem 1.5rem;text-align:center;color:var(--text-muted);}
+.booking-locked{display:flex;flex-direction:column;align-items:center;gap:.6rem;}
+.booking-locked .lock-icon{font-size:2.2rem;margin-bottom:.25rem;}
+.booking-locked .lock-title{font-size:1rem;font-weight:700;color:var(--text);}
+.booking-locked .lock-time{font-size:.88rem;color:var(--primary);font-weight:600;}
+.booking-locked .lock-note{font-size:.82rem;color:var(--text-muted);}
 .docs-empty{padding:2.5rem 1.5rem;text-align:center;color:var(--text-muted);}
 .booking-notice{background:#fffbe6;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);padding:1rem 1.25rem;margin-top:1rem;}
 .booking-notice-title{font-weight:700;color:#92400e;margin-bottom:.6rem;font-size:.95rem;}
@@ -243,6 +248,30 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .tl-ongoing .tl-status{color:#e65100;}
 .tl-pending .tl-status{color:#bbb;}
 .progress-table-title{padding:.85rem 1.5rem .4rem;font-size:.82rem;font-weight:600;color:var(--text-muted);letter-spacing:.06em;border-top:1px solid var(--border);}
+
+/* ── 建築剖面圖 ── */
+.building-section{padding:1.25rem 1.25rem 1.5rem;display:flex;flex-direction:column;align-items:center;border-bottom:1px solid var(--border);}
+.building-roof{width:90%;max-width:460px;height:56px;background:var(--primary-dk);clip-path:polygon(50% 0%,95% 100%,5% 100%);position:relative;}
+.building-roof::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:40px;height:28px;background:rgba(255,255,255,.15);border-radius:4px 4px 0 0;}
+.building-body{width:90%;max-width:460px;border-left:5px solid var(--primary);border-right:5px solid var(--primary);}
+.bf{display:flex;align-items:center;border-bottom:1px solid rgba(0,0,0,.07);padding:.55rem .75rem;gap:.65rem;min-height:46px;transition:filter .15s;}
+.bf:last-child{border-bottom:none;}
+.bf:hover{filter:brightness(.97);}
+.bf.bf-done{background:linear-gradient(90deg,#e8f5e9,#f4fbf5);}
+.bf.bf-ongoing{background:linear-gradient(90deg,#fff8e1,#fffde7);animation:bf-pulse 2s ease-in-out infinite;}
+.bf.bf-pending{background:#f9f9f9;}
+@keyframes bf-pulse{0%,100%{background:linear-gradient(90deg,#fff8e1,#fffde7);}50%{background:linear-gradient(90deg,#ffe082,#fff8e1);}}
+.bf-phase{font-size:.75rem;font-weight:700;color:var(--primary);min-width:3rem;text-align:center;flex-shrink:0;line-height:1.3;}
+.bf-sep{width:1px;height:22px;background:rgba(0,0,0,.1);flex-shrink:0;}
+.bf-item{flex:1;font-size:.83rem;color:var(--text);line-height:1.45;word-break:break-word;}
+.bf-right{display:flex;flex-direction:column;align-items:flex-end;gap:.18rem;flex-shrink:0;min-width:4.5rem;}
+.bf-quarter{font-size:.67rem;color:var(--text-muted);white-space:nowrap;}
+.bf-badge{font-size:.68rem;font-weight:700;padding:.14rem .5rem;border-radius:2rem;white-space:nowrap;}
+.bf-done .bf-badge{background:#c8e6c9;color:#2e7d32;}
+.bf-ongoing .bf-badge{background:#ffe0b2;color:#e65100;}
+.bf-pending .bf-badge{background:#eeeeee;color:#9e9e9e;}
+.building-base{width:90%;max-width:460px;height:14px;background:linear-gradient(90deg,var(--primary-dk),var(--primary));border-radius:0 0 3px 3px;}
+.building-ground{width:calc(90% + 24px);max-width:484px;height:8px;background:#bdbdbd;border-radius:2px;margin-top:3px;}
 
 /* ── 工程進度表格 ── */
 .progress-table{width:100%;border-collapse:collapse;table-layout:fixed;}
@@ -560,7 +589,7 @@ var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP
 
 var App = (function() {
   var state = { user: null, customer: null };
-  var bState = { slots: [], myBookings: [], activeService: null, selectedSlot: null, pendingCancel: null, calMonth: null, selectedDate: null, modifyingBooking: null };
+  var bState = { slots: [], myBookings: [], bookingSettings: [], activeService: null, selectedSlot: null, pendingCancel: null, calMonth: null, selectedDate: null, modifyingBooking: null };
   var SESSION_KEY = 'xh_session';
   var MAX_SIZE = 20 * 1024 * 1024;
 
@@ -697,9 +726,12 @@ var App = (function() {
     el.innerHTML = '<p class="text-muted text-center" style="padding:2.5rem">載入中…</p>';
     Promise.all([
       callServer('serverGetBookingSlots', state.user.projectCode, state.user.unit),
-      callServer('serverGetMyBookings', state.user.projectCode, state.user.idCard, state.user.unit)
+      callServer('serverGetMyBookings', state.user.projectCode, state.user.idCard, state.user.unit),
+      callServer('serverGetBookingSettings', state.user.projectCode)
     ]).then(function(results) {
-      bState.slots = results[0]; bState.myBookings = results[1]; bState.pendingCancel = null;
+      bState.slots = results[0]; bState.myBookings = results[1];
+      bState.bookingSettings = Array.isArray(results[2]) ? results[2] : [];
+      bState.pendingCancel = null;
       var services = [];
       bState.slots.forEach(function(s) { if (services.indexOf(s.serviceType) < 0) services.push(s.serviceType); });
       bState.myBookings.forEach(function(b) { if (services.indexOf(b.serviceType) < 0) services.push(b.serviceType); });
@@ -773,7 +805,43 @@ var App = (function() {
     return h;
   }
 
+  function checkBookingWindow(svc) {
+    if (!bState.bookingSettings || !bState.bookingSettings.length) return { open: true };
+    var setting = null;
+    bState.bookingSettings.forEach(function(s) { if (s.serviceType === svc) setting = s; });
+    if (!setting || (!setting.openTime && !setting.closeTime)) return { open: true };
+    var now = new Date();
+    var twNow = new Date(now.getTime() + 8 * 3600000);
+    var pad = function(n) { return String(n).padStart(2, '0'); };
+    var twStr = twNow.getUTCFullYear() + '/' + pad(twNow.getUTCMonth()+1) + '/' + pad(twNow.getUTCDate()) + ' ' + pad(twNow.getUTCHours()) + ':' + pad(twNow.getUTCMinutes());
+    if (setting.openTime && twStr < setting.openTime) return { open: false, reason: 'before', time: setting.openTime };
+    if (setting.closeTime && twStr > setting.closeTime) return { open: false, reason: 'after', time: setting.closeTime };
+    return { open: true };
+  }
+
+  function fmtWindowTime(str) {
+    if (!str) return str;
+    var m = str.match(/(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
+    if (!m) return str;
+    return (parseInt(m[1]) - 1911) + '年' + m[2] + '月' + m[3] + '日 ' + m[4] + ':' + m[5];
+  }
+
   function renderSlotPicker(svc) {
+    var win = checkBookingWindow(svc);
+    if (!win.open) {
+      var h2 = '<div class="booking-empty booking-locked">';
+      h2 += '<div class="lock-icon">🔒</div>';
+      if (win.reason === 'before') {
+        h2 += '<div class="lock-title">預約尚未開放</div>';
+        h2 += '<div class="lock-time">開放時間：' + fmtWindowTime(win.time) + '</div>';
+        h2 += '<div class="lock-note">屆時請再回來預約，感謝您的耐心等候。</div>';
+      } else {
+        h2 += '<div class="lock-title">預約已截止</div>';
+        h2 += '<div class="lock-note">此服務的預約受理期間已結束，感謝您的參與。</div>';
+      }
+      h2 += '</div>';
+      return h2;
+    }
     var isModifying = !!(bState.modifyingBooking && bState.modifyingBooking.serviceType === svc);
     var slots = bState.slots.filter(function(s) { return s.serviceType === svc; });
     if (!slots.length) return '<div class="booking-empty"><p>此服務項目目前尚無開放時段，請稍後查詢。</p></div>';
@@ -1037,19 +1105,27 @@ var App = (function() {
         h += '<span class="prog-bar-count">' + done + '&thinsp;/&thinsp;' + total + ' 期</span>';
         h += '</div></div>';
 
-        // 時間軸
-        h += '<div class="timeline-wrap"><div class="timeline-inner">';
-        phases.forEach(function(p) {
-          var cls  = p.status === '已完成' ? 'tl-done' : p.status === '進行中' ? 'tl-ongoing' : 'tl-pending';
-          var icon = p.status === '已完成' ? '✓' : p.status === '進行中' ? '▶' : '○';
-          h += '<div class="tl-item ' + cls + '">';
-          h += '<div class="tl-dot">' + icon + '</div>';
-          h += '<div class="tl-phase">' + esc(p.phase) + '</div>';
-          h += '<div class="tl-quarter">' + toRocQuarter(p.dueDate) + '</div>';
-          h += '<div class="tl-status">' + esc(p.status) + '</div>';
+        // 建築剖面圖（由上往下 = 最後一期在頂部）
+        h += '<div class="building-section">';
+        h += '<div class="building-roof"></div>';
+        h += '<div class="building-body">';
+        phases.slice().reverse().forEach(function(p) {
+          var cls = p.status === '已完成' ? 'bf-done' : p.status === '進行中' ? 'bf-ongoing' : 'bf-pending';
+          var statusTxt = p.status || '未開始';
+          h += '<div class="bf ' + cls + '">';
+          h += '<div class="bf-phase">' + esc(p.phase) + '</div>';
+          h += '<div class="bf-sep"></div>';
+          h += '<div class="bf-item">' + esc(p.item) + '</div>';
+          h += '<div class="bf-right">';
+          h += '<span class="bf-quarter">' + toRocQuarter(p.dueDate) + '</span>';
+          h += '<span class="bf-badge">' + esc(statusTxt) + '</span>';
+          h += '</div>';
           h += '</div>';
         });
-        h += '</div></div>';
+        h += '</div>';
+        h += '<div class="building-base"></div>';
+        h += '<div class="building-ground"></div>';
+        h += '</div>';
 
         // 詳細進度表
         h += '<div class="progress-table-title">詳細進度</div>';
