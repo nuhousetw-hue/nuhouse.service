@@ -439,7 +439,6 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       <!-- 子分頁 -->
       <div class="stg-tabs">
         <button class="stg-tab-btn active" id="stg-tab-open"  onclick="Admin.switchStgTab('open')">開放預約設定</button>
-        <button class="stg-tab-btn"        id="stg-tab-svc"   onclick="Admin.switchStgTab('svc')">預約項目設定</button>
         <button class="stg-tab-btn"        id="stg-tab-slots" onclick="Admin.switchStgTab('slots')">日期時間設定</button>
       </div>
 
@@ -449,16 +448,6 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
         <div id="settings-form"><p class="settings-empty">請先選擇建案</p></div>
         <div class="settings-footer">
           <button class="btn-save-settings" onclick="Admin.saveSettings()">儲存設定</button>
-        </div>
-      </div>
-
-      <!-- 預約項目設定 -->
-      <div id="stg-pane-svc" class="settings-card hidden">
-        <p class="settings-intro">管理此建案的服務項目名稱。新增後可至「開放預約設定」設定時間，並至「日期時間設定」安排時段。</p>
-        <div id="svc-type-list"><p class="settings-empty">請先選擇建案</p></div>
-        <div class="svc-add-row">
-          <input type="text" id="new-svc-name" placeholder="輸入新服務項目名稱，例如：對保服務" maxlength="20"/>
-          <button class="btn-svc-add" onclick="Admin.addSvcType()">＋ 新增</button>
         </div>
       </div>
 
@@ -798,17 +787,11 @@ var Admin = (function() {
   function loadSettings(projectCode) {
     var form = document.getElementById('settings-form');
     form.innerHTML = '<p class="settings-empty">載入中…</p>';
-    Promise.all([
-      callServer('serverAdminGetUnitOptions', projectCode),
-      callServer('serverGetBookingSettings', projectCode)
-    ]).then(function(results) {
-      var serviceTypes = (results[0] && results[0].serviceTypes) || [];
-      var currentSettings = Array.isArray(results[1]) ? results[1] : [];
+    callServer('serverGetBookingSettings', projectCode)
+    .then(function(result) {
+      var serviceTypes = FIXED_SVC_TYPES;
+      var currentSettings = Array.isArray(result) ? result : [];
       state.settingsServiceTypes = serviceTypes;
-      if (!serviceTypes.length) {
-        form.innerHTML = '<p class="settings-empty">此建案尚無服務項目（請先在預約時段工作表新增資料）</p>';
-        return;
-      }
       var html = '';
       serviceTypes.forEach(function(svc) {
         var cur = null;
@@ -976,29 +959,29 @@ var Admin = (function() {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   };
 
-  // ── 預約設定（三合一）──────────────────────────────────────
+  // ── 預約設定（開放設定 + 日期時間設定）──────────────────────
+  var FIXED_SVC_TYPES = ['客變服務', '對保服務', '驗屋服務'];
+
   var slotStg = {
     subTab: 'open',
     year: new Date().getFullYear(), month: new Date().getMonth(),
-    slots: [], svcTypes: [], selectedDate: null, editRowIdx: null
+    slots: [], svcTypes: FIXED_SVC_TYPES, selectedDate: null, editRowIdx: null
   };
 
   function loadSettingsPanel(projectCode) {
     if (slotStg.subTab === 'open')  loadSettings(projectCode);
-    if (slotStg.subTab === 'svc')   loadSvcTypes(projectCode);
     if (slotStg.subTab === 'slots') loadSlotCal();
   }
 
   function switchStgTab(tab) {
     slotStg.subTab = tab;
-    ['open','svc','slots'].forEach(function(t) {
+    ['open','slots'].forEach(function(t) {
       document.getElementById('stg-tab-' + t).classList.toggle('active', tab === t);
       document.getElementById('stg-pane-' + t).classList.toggle('hidden', tab !== t);
     });
     var pc = document.getElementById('select-project').value;
     if (!pc) return;
     if (tab === 'open')  loadSettings(pc);
-    if (tab === 'svc')   loadSvcTypes(pc);
     if (tab === 'slots') loadSlotCal();
   }
 
@@ -1067,12 +1050,10 @@ var Admin = (function() {
     document.getElementById('slotcal-title').textContent = y + '年 ' + mNames[m];
     if (!pc) { document.getElementById('slotcal-grid').innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted)">請先選擇建案</div>'; return; }
     showLoading(true);
-    Promise.all([
-      callServer('serverAdminGetSlots', pc),
-      callServer('serverGetBookingSettings', pc)
-    ]).then(function(res) {
-      slotStg.slots    = Array.isArray(res[0]) ? res[0] : [];
-      slotStg.svcTypes = (Array.isArray(res[1]) ? res[1] : []).map(function(s) { return s.serviceType; });
+    callServer('serverAdminGetSlots', pc)
+    .then(function(data) {
+      slotStg.slots    = Array.isArray(data) ? data : [];
+      slotStg.svcTypes = FIXED_SVC_TYPES;
       renderSlotCal(slotStg.slots);
       if (slotStg.selectedDate) renderDayPanel(slotStg.selectedDate, slotStg.slots);
     })
@@ -1379,7 +1360,7 @@ var Admin = (function() {
   });
 
   return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs,
-           saveSettings, switchStgTab, addSvcType, deleteSvcType,
+           saveSettings, switchStgTab,
            loadSlotCal, slotCalNav, selectSlotDate, closeDayPanel,
            showSlotEditForm, hideSlotEditForm, saveSlotEdit, deleteSlotItem,
            loadCalendar, calNav, exportCalPdf };
