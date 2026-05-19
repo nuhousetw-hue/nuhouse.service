@@ -445,7 +445,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
           </div>
           <div class="cal-filters">
             <select id="cal-svc-filter"><option value="">全部服務</option></select>
-            <button class="btn-cal-refresh" onclick="Admin.loadCalendar()">重新整理</button>
+            <button class="btn-cal-refresh" onclick="Admin.loadCalendar(true)">重新整理</button>
             <button class="btn-cal-export" id="cal-export-btn" onclick="Admin.exportCalPdf()">匯出 PDF</button>
           </div>
         </div>
@@ -542,7 +542,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
             <div class="slotcal-title" id="slotcal-title"></div>
             <button class="slotcal-nav-btn" onclick="Admin.slotCalNav(1)">&#8250;</button>
           </div>
-          <button class="btn-cal-refresh" onclick="Admin.loadSlotCal()">重新整理</button>
+          <button class="btn-cal-refresh" onclick="Admin.loadSlotCal(true)">重新整理</button>
         </div>
         <div class="slotcal-weekdays">
           <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
@@ -863,29 +863,30 @@ var Admin = (function() {
     return str.replace(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/, '$1/$2/$3 $4:$5');
   }
 
-  function loadSettings(projectCode) {
-    var form = document.getElementById('settings-form');
-    form.innerHTML = '<p class="settings-empty">載入中…</p>';
+  var _settingsCache = {};
+  function _renderSettingsForm(currentSettings) {
+    state.settingsServiceTypes = FIXED_SVC_TYPES;
+    var html = '';
+    FIXED_SVC_TYPES.forEach(function(svc) {
+      var cur = null;
+      currentSettings.forEach(function(s) { if (s.serviceType === svc) cur = s; });
+      var openVal  = cur ? storedToInput(cur.openTime)  : '';
+      var closeVal = cur ? storedToInput(cur.closeTime) : '';
+      var safeId   = svc.replace(/[^a-zA-Z0-9]/g, '_');
+      html += '<div class="settings-row">';
+      html += '<div class="settings-svc">' + esc(svc) + '</div>';
+      html += '<div class="settings-field"><label>開放預約時間</label><input type="datetime-local" id="st-open-' + safeId + '" value="' + openVal + '"/></div>';
+      html += '<div class="settings-field"><label>結束預約時間</label><input type="datetime-local" id="st-close-' + safeId + '" value="' + closeVal + '"/></div>';
+      html += '</div>';
+    });
+    document.getElementById('settings-form').innerHTML = html;
+  }
+  function loadSettings(projectCode, force) {
+    if (!force && _settingsCache[projectCode]) { _renderSettingsForm(_settingsCache[projectCode]); return; }
+    document.getElementById('settings-form').innerHTML = '<p class="settings-empty">載入中…</p>';
     callServer('serverGetBookingSettings', projectCode)
-    .then(function(result) {
-      var serviceTypes = FIXED_SVC_TYPES;
-      var currentSettings = Array.isArray(result) ? result : [];
-      state.settingsServiceTypes = serviceTypes;
-      var html = '';
-      serviceTypes.forEach(function(svc) {
-        var cur = null;
-        currentSettings.forEach(function(s) { if (s.serviceType === svc) cur = s; });
-        var openVal  = cur ? storedToInput(cur.openTime)  : '';
-        var closeVal = cur ? storedToInput(cur.closeTime) : '';
-        var safeId = svc.replace(/[^a-zA-Z0-9]/g, '_');
-        html += '<div class="settings-row">';
-        html += '<div class="settings-svc">' + esc(svc) + '</div>';
-        html += '<div class="settings-field"><label>開放預約時間</label><input type="datetime-local" id="st-open-' + safeId + '" value="' + openVal + '"/></div>';
-        html += '<div class="settings-field"><label>結束預約時間</label><input type="datetime-local" id="st-close-' + safeId + '" value="' + closeVal + '"/></div>';
-        html += '</div>';
-      });
-      form.innerHTML = html;
-    }).catch(function() { form.innerHTML = '<p class="settings-empty">載入失敗，請稍後再試</p>'; });
+      .then(function(r) { _settingsCache[projectCode] = Array.isArray(r) ? r : []; _renderSettingsForm(_settingsCache[projectCode]); })
+      .catch(function() { document.getElementById('settings-form').innerHTML = '<p class="settings-empty">載入失敗，請稍後再試</p>'; });
   }
 
   function saveSettings() {
@@ -905,8 +906,11 @@ var Admin = (function() {
     showLoading(true);
     callServer('serverSaveBookingSettings', projectCode, settings)
       .then(function(res) {
-        if (res && res.success) showToast('設定已儲存', 'success');
-        else showToast('儲存失敗：' + ((res && res.message) || '未知錯誤'), 'error');
+        if (res && res.success) {
+          var pc = document.getElementById('select-project').value;
+          delete _settingsCache[pc];
+          showToast('設定已儲存', 'success');
+        } else showToast('儲存失敗：' + ((res && res.message) || '未知錯誤'), 'error');
       })
       .catch(function() { showToast('儲存失敗，請稍後再試', 'error'); })
       .then(function() { showLoading(false); });
@@ -1044,10 +1048,13 @@ var Admin = (function() {
   var slotStg = {
     subTab: 'open',
     year: new Date().getFullYear(), month: new Date().getMonth(),
-    slots: [], svcTypes: FIXED_SVC_TYPES, selectedDate: null, editRowIdx: null
+    slots: [], svcTypes: FIXED_SVC_TYPES, selectedDate: null, editRowIdx: null,
+    loadedProject: null   // 追蹤已載入的建案，避免重複呼叫 API
   };
 
   function loadSettingsPanel(projectCode) {
+    // 切換建案時清除前端快取
+    if (slotStg.loadedProject !== projectCode) slotStg.loadedProject = null;
     if (slotStg.subTab === 'open')  loadSettings(projectCode);
     if (slotStg.subTab === 'slots') loadSlotCal();
   }
@@ -1122,17 +1129,23 @@ var Admin = (function() {
   }
 
   // ── 日期時間設定（時段行事曆）──
-  function loadSlotCal() {
+  function loadSlotCal(force) {
     var pc = document.getElementById('select-project').value;
     var y = slotStg.year, m = slotStg.month;
     var mNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
     document.getElementById('slotcal-title').textContent = y + '年 ' + mNames[m];
     if (!pc) { document.getElementById('slotcal-grid').innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted)">請先選擇建案</div>'; return; }
+    // 同一建案已有資料則直接渲染，不重新呼叫 API
+    if (!force && slotStg.loadedProject === pc && slotStg.slots.length >= 0) {
+      renderSlotCal(slotStg.slots);
+      if (slotStg.selectedDate) renderDayPanel(slotStg.selectedDate, slotStg.slots);
+      return;
+    }
     showLoading(true);
     callServer('serverAdminGetSlots', pc)
     .then(function(data) {
-      slotStg.slots    = Array.isArray(data) ? data : [];
-      slotStg.svcTypes = FIXED_SVC_TYPES;
+      slotStg.slots         = Array.isArray(data) ? data : [];
+      slotStg.loadedProject = pc;
       renderSlotCal(slotStg.slots);
       if (slotStg.selectedDate) renderDayPanel(slotStg.selectedDate, slotStg.slots);
     })
@@ -1144,7 +1157,14 @@ var Admin = (function() {
     slotStg.month += dir;
     if (slotStg.month > 11) { slotStg.month = 0; slotStg.year++; }
     if (slotStg.month < 0)  { slotStg.month = 11; slotStg.year--; }
-    loadSlotCal();
+    // 月份切換只重新渲染，資料已在前端
+    renderSlotCal(slotStg.slots);
+    if (slotStg.selectedDate) {
+      var ds = slotStg.selectedDate;
+      var inMonth = ds.startsWith(slotStg.year + '/' + _pad2(slotStg.month + 1));
+      if (!inMonth) { slotStg.selectedDate = null; document.getElementById('slot-day-panel').classList.add('hidden'); }
+      else renderDayPanel(ds, slotStg.slots);
+    }
   }
 
   function renderSlotCal(slots) {
@@ -1210,9 +1230,7 @@ var Admin = (function() {
         var bookedCls = s.bookedCount > 0 ? 'has-booking' : 'no-booking';
         var bookedLbl = s.bookedCount > 0 ? '已預約 ' + s.bookedCount + '/' + s.capacity : '0/' + s.capacity;
         var openBadge = s.open ? '<span class="slot-open-badge slot-open-on">開放</span>' : '<span class="slot-open-badge slot-open-off">關閉</span>';
-        var allowLbl  = (s.allowedUnits || s.allowedFloors)
-          ? (s.allowedUnits ? s.allowedUnits : '全部') + '・' + (s.allowedFloors ? s.allowedFloors + 'F' : '不限樓層')
-          : '全部戶別';
+        var allowLbl  = s.allowedStr ? s.allowedStr : '全部戶別';
         html += '<div class="slot-row">';
         html += '<span class="slot-svc-tag">'  + esc(s.serviceType) + '</span>';
         html += '<span class="slot-time-val">'  + esc(s.time)        + '</span>';
@@ -1246,11 +1264,7 @@ var Admin = (function() {
         document.getElementById('sf-time').value     = s.time;
         document.getElementById('sf-capacity').value = s.capacity;
         document.getElementById('sf-open').checked   = s.open;
-        // 還原合併格式
-        var allowedStr = (s.allowedUnits || s.allowedFloors)
-          ? (s.allowedUnits ? s.allowedUnits + ':' + (s.allowedFloors || '') : s.allowedFloors)
-          : '';
-        document.getElementById('sf-allowed').value = allowedStr;
+        document.getElementById('sf-allowed').value  = s.allowedStr || '';
       }
     } else {
       document.getElementById('slot-form-title').textContent = '新增時段';
@@ -1284,7 +1298,8 @@ var Admin = (function() {
         if (r && r.success) {
           showToast(slotStg.editRowIdx ? '已更新' : '已新增', 'success');
           hideSlotEditForm();
-          loadSlotCal();
+          slotStg.loadedProject = null;
+          loadSlotCal(true);
         } else { showToast((r && r.message) || '儲存失敗', 'error'); showLoading(false); }
       })
       .catch(function() { showToast('儲存失敗', 'error'); showLoading(false); });
@@ -1366,7 +1381,8 @@ var Admin = (function() {
         if (r && r.success) {
           showToast('已新增 ' + r.count + ' 筆時段', 'success');
           document.getElementById('batch-form-wrap').classList.add('hidden');
-          loadSlotCal();
+          slotStg.loadedProject = null;
+          loadSlotCal(true);
         } else { showToast((r && r.message) || '建立失敗', 'error'); showLoading(false); }
       })
       .catch(function() { showToast('建立失敗', 'error'); showLoading(false); });
@@ -1384,7 +1400,7 @@ var Admin = (function() {
     showLoading(true);
     callServer('serverAdminDeleteSlot', pc, rowIdx)
       .then(function(r) {
-        if (r && r.success) { showToast('已刪除', 'success'); loadSlotCal(); }
+        if (r && r.success) { showToast('已刪除', 'success'); slotStg.loadedProject = null; loadSlotCal(true); }
         else { showToast((r && r.message) || '刪除失敗', 'error'); showLoading(false); }
       })
       .catch(function() { showToast('刪除失敗', 'error'); showLoading(false); });
@@ -1396,12 +1412,13 @@ var Admin = (function() {
     year: new Date().getFullYear(),
     month: new Date().getMonth(),
     data: [],
-    svcFilter: ''
+    svcFilter: '',
+    loadedProject: null, loadedYear: null, loadedMonth: null
   };
 
   function _pad2(n) { return String(n).padStart(2, '0'); }
 
-  function loadCalendar() {
+  function loadCalendar(force) {
     var projectCode = document.getElementById('select-project').value;
     if (!projectCode) {
       document.getElementById('cal-title').textContent = calState.year + '年 ' + (calState.month+1) + '月';
@@ -1409,6 +1426,12 @@ var Admin = (function() {
       return;
     }
     var y = calState.year, m = calState.month;
+    // 同建案同月份已有資料則直接渲染
+    if (!force && calState.loadedProject === projectCode && calState.loadedYear === y && calState.loadedMonth === m) {
+      buildCalSvcFilter(calState.data);
+      renderCalendar(calState.data);
+      return;
+    }
     var firstDay = y + '/' + _pad2(m+1) + '/01';
     var lastDate = new Date(y, m+1, 0).getDate();
     var lastDay  = y + '/' + _pad2(m+1) + '/' + _pad2(lastDate);
@@ -1416,6 +1439,9 @@ var Admin = (function() {
     callServer('serverAdminGetBookings', projectCode, firstDay, lastDay, '已預約')
       .then(function(data) {
         calState.data = Array.isArray(data) ? data : [];
+        calState.loadedProject = projectCode;
+        calState.loadedYear    = y;
+        calState.loadedMonth   = m;
         buildCalSvcFilter(calState.data);
         renderCalendar(calState.data);
         var now = new Date();
@@ -1442,7 +1468,7 @@ var Admin = (function() {
     calState.month += dir;
     if (calState.month > 11) { calState.month = 0; calState.year++; }
     if (calState.month < 0)  { calState.month = 11; calState.year--; }
-    loadCalendar();
+    loadCalendar(); // 月份不同會自動重新取資料
   }
 
   function buildCalSvcFilter(data) {
