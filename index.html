@@ -601,6 +601,29 @@ var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP
 var App = (function() {
   var state = { user: null, customer: null };
   var bState = { slots: [], myBookings: [], bookingSettings: [], activeService: null, selectedSlot: null, pendingCancel: null, calMonth: null, selectedDate: null, modifyingBooking: null, method: null };
+  var _bCache = { data: null, ts: 0 };
+  var _B_TTL  = 120000; // 前端快取 2 分鐘
+
+  function prefetchBookingData() {
+    if (!state.user) return;
+    callServer('serverGetBookingData', state.user.projectCode, state.user.idCard, state.user.unit)
+      .then(function(r) { _bCache = { data: r, ts: Date.now() }; })
+      .catch(function(){});
+  }
+
+  function _applyBookingData(result) {
+    bState.slots = result.slots || []; bState.myBookings = result.myBookings || [];
+    bState.bookingSettings = result.settings || [];
+    bState.pendingCancel = null;
+    var el = document.getElementById('booking-content');
+    if (!el) return;
+    var services = [];
+    bState.slots.forEach(function(s) { if (services.indexOf(s.serviceType) < 0) services.push(s.serviceType); });
+    bState.myBookings.forEach(function(b) { if (services.indexOf(b.serviceType) < 0) services.push(b.serviceType); });
+    if (!services.length) { el.innerHTML = '<div class="booking-empty"><p>目前尚無開放預約的服務項目，請稍後查詢。</p></div>'; return; }
+    if (!bState.activeService || services.indexOf(bState.activeService) < 0) bState.activeService = services[0];
+    renderBooking(services);
+  }
   var SESSION_KEY = 'xh_session';
   var MAX_SIZE = 20 * 1024 * 1024;
 
@@ -645,7 +668,7 @@ var App = (function() {
     showScreen('login');
     try {
       var saved = sessionStorage.getItem(SESSION_KEY);
-      if (saved) { state.user = JSON.parse(saved); enterApp(); return; }
+      if (saved) { state.user = JSON.parse(saved); enterApp(); prefetchBookingData(); return; }
     } catch(e) { sessionStorage.removeItem(SESSION_KEY); }
   }
 
@@ -692,6 +715,7 @@ var App = (function() {
     state.user = { idCard: c.idCard, name: c.name, projectCode: c.projectCode, projectName: c.projectName, unit: unit.unit, folderId: unit.folderId, units: c.units };
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(state.user));
     enterApp();
+    prefetchBookingData();
   }
 
   function logout() {
@@ -734,19 +758,19 @@ var App = (function() {
   /* ── 預約 ── */
   function loadBooking() {
     var el = document.getElementById('booking-content');
-    el.innerHTML = '<p class="text-muted text-center" style="padding:2.5rem">載入中…</p>';
-    callServer('serverGetBookingData', state.user.projectCode, state.user.idCard, state.user.unit)
-    .then(function(result) {
-      bState.slots = result.slots || []; bState.myBookings = result.myBookings || [];
-      bState.bookingSettings = result.settings || [];
-      bState.pendingCancel = null;
-      var services = [];
-      bState.slots.forEach(function(s) { if (services.indexOf(s.serviceType) < 0) services.push(s.serviceType); });
-      bState.myBookings.forEach(function(b) { if (services.indexOf(b.serviceType) < 0) services.push(b.serviceType); });
-      if (!services.length) { el.innerHTML = '<div class="booking-empty"><p>目前尚無開放預約的服務項目，請稍後查詢。</p></div>'; return; }
-      if (!bState.activeService || services.indexOf(bState.activeService) < 0) bState.activeService = services[0];
-      renderBooking(services);
-    }).catch(function() { el.innerHTML = '<div class="booking-empty"><p>載入失敗，請稍後再試</p></div>'; });
+    var isFresh = _bCache.data && (Date.now() - _bCache.ts < _B_TTL);
+    if (isFresh) {
+      _applyBookingData(_bCache.data);
+      // 背景靜默更新
+      callServer('serverGetBookingData', state.user.projectCode, state.user.idCard, state.user.unit)
+        .then(function(r) { _bCache = { data: r, ts: Date.now() }; _applyBookingData(r); })
+        .catch(function(){});
+    } else {
+      el.innerHTML = '<p class="text-muted text-center" style="padding:2.5rem">載入中…</p>';
+      callServer('serverGetBookingData', state.user.projectCode, state.user.idCard, state.user.unit)
+        .then(function(r) { _bCache = { data: r, ts: Date.now() }; _applyBookingData(r); })
+        .catch(function() { el.innerHTML = '<div class="booking-empty"><p>載入失敗，請稍後再試</p></div>'; });
+    }
   }
 
   function getServices() {
@@ -987,6 +1011,7 @@ var App = (function() {
     callServer('serverCreateBooking', state.user.projectCode, state.user.idCard, state.user.unit, s.serviceType, s.date, s.time, state.user.name, isModifying ? oldBooking.date : null, isModifying ? oldBooking.time : null, bState.method || '')
       .then(function(res) {
         if (!res.success) { showToast(res.message || '預約失敗', 'error'); return; }
+        _bCache = { data: null, ts: 0 };
         if (isModifying) {
           return callServer('serverCancelBooking', state.user.projectCode, state.user.idCard, state.user.unit, oldBooking.serviceType, oldBooking.date, oldBooking.time)
             .then(function() { showToast('預約已修改！', 'success'); bState.selectedSlot = null; bState.modifyingBooking = null; loadBooking(); });
@@ -1005,7 +1030,7 @@ var App = (function() {
     showLoading(true);
     callServer('serverCancelBooking', state.user.projectCode, state.user.idCard, state.user.unit, svc)
       .then(function(res) {
-        if (res.success) { showToast('預約已取消', 'success'); loadBooking(); }
+        if (res.success) { _bCache = { data: null, ts: 0 }; showToast('預約已取消', 'success'); loadBooking(); }
         else { showToast(res.message || '取消失敗', 'error'); }
       })
       .catch(function() { showToast('取消失敗，請稍後再試', 'error'); })
