@@ -127,6 +127,50 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .settings-svc{font-size:.85rem;}
 }
 
+/* 行事曆 */
+.cal-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1.25rem;}
+.cal-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.85rem;}
+.cal-nav-wrap{display:flex;align-items:center;gap:.6rem;}
+.cal-nav-btn{background:#fff;border:1.5px solid var(--border);border-radius:6px;padding:.28rem .75rem;font-size:1rem;cursor:pointer;line-height:1;}
+.cal-nav-btn:hover{border-color:var(--primary);color:var(--primary);}
+.cal-title{font-size:1.05rem;font-weight:700;min-width:110px;text-align:center;}
+.cal-filters{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.cal-filters select{border:1.5px solid var(--border);border-radius:6px;padding:.35rem .6rem;font-size:.85rem;background:#fff;outline:none;}
+.cal-filters select:focus{border-color:var(--primary);}
+.btn-cal-refresh{background:var(--surface);border:1.5px solid var(--border);border-radius:6px;padding:.35rem .85rem;font-size:.85rem;cursor:pointer;}
+.btn-cal-refresh:hover{border-color:var(--primary);color:var(--primary);}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:.78rem;color:var(--text-muted);font-weight:600;padding:.3rem 0;border-bottom:1px solid var(--border);margin-bottom:.4rem;}
+.cal-weekdays span:first-child{color:#e53935;}
+.cal-weekdays span:last-child{color:#1565c0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-cell{min-height:110px;border:1px solid var(--border);border-radius:6px;padding:.3rem .35rem;background:#fff;vertical-align:top;}
+.cal-cell.cal-empty{background:#f8f9fc;border-color:transparent;}
+.cal-cell.cal-today{border-color:var(--primary);border-width:2px;}
+.cal-day-num{font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:.2rem;}
+.cal-cell.cal-today .cal-day-num{color:var(--primary);}
+.cal-cell:first-child .cal-day-num,.cal-cell.cal-sun .cal-day-num{color:#e53935;}
+.cal-cell.cal-sat .cal-day-num{color:#1565c0;}
+.cal-item{font-size:.68rem;border-radius:3px;padding:.15rem .3rem;margin-bottom:.15rem;line-height:1.45;cursor:default;word-break:break-all;}
+.cal-item.svc-kv{background:#fff3e0;border-left:2px solid #e65100;}
+.cal-item.svc-yy{background:#e3f2fd;border-left:2px solid #1565c0;}
+.cal-item.svc-other{background:#f3e5f5;border-left:2px solid #7b1fa2;}
+.cal-item-row{display:flex;gap:.25rem;flex-wrap:wrap;align-items:center;}
+.cal-svc{font-weight:700;}
+.cal-time{color:#555;}
+.cal-unit{background:rgba(0,0,0,.07);border-radius:3px;padding:0 .25rem;}
+.cal-method{color:#777;font-style:italic;}
+.cal-more{font-size:.65rem;color:var(--text-muted);margin-top:.1rem;}
+.cal-empty-msg{text-align:center;color:var(--text-muted);padding:3rem 0;font-size:.9rem;}
+@media(max-width:900px){
+  .cal-cell{min-height:80px;}
+  .cal-item{font-size:.62rem;}
+}
+@media(max-width:640px){
+  .cal-cell{min-height:56px;padding:.2rem;}
+  .cal-day-num{font-size:.72rem;}
+  .cal-item{font-size:.58rem;padding:.1rem .2rem;}
+}
+
 /* 複選下拉 */
 .ms-wrap{position:relative;display:inline-block;}
 .ms-btn{border:1.5px solid var(--border);border-radius:6px;padding:.38rem .7rem;background:#fff;cursor:pointer;display:flex;align-items:center;gap:.5rem;min-width:110px;font-size:.88rem;color:var(--text);}
@@ -200,6 +244,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       <button class="tab-btn"        id="tab-upload"   onclick="Admin.switchTab('upload')">📁 上傳紀錄</button>
       <button class="tab-btn"        id="tab-unbooked"  onclick="Admin.switchTab('unbooked')">👤 未預約客戶</button>
       <button class="tab-btn"        id="tab-settings"  onclick="Admin.switchTab('settings')">⚙️ 預約設定</button>
+      <button class="tab-btn"        id="tab-calendar"  onclick="Admin.switchTab('calendar')">📅 行事曆</button>
     </div>
 
     <!-- 預約篩選 -->
@@ -254,6 +299,27 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
       <button class="btn-query" onclick="Admin.query()">查詢</button>
       <button class="btn-reset" onclick="Admin.resetFilters()">清除</button>
+    </div>
+
+    <!-- 行事曆面板 -->
+    <div id="calendar-panel" class="hidden">
+      <div class="cal-card">
+        <div class="cal-toolbar">
+          <div class="cal-nav-wrap">
+            <button class="cal-nav-btn" onclick="Admin.calNav(-1)">&#8249;</button>
+            <div class="cal-title" id="cal-title"></div>
+            <button class="cal-nav-btn" onclick="Admin.calNav(1)">&#8250;</button>
+          </div>
+          <div class="cal-filters">
+            <select id="cal-svc-filter"><option value="">全部服務</option></select>
+            <button class="btn-cal-refresh" onclick="Admin.loadCalendar()">重新整理</button>
+          </div>
+        </div>
+        <div class="cal-weekdays">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
     </div>
 
     <!-- 預約設定面板 -->
@@ -370,6 +436,8 @@ var Admin = (function() {
         document.getElementById('current-project-name').textContent = name;
         if (state.tab === 'settings') {
           if (sel.value) loadSettings(sel.value);
+        } else if (state.tab === 'calendar') {
+          loadCalendar();
         } else {
           resetTable();
         }
@@ -380,19 +448,23 @@ var Admin = (function() {
 
   function switchTab(tab) {
     state.tab = tab;
-    ['booking','upload','unbooked','settings'].forEach(function(t) {
+    ['booking','upload','unbooked','settings','calendar'].forEach(function(t) {
       document.getElementById('tab-' + t).classList.toggle('active', tab === t);
     });
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
     var isSettings = tab === 'settings';
+    var isCalendar = tab === 'calendar';
     document.getElementById('settings-panel').classList.toggle('hidden', !isSettings);
-    document.getElementById('result-bar').classList.toggle('hidden', isSettings);
-    document.getElementById('table-wrap').classList.toggle('hidden', isSettings);
+    document.getElementById('calendar-panel').classList.toggle('hidden', !isCalendar);
+    document.getElementById('result-bar').classList.toggle('hidden', isSettings || isCalendar);
+    document.getElementById('table-wrap').classList.toggle('hidden', isSettings || isCalendar);
     if (isSettings) {
       var projectCode = document.getElementById('select-project').value;
       if (projectCode) loadSettings(projectCode);
+    } else if (isCalendar) {
+      loadCalendar();
     } else {
       resetTable();
     }
@@ -711,11 +783,123 @@ var Admin = (function() {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   };
 
+  // ── 行事曆 ──────────────────────────────────────────────────
+  var calState = {
+    year: new Date().getFullYear(),
+    month: new Date().getMonth(),
+    data: [],
+    svcFilter: ''
+  };
+
+  function _pad2(n) { return String(n).padStart(2, '0'); }
+
+  function loadCalendar() {
+    var projectCode = document.getElementById('select-project').value;
+    if (!projectCode) {
+      document.getElementById('cal-title').textContent = calState.year + '年 ' + (calState.month+1) + '月';
+      document.getElementById('cal-grid').innerHTML = '<div class="cal-empty-msg">請先選擇建案</div>';
+      return;
+    }
+    var y = calState.year, m = calState.month;
+    var firstDay = y + '/' + _pad2(m+1) + '/01';
+    var lastDate = new Date(y, m+1, 0).getDate();
+    var lastDay  = y + '/' + _pad2(m+1) + '/' + _pad2(lastDate);
+    showLoading(true);
+    callServer('serverAdminGetBookings', projectCode, firstDay, lastDay, '已預約')
+      .then(function(data) {
+        calState.data = Array.isArray(data) ? data : [];
+        buildCalSvcFilter(calState.data);
+        renderCalendar(calState.data);
+      })
+      .catch(function() {
+        document.getElementById('cal-grid').innerHTML = '<div class="cal-empty-msg">載入失敗，請重新整理</div>';
+      })
+      .then(function() { showLoading(false); });
+  }
+
+  function calNav(dir) {
+    calState.month += dir;
+    if (calState.month > 11) { calState.month = 0; calState.year++; }
+    if (calState.month < 0)  { calState.month = 11; calState.year--; }
+    loadCalendar();
+  }
+
+  function buildCalSvcFilter(data) {
+    var seen = {};
+    data.forEach(function(r) { if (r.serviceType) seen[r.serviceType] = 1; });
+    var sel = document.getElementById('cal-svc-filter');
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">全部服務</option>';
+    Object.keys(seen).sort().forEach(function(s) {
+      var o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o);
+    });
+    if (cur && seen[cur]) sel.value = cur;
+    calState.svcFilter = sel.value;
+    sel.onchange = function() { calState.svcFilter = sel.value; renderCalendar(calState.data); };
+  }
+
+  function renderCalendar(data) {
+    var y = calState.year, m = calState.month;
+    var monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    document.getElementById('cal-title').textContent = y + '年 ' + monthNames[m];
+
+    var filtered = calState.svcFilter
+      ? data.filter(function(r) { return r.serviceType === calState.svcFilter; })
+      : data;
+
+    var byDate = {};
+    filtered.forEach(function(r) {
+      if (!byDate[r.date]) byDate[r.date] = [];
+      byDate[r.date].push(r);
+    });
+
+    var firstDow   = new Date(y, m, 1).getDay();
+    var daysInMonth = new Date(y, m+1, 0).getDate();
+    var today = new Date();
+    var todayStr = today.getFullYear() + '/' + _pad2(today.getMonth()+1) + '/' + _pad2(today.getDate());
+
+    var html = '';
+    for (var i = 0; i < firstDow; i++) html += '<div class="cal-cell cal-empty"></div>';
+
+    for (var d = 1; d <= daysInMonth; d++) {
+      var dateStr = y + '/' + _pad2(m+1) + '/' + _pad2(d);
+      var dow = new Date(y, m, d).getDay();
+      var cls = 'cal-cell';
+      if (dateStr === todayStr) cls += ' cal-today';
+      if (dow === 0) cls += ' cal-sun';
+      if (dow === 6) cls += ' cal-sat';
+
+      html += '<div class="' + cls + '"><div class="cal-day-num">' + d + '</div>';
+
+      var items = (byDate[dateStr] || []).slice().sort(function(a,b) {
+        return (a.time||'').localeCompare(b.time||'');
+      });
+      var maxShow = 3, more = items.length - maxShow;
+
+      items.slice(0, maxShow).forEach(function(r) {
+        var svcCls = (r.serviceType||'').indexOf('客變') >= 0 ? 'svc-kv'
+                   : (r.serviceType||'').indexOf('驗屋') >= 0 ? 'svc-yy'
+                   : 'svc-other';
+        html += '<div class="cal-item ' + svcCls + '">';
+        html += '<div class="cal-item-row"><span class="cal-svc">' + esc(r.serviceType||'') + '</span>';
+        html += '<span class="cal-time">&nbsp;' + esc(r.time||'') + '</span></div>';
+        html += '<div class="cal-item-row"><span class="cal-unit">' + esc(r.unit||'') + '</span>';
+        html += '<span class="cal-time">&nbsp;' + esc(r.name||'') + '</span>';
+        if (r.method) html += '<span class="cal-method">&nbsp;' + esc(r.method) + '</span>';
+        html += '</div></div>';
+      });
+      if (more > 0) html += '<div class="cal-more">還有 ' + more + ' 筆…</div>';
+      html += '</div>';
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+  // ────────────────────────────────────────────────────────────
+
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.ms-wrap')) closeAllMs();
   });
 
-  return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, saveSettings };
+  return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, saveSettings, loadCalendar, calNav };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
