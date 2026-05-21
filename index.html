@@ -256,32 +256,43 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 }
 .prog-current-label{font-size:.92rem;color:#7a6000;font-weight:600;}
 .prog-current-phase{font-size:1.3rem;font-weight:900;color:#B8860B;letter-spacing:.06em;text-shadow:0 1px 0 rgba(255,255,255,.8);}
-/* 時間軸進度百分比 */
-.tl-pct-row{display:flex;align-items:center;gap:.85rem;padding:.2rem 1.5rem .85rem;}
-.tl-pct-track{flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden;}
-.tl-pct-fill{height:100%;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:4px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
-.tl-pct-label{font-size:.9rem;font-weight:800;color:#1565c0;white-space:nowrap;min-width:3rem;text-align:right;}
-
-/* ── 工程進度時間軸 ── */
-.timeline-wrap{padding:1.1rem .75rem .4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.timeline-wrap::-webkit-scrollbar{display:none;}
-.timeline-inner{display:flex;align-items:flex-start;width:100%;padding:0 .25rem;}
-.tl-item{display:flex;flex-direction:column;align-items:center;position:relative;flex:1;}
-.tl-item:not(:last-child)::after{content:'';position:absolute;top:17px;left:50%;width:100%;height:2px;z-index:0;}
-.tl-done:not(:last-child)::after{background:#1565c0;}
-.tl-ongoing:not(:last-child)::after,.tl-pending:not(:last-child)::after{background:#ddd;}
-.tl-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:1;position:relative;border:3px solid;font-size:.85rem;font-weight:800;}
-.tl-done .tl-dot{background:#1565c0;border-color:#1565c0;color:#fff;}
-.tl-ongoing .tl-dot{background:#f9a825;border-color:#f9a825;color:#fff;animation:tl-pulse 1.6s ease-in-out infinite;}
-.tl-pending .tl-dot{background:#f5f5f5;border-color:#bdbdbd;color:#9e9e9e;}
-@keyframes tl-pulse{0%,100%{box-shadow:0 0 0 0 rgba(249,168,37,.5);}60%{box-shadow:0 0 0 8px rgba(249,168,37,0);}}
-.tl-quarter{font-size:.62rem;color:var(--text-muted);margin-top:.35rem;text-align:center;
-  width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  padding:0 .15rem;line-height:1.3;}
-/* 時間軸圖例 */
-.tl-legend{display:flex;gap:1.1rem;justify-content:center;padding:.1rem 1rem .9rem;flex-wrap:wrap;}
+/* ── 整體進度條 ── */
+.tl-pct-row{display:flex;align-items:center;gap:.85rem;padding:.9rem 1.5rem .5rem;}
+.tl-pct-track{flex:1;height:9px;background:#eee;border-radius:5px;overflow:hidden;}
+.tl-pct-fill{height:100%;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:5px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+.tl-pct-label{font-size:.95rem;font-weight:800;color:#1565c0;white-space:nowrap;min-width:3rem;text-align:right;}
+/* 圖例 */
+.tl-legend{display:flex;gap:1.1rem;justify-content:flex-start;padding:.15rem 1.5rem .85rem;flex-wrap:wrap;border-bottom:1px solid var(--border);}
 .tl-legend-item{display:flex;align-items:center;gap:.35rem;font-size:.74rem;color:var(--text-muted);}
-.tl-legend-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
+.tl-legend-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+
+/* ── 垂直步驟清單 ── */
+@keyframes tl-pulse{0%,100%{box-shadow:0 0 0 0 rgba(249,168,37,.5);}60%{box-shadow:0 0 0 9px rgba(249,168,37,0);}}
+.stepper{padding:.85rem 1.25rem 1rem;}
+.stepper-item{display:flex;gap:.9rem;}
+.stepper-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:36px;}
+.stepper-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.88rem;font-weight:800;flex-shrink:0;border:2.5px solid transparent;}
+.stepper-line{flex:1;width:2px;min-height:12px;margin:.18rem 0;}
+.stepper-item:last-child .stepper-line{display:none;}
+/* 已完成 */
+.stepper-done .stepper-dot{background:#1565c0;border-color:#1565c0;color:#fff;}
+.stepper-done .stepper-line{background:linear-gradient(180deg,#1565c0,#90caf9);}
+/* 進行中 */
+.stepper-ongoing .stepper-dot{background:#f9a825;border-color:#f9a825;color:#fff;animation:tl-pulse 1.8s ease-in-out infinite;}
+.stepper-ongoing .stepper-line{background:#e0e0e0;}
+/* 未開始 */
+.stepper-pending .stepper-dot{background:#f5f5f5;border-color:#bdbdbd;color:#9e9e9e;}
+.stepper-pending .stepper-line{background:#e0e0e0;}
+/* 右側內容 */
+.stepper-body{flex:1;padding:.35rem 0 1.1rem;}
+.stepper-hd{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-bottom:.28rem;}
+.stepper-phase{font-size:.8rem;font-weight:700;color:var(--text-muted);}
+.stepper-name{font-size:.95rem;font-weight:600;color:var(--text);line-height:1.45;}
+.stepper-due{font-size:.76rem;color:var(--text-muted);margin-top:.2rem;}
+/* 進行中高亮 */
+.stepper-ongoing .stepper-body{background:linear-gradient(90deg,rgba(249,168,37,.07),transparent);
+  border-radius:8px;padding:.35rem .65rem 1.1rem;margin-left:-.65rem;}
 
 .progress-table-title{padding:.85rem 1.5rem .4rem;font-size:.82rem;font-weight:600;color:var(--text-muted);letter-spacing:.06em;border-top:1px solid var(--border);}
 /* 照片說明文字 */
@@ -334,14 +345,17 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
   /* 百分比進度條 */
   .tl-pct-row{padding:.2rem .9rem .75rem;}
   .tl-pct-label{font-size:.85rem;}
-  /* 時間軸 */
-  .tl-item{min-width:72px;}
-  .tl-dot{width:32px;height:32px;font-size:.82rem;}
-  .tl-phase{font-size:.68rem;max-width:66px;}
-  .tl-quarter{font-size:.6rem;}
-  .tl-status{font-size:.62rem;}
+  /* 圖例 */
   .tl-legend{gap:.75rem;padding:.1rem .9rem .75rem;}
   .tl-legend-item{font-size:.7rem;}
+  /* 垂直步驟清單 */
+  .stepper{padding:.65rem .9rem .75rem;}
+  .stepper-col{width:32px;}
+  .stepper-dot{width:32px;height:32px;font-size:.8rem;}
+  .stepper-name{font-size:.88rem;}
+  .stepper-phase{font-size:.74rem;}
+  .stepper-due{font-size:.7rem;}
+  .stepper-ongoing .stepper-body{padding:.3rem .5rem 1rem;margin-left:-.5rem;}
   /* 照片 */
   .progress-photo{flex:0 0 82%;}
   .photo-name{font-size:.6rem;}
@@ -1230,17 +1244,7 @@ var App = (function() {
           h += '</div>';
         }
 
-        /* 時間軸 */
-        h += '<div class="timeline-wrap"><div class="timeline-inner">';
-        phases.forEach(function(p, i) {
-          var cls = p.status === '已完成' ? 'tl-done' : p.status === '進行中' ? 'tl-ongoing' : 'tl-pending';
-          h += '<div class="tl-item ' + cls + '">';
-          h += '<div class="tl-dot">' + (i + 1) + '</div>';
-          h += '<div class="tl-quarter">' + esc(p.item) + '</div>';
-          h += '</div>';
-        });
-        h += '</div></div>';
-        /* 百分比進度條 */
+        /* 整體進度條 */
         h += '<div class="tl-pct-row">';
         h += '<div class="tl-pct-track"><div class="tl-pct-fill" id="tl-pct-fill" style="width:0%"></div></div>';
         h += '<span class="tl-pct-label">' + pct + '%</span>';
@@ -1250,6 +1254,21 @@ var App = (function() {
         h += '<div class="tl-legend-item"><div class="tl-legend-dot" style="background:#1565c0"></div>已完成</div>';
         h += '<div class="tl-legend-item"><div class="tl-legend-dot" style="background:#f9a825"></div>進行中</div>';
         h += '<div class="tl-legend-item"><div class="tl-legend-dot" style="background:#bdbdbd"></div>未開始</div>';
+        h += '</div>';
+        /* 垂直步驟清單 */
+        h += '<div class="stepper">';
+        phases.forEach(function(p, i) {
+          var cls = p.status === '已完成' ? 'stepper-done' : p.status === '進行中' ? 'stepper-ongoing' : 'stepper-pending';
+          var badge = p.status === '已完成' ? 'prog-done' : p.status === '進行中' ? 'prog-ongoing' : 'prog-pending';
+          h += '<div class="stepper-item ' + cls + '">';
+          h += '<div class="stepper-col"><div class="stepper-dot">' + (i + 1) + '</div><div class="stepper-line"></div></div>';
+          h += '<div class="stepper-body">';
+          h += '<div class="stepper-hd"><span class="stepper-phase">' + esc(p.phase) + '</span>';
+          h += '<span class="prog-status ' + badge + '">' + esc(p.status) + '</span></div>';
+          h += '<div class="stepper-name">' + esc(p.item) + '</div>';
+          h += '<div class="stepper-due">預計完成：' + esc(p.dueDate) + '</div>';
+          h += '</div></div>';
+        });
         h += '</div>';
 
         /* 詳細進度表 */
