@@ -1201,6 +1201,15 @@ var App = (function() {
           el.innerHTML = '<p class="text-muted text-center" style="padding:2rem">目前尚無工程進度資料</p>';
           return;
         }
+        /* 篩掉第0期或空白期別（試算表舊資料保險） */
+        phases = phases.filter(function(p) {
+          var ph = (p.phase || '').trim();
+          return ph && ph !== '第0期' && ph !== '第零期';
+        });
+        if (!phases.length) {
+          el.innerHTML = '<p class="text-muted text-center" style="padding:2rem">目前尚無工程進度資料</p>';
+          return;
+        }
 
         var total    = phases.length;
         var done     = phases.filter(function(p){ return p.status === '已完成'; }).length;
@@ -1282,8 +1291,7 @@ var App = (function() {
           h += '<div class="snake-lbls ' + (isRtl ? 'rtl' : 'ltr') + '">';
           row.forEach(function(p, ci) {
             var sc = p.status === '已完成' ? 'sn-done' : p.status === '進行中' ? 'sn-ongoing' : 'sn-pending';
-            h += '<div class="sn-lbl ' + sc + '"><div class="snake-ph">' + esc(p.phase) + '</div>';
-            h += '<div class="snake-nm">' + esc(p.item) + '</div></div>';
+            h += '<div class="sn-lbl ' + sc + '"><div class="snake-nm">' + esc(p.item) + '</div></div>';
           });
           h += '</div>';
           if (ri < snRows.length - 1) {
