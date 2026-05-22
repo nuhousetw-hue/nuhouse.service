@@ -242,9 +242,10 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .prog-bar-count{font-size:.88rem;font-weight:700;color:#1e8e3e;white-space:nowrap;min-width:3.5rem;text-align:right;}
 /* ── 工程進度統計卡 ── */
 .prog-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;padding:1.1rem 1.25rem .85rem;}
-.prog-stat-card{background:#fff;border-radius:12px;padding:1rem .75rem;text-align:center;border:1.5px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.06);}
-.prog-stat-label{font-size:.8rem;color:var(--text-muted);margin-bottom:.45rem;letter-spacing:.04em;}
-.prog-stat-value{font-size:1.55rem;font-weight:900;color:var(--primary);line-height:1.2;}
+.prog-stat-card{background:#fff;border-radius:12px;padding:1rem .75rem .9rem;text-align:center;border:1.5px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.prog-stat-icon{font-size:1.45rem;line-height:1;margin-bottom:.28rem;}
+.prog-stat-label{font-size:.78rem;color:var(--text-muted);margin-bottom:.38rem;letter-spacing:.04em;}
+.prog-stat-value{font-size:1.4rem;font-weight:900;color:var(--primary);line-height:1.2;word-break:break-word;}
 .prog-stat-value.green{color:#1565c0;}
 /* 目前進行期 橫幅（金色風格） */
 .prog-current-banner{
@@ -269,7 +270,6 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 /* ── 蛇形時間軸 ── */
 @keyframes tl-pulse{0%,100%{box-shadow:0 0 0 0 rgba(249,168,37,.5);}60%{box-shadow:0 0 0 9px rgba(249,168,37,0);}}
 .snake-wrap{padding:.9rem 1.25rem 1.2rem;position:relative;}
-/* 固定高度的圓點軌道（確保 U 形轉角可精確定位） */
 .snake-track{display:flex;position:relative;height:44px;}
 .snake-track.rtl{flex-direction:row-reverse;}
 .snake-line{position:absolute;top:21px;height:3px;border-radius:2px;z-index:0;}
@@ -278,7 +278,6 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .sn-done .snake-dot{background:#1565c0;border-color:#1565c0;color:#fff;}
 .sn-ongoing .snake-dot{background:#f9a825;border-color:#f9a825;color:#fff;animation:tl-pulse 1.8s ease-in-out infinite;}
 .sn-pending .snake-dot{background:#f5f5f5;border-color:#bdbdbd;color:#9e9e9e;}
-/* 文字標籤列（排列方式與圓點軌道一致） */
 .snake-lbls{display:flex;padding-bottom:.85rem;}
 .snake-lbls.rtl{flex-direction:row-reverse;}
 .sn-lbl{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:.4rem .15rem 0;}
@@ -287,7 +286,6 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .sn-done .snake-ph{color:#1565c0;}
 .sn-ongoing .snake-ph{color:#e65100;font-weight:700;}
 .sn-ongoing .snake-nm{font-weight:600;}
-/* U形轉角（由 JS 計算絕對位置，確保精確接連到圓點中心） */
 .snake-turn{position:absolute;box-sizing:border-box;pointer-events:none;}
 .snake-turn.right{border-right:3px solid #e0e0e0;border-top:3px solid #e0e0e0;border-bottom:3px solid #e0e0e0;border-radius:0 9999px 9999px 0;}
 .snake-turn.left{border-left:3px solid #e0e0e0;border-top:3px solid #e0e0e0;border-bottom:3px solid #e0e0e0;border-radius:9999px 0 0 9999px;}
@@ -331,17 +329,16 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 
 /* ── RWD ── */
 @media(max-width:640px){
-  /* 統計卡：2欄，字體適中 */
+  /* 統計卡：2欄 */
   .prog-stats-row{grid-template-columns:repeat(2,1fr);gap:.5rem;padding:.85rem .9rem .65rem;}
-  .prog-stat-card{padding:.8rem .5rem;}
-  .prog-stat-value{font-size:1.3rem;}
-  .prog-stat-label{font-size:.75rem;}
+  .prog-stat-card{padding:.75rem .5rem .7rem;}
+  .prog-stat-icon{font-size:1.2rem;}
+  .prog-stat-value{font-size:1.25rem;}
+  .prog-stat-label{font-size:.73rem;}
   /* 目前進行橫幅 */
   .prog-current-banner{flex-wrap:wrap;margin:.1rem .9rem .75rem;padding:.65rem .95rem;gap:.35rem;}
   .prog-current-phase{font-size:1.15rem;}
   .prog-current-label{font-size:.84rem;}
-  /* 統計卡目前施工 */
-  .prog-stat-value[style]{font-size:1.15rem!important;}
   /* 百分比進度條 */
   .tl-pct-row{padding:.2rem .9rem .75rem;}
   .tl-pct-label{font-size:.85rem;}
@@ -1219,10 +1216,10 @@ var App = (function() {
 
         /* 統計卡 */
         var h = '<div class="prog-stats-row">';
-        h += '<div class="prog-stat-card"><div class="prog-stat-label">更新日期</div><div class="prog-stat-value" style="font-size:.78rem;">' + todayStr + '</div></div>';
-        h += '<div class="prog-stat-card"><div class="prog-stat-label">整體進度</div><div class="prog-stat-value green">' + pct + '%</div></div>';
-        h += '<div class="prog-stat-card"><div class="prog-stat-label">總期數</div><div class="prog-stat-value">' + total + '期</div></div>';
-        h += '<div class="prog-stat-card"><div class="prog-stat-label">目前施工</div><div class="prog-stat-value" style="font-size:1.25rem;">' + esc(gp ? gp.phase : '已完工') + '</div></div>';
+        h += '<div class="prog-stat-card"><div class="prog-stat-icon">📅</div><div class="prog-stat-label">更新日期</div><div class="prog-stat-value">' + todayStr + '</div></div>';
+        h += '<div class="prog-stat-card"><div class="prog-stat-icon">📊</div><div class="prog-stat-label">整體進度</div><div class="prog-stat-value green">' + pct + '%</div></div>';
+        h += '<div class="prog-stat-card"><div class="prog-stat-icon">🏗️</div><div class="prog-stat-label">總期數</div><div class="prog-stat-value">' + total + '期</div></div>';
+        h += '<div class="prog-stat-card"><div class="prog-stat-icon">🔨</div><div class="prog-stat-label">目前施工</div><div class="prog-stat-value">' + esc(gp ? gp.phase : '已完工') + '</div></div>';
         h += '</div>';
 
         /* 目前進行橫幅 */
@@ -1254,7 +1251,7 @@ var App = (function() {
         h += '<div class="tl-legend-item"><div class="tl-legend-dot" style="background:#f9a825"></div>進行中</div>';
         h += '<div class="tl-legend-item"><div class="tl-legend-dot" style="background:#bdbdbd"></div>未開始</div>';
         h += '</div>';
-        /* 蛇形時間軸（圓點軌道 + 標籤列分離，U形轉角由 JS 定位） */
+        /* 蛇形時間軸 */
         var COLS = 5;
         var snRows = [];
         for (var sri = 0; sri < phases.length; sri += COLS) {
@@ -1265,18 +1262,16 @@ var App = (function() {
           var isRtl = ri % 2 === 1;
           var n = row.length;
           var sp = (100 / (n * 2)).toFixed(2) + '%';
-          /* 連接線漸層（依視覺左→右順序） */
           var vis = isRtl ? row.slice().reverse() : row;
-          var gp = [];
+          var gp2 = [];
           for (var gi = 0; gi < vis.length - 1; gi++) {
             var a = vis[gi], b = vis[gi + 1];
-            var c = (a.status === '已完成' && (b.status === '已完成' || b.status === '進行中')) ? '#1565c0' : '#e0e0e0';
+            var lc = (a.status === '已完成' && (b.status === '已完成' || b.status === '進行中')) ? '#1565c0' : '#e0e0e0';
             var p1 = Math.round(gi / (vis.length - 1) * 100);
             var p2 = Math.round((gi + 1) / (vis.length - 1) * 100);
-            gp.push(c + ' ' + p1 + '%', c + ' ' + p2 + '%');
+            gp2.push(lc + ' ' + p1 + '%', lc + ' ' + p2 + '%');
           }
-          var lineStyle = vis.length > 1 ? 'linear-gradient(90deg,' + gp.join(',') + ')' : '#e0e0e0';
-          /* 圓點軌道（固定高度） */
+          var lineStyle = vis.length > 1 ? 'linear-gradient(90deg,' + gp2.join(',') + ')' : '#e0e0e0';
           h += '<div class="snake-track ' + (isRtl ? 'rtl' : 'ltr') + '">';
           h += '<div class="snake-line" style="background:' + lineStyle + ';left:' + sp + ';right:' + sp + '"></div>';
           row.forEach(function(p, ci) {
@@ -1284,7 +1279,6 @@ var App = (function() {
             h += '<div class="sn-slot ' + sc + '"><div class="snake-dot">' + (ri * COLS + ci + 1) + '</div></div>';
           });
           h += '</div>';
-          /* 標籤列（flex 方向與圓點軌道一致） */
           h += '<div class="snake-lbls ' + (isRtl ? 'rtl' : 'ltr') + '">';
           row.forEach(function(p, ci) {
             var sc = p.status === '已完成' ? 'sn-done' : p.status === '進行中' ? 'sn-ongoing' : 'sn-pending';
@@ -1292,7 +1286,6 @@ var App = (function() {
             h += '<div class="snake-nm">' + esc(p.item) + '</div></div>';
           });
           h += '</div>';
-          /* U形轉角佔位元素（位置由 JS 計算後設定） */
           if (ri < snRows.length - 1) {
             var tc = row[row.length - 1];
             var tn = snRows[ri + 1][0];
@@ -1321,19 +1314,18 @@ var App = (function() {
 
         el.innerHTML = h;
         setTimeout(function() {
-          /* 進度條動畫 */
           var bar = document.getElementById('tl-pct-fill');
           if (bar) bar.style.width = pct + '%';
-          /* U形轉角定位：量測各圓點中心 Y 座標，精確設定絕對位置 */
+          /* U形轉角定位 */
           var wrap = el.querySelector('.snake-wrap');
           if (!wrap) return;
           var wrapRect = wrap.getBoundingClientRect();
-          var grps = wrap.querySelectorAll('.snake-track');
+          var tracks = wrap.querySelectorAll('.snake-track');
           var turnEls = wrap.querySelectorAll('.snake-turn');
           turnEls.forEach(function(turn, ti) {
-            if (ti >= grps.length - 1) return;
-            var ss1 = grps[ti].querySelectorAll('.sn-slot');
-            var ss2 = grps[ti + 1].querySelectorAll('.sn-slot');
+            if (ti >= tracks.length - 1) return;
+            var ss1 = tracks[ti].querySelectorAll('.sn-slot');
+            var ss2 = tracks[ti + 1].querySelectorAll('.sn-slot');
             if (!ss1.length || !ss2.length) return;
             var d1 = ss1[ss1.length - 1].querySelector('.snake-dot');
             var d2 = ss2[0].querySelector('.snake-dot');
