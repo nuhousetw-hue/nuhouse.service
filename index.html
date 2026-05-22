@@ -1356,7 +1356,7 @@ var App = (function() {
             .then(function(photos) {
               _photoCache[latestDone.folderId] = photos;
               var c = document.getElementById('latest-carousel');
-              if (c) renderCarousel(c, photos);
+              if (c) renderCarousel(c, photos, true); /* autoplay */
             })
             .catch(function() {
               var c = document.getElementById('latest-carousel');
@@ -1385,7 +1385,7 @@ var App = (function() {
       .catch(function() { carousel.innerHTML = '<p class="text-muted text-center" style="padding:1rem">照片載入失敗</p>'; });
   }
 
-  function renderCarousel(el, photos) {
+  function renderCarousel(el, photos, autoplay) {
     if (!photos || !photos.length) { el.innerHTML = '<p class="text-muted text-center" style="padding:1rem">此期尚無照片</p>'; return; }
     var h = '<div class="progress-carousel">';
     photos.forEach(function(p) {
@@ -1396,6 +1396,30 @@ var App = (function() {
     });
     h += '</div>';
     el.innerHTML = h;
+    if (autoplay && photos.length > 1) {
+      var car = el.querySelector('.progress-carousel');
+      if (car) _startAutoPlay(car, photos.length);
+    }
+  }
+
+  function _startAutoPlay(car, count) {
+    var cur = 0;
+    var timer = null;
+    function goTo(i) {
+      var items = car.querySelectorAll('.progress-photo');
+      if (!items.length || !document.contains(car)) { stop(); return; }
+      cur = (i + count) % count;
+      items[cur].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    }
+    function start() {
+      if (!timer) timer = setInterval(function() { goTo(cur + 1); }, 1500);
+    }
+    function stop() { clearInterval(timer); timer = null; }
+    start();
+    car.addEventListener('mouseenter', stop);
+    car.addEventListener('mouseleave', start);
+    car.addEventListener('touchstart', stop, { passive: true });
+    car.addEventListener('touchend', function() { setTimeout(start, 4000); }, { passive: true });
   }
 
   function openLightbox(url) {
