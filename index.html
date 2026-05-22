@@ -1201,16 +1201,6 @@ var App = (function() {
           el.innerHTML = '<p class="text-muted text-center" style="padding:2rem">目前尚無工程進度資料</p>';
           return;
         }
-        /* 篩掉第0期或空白期別（試算表舊資料保險） */
-        phases = phases.filter(function(p) {
-          var ph = (p.phase || '').trim();
-          return ph && ph !== '第0期' && ph !== '第零期';
-        });
-        if (!phases.length) {
-          el.innerHTML = '<p class="text-muted text-center" style="padding:2rem">目前尚無工程進度資料</p>';
-          return;
-        }
-
         var total    = phases.length;
         var done     = phases.filter(function(p){ return p.status === '已完成'; }).length;
         var pct      = total ? Math.round(done / total * 100) : 0;
