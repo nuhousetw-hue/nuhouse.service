@@ -12,7 +12,7 @@
   --text:#3C3C3C;--text-muted:#888;
   --shadow-sm:0 2px 8px rgba(0,0,0,.08);
   --shadow-md:0 4px 20px rgba(0,0,0,.14);
-  --radius:12px;--radius-sm:8px;--nav-h:60px;
+  --radius:12px;--radius-sm:8px;--nav-h:56px;--sidebar-w:245px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:15px;}
@@ -31,14 +31,48 @@ input,select{font:inherit;}
 .toast.success{background:var(--success);}
 .toast.error{background:var(--danger);}
 
-/* Navbar */
-#navbar{position:fixed;top:0;left:0;right:0;background:var(--primary);height:var(--nav-h);z-index:1000;box-shadow:0 2px 12px rgba(0,0,0,.2);}
-.nav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:100%;padding:0 1.5rem;}
-.nav-brand{font-size:1rem;font-weight:700;color:#fff;letter-spacing:.05em;}
-.nav-brand span{font-size:.78rem;font-weight:400;color:rgba(255,255,255,.7);margin-left:.6rem;background:rgba(255,255,255,.15);padding:.1rem .5rem;border-radius:4px;}
-.nav-right{display:flex;align-items:center;gap:1rem;color:rgba(255,255,255,.85);font-size:.85rem;}
-.btn-logout{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:.3rem .9rem;border-radius:6px;font-size:.82rem;}
-.btn-logout:hover{background:rgba(255,255,255,.25);}
+/* Sidebar */
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--surface);border-right:1.5px solid var(--border);z-index:500;display:none;flex-direction:column;overflow-y:auto;overflow-x:hidden;box-shadow:2px 0 12px rgba(0,0,0,.06);}
+#sidebar.visible{display:flex;}
+.sb-brand{padding:1rem .95rem .8rem;background:var(--primary);flex-shrink:0;}
+.sb-brand-name{font-size:.96rem;font-weight:700;color:#fff;letter-spacing:.04em;}
+.sb-brand-sub{font-size:.72rem;color:rgba(255,255,255,.72);margin-top:.1rem;}
+.sb-project{padding:.7rem .9rem;border-bottom:1.5px solid var(--border);flex-shrink:0;}
+.sb-project-label{display:block;font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.38rem;}
+.sb-project select{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:.42rem .55rem;font-size:.9rem;background:#fff;outline:none;cursor:pointer;}
+.sb-project select:focus{border-color:var(--primary);}
+.sb-nav{flex:1;padding:0;}
+.sb-group{border-top:1px solid var(--border);}
+.sb-group:first-child{border-top:none;}
+.sb-group-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;padding:.82rem .9rem .65rem;font-size:1rem;font-weight:700;color:var(--text);cursor:pointer;text-align:left;}
+.sb-group-btn:hover{color:var(--primary);background:#fafafa;}
+.sb-group-arrow{font-size:.72rem;color:var(--text-muted);flex-shrink:0;margin-left:.4rem;}
+.sb-group-items.collapsed{display:none;}
+.sb-item{display:block;width:100%;text-align:left;background:none;border:none;border-left:3px solid transparent;padding:.62rem .85rem .62rem 1.25rem;font-size:.97rem;color:var(--text);cursor:pointer;transition:background .13s,color .13s,border-color .13s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-item:hover:not(.active){background:#f5f5f5;color:var(--primary);}
+.sb-item.active{background:#fff0f1;color:var(--primary);border-left-color:var(--primary);font-weight:700;}
+.sb-footer{padding:.75rem .9rem;border-top:1.5px solid var(--border);flex-shrink:0;}
+.sb-footer-user{font-size:.8rem;color:var(--text-muted);margin-bottom:.45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.btn-sb-logout{width:100%;background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.4rem .8rem;font-size:.83rem;font-weight:600;cursor:pointer;}
+.btn-sb-logout:hover{background:var(--primary-dk);}
+
+/* Mobile topbar */
+#mobile-topbar{position:fixed;top:0;left:0;right:0;height:var(--nav-h);background:var(--primary);z-index:600;display:none;align-items:center;justify-content:space-between;padding:0 1rem;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+#mobile-topbar.visible{display:flex;}
+.mb-brand{font-size:.9rem;font-weight:700;color:#fff;letter-spacing:.03em;}
+.btn-hamburger{background:none;border:none;color:#fff;cursor:pointer;padding:.3rem;line-height:0;}
+#sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:490;}
+#sidebar-overlay.visible{display:block;}
+
+/* Customer search panels */
+.cust-search-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1.25rem 1.5rem;margin-bottom:.85rem;}
+.cust-search-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1.5px solid var(--border);}
+.cust-filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.65rem;margin-bottom:.85rem;}
+.cust-filter-field{display:flex;flex-direction:column;gap:.28rem;}
+.cust-filter-field label{font-size:.8rem;color:var(--text-muted);font-weight:600;}
+.cust-filter-field input{border:1.5px solid var(--border);border-radius:6px;padding:.44rem .7rem;font-size:.9rem;background:#fff;outline:none;}
+.cust-filter-field input:focus{border-color:var(--primary);}
+.cust-filter-btns{display:flex;gap:.5rem;align-items:center;}
 
 /* Login */
 #screen-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);}
@@ -54,8 +88,8 @@ input,select{font:inherit;}
 .btn-login:hover{background:var(--primary-dk);}
 
 /* Main */
-#screen-main{padding-top:calc(var(--nav-h) + 1.25rem);padding-bottom:2rem;}
-.main-inner{max-width:1400px;margin:0 auto;padding:0 1.25rem;}
+#screen-main{margin-left:var(--sidebar-w);padding-top:1.25rem;padding-bottom:2rem;}
+.main-inner{max-width:1200px;margin:0 auto;padding:0 1.25rem;}
 
 /* Control bar */
 .control-bar{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:.85rem 1.25rem;margin-bottom:.85rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
@@ -176,10 +210,10 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 }
 @media print{
   body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  #navbar,.control-bar,.tabs,#filter-booking,#filter-upload,#filter-unbooked,
-  #result-bar,#table-wrap,#settings-panel,
+  #sidebar,#mobile-topbar,#sidebar-overlay,.control-bar,#filter-booking,#filter-upload,#filter-unbooked,
+  #result-bar,#table-wrap,#settings-panel,#profile-panel,#billing-panel,
   .cal-nav-btn,.cal-filters,#cal-export-btn{display:none!important;}
-  #screen-main{padding-top:0!important;}
+  #screen-main{padding-top:0!important;margin-left:0!important;}
   .main-inner{padding:0!important;max-width:100%!important;}
   #calendar-panel{display:block!important;}
   .cal-card{box-shadow:none!important;padding:.5rem 0!important;}
@@ -303,6 +337,17 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .slot-row{gap:.3rem;}
 }
 
+/* Sidebar Responsive */
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%);transition:transform .25s ease;z-index:601;}
+  #sidebar.visible.open{transform:translateX(0);}
+  #screen-main{margin-left:0!important;padding-top:calc(var(--nav-h) + 1.25rem);}
+}
+@media(min-width:769px){
+  #mobile-topbar{display:none!important;}
+  #sidebar-overlay{display:none!important;}
+}
+
 /* 複選下拉 */
 .ms-wrap{position:relative;display:inline-block;}
 .ms-btn{border:1.5px solid var(--border);border-radius:6px;padding:.38rem .7rem;background:#fff;cursor:pointer;display:flex;align-items:center;gap:.5rem;min-width:110px;font-size:.88rem;color:var(--text);}
@@ -324,16 +369,70 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 </div>
 <div id="toast" class="toast hidden"></div>
 
-<!-- Navbar -->
-<nav id="navbar" class="hidden">
-  <div class="nav-inner">
-    <div class="nav-brand">新濠建設機構<span>後台管理</span></div>
-    <div class="nav-right">
-      <span id="nav-admin-info"></span>
-      <button class="btn-logout" onclick="Admin.logout()">登出</button>
-    </div>
+<!-- Mobile Topbar -->
+<div id="mobile-topbar">
+  <span class="mb-brand">新濠建設機構 後台</span>
+  <button class="btn-hamburger" onclick="Admin.toggleSidebar()" aria-label="選單">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+</div>
+<div id="sidebar-overlay" onclick="Admin.toggleSidebar()"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-name">新濠建設機構</div>
+    <div class="sb-brand-sub">後台管理系統</div>
   </div>
-</nav>
+  <div class="sb-project">
+    <label class="sb-project-label">建案選擇</label>
+    <select id="select-project">
+      <option value="">— 請選擇建案 —</option>
+    </select>
+    <span id="current-project-name" class="hidden"></span>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-group">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('query')">
+        <span>查詢</span><span class="sb-group-arrow" id="sg-arrow-query">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-query">
+        <button class="sb-item active" id="tab-booking" onclick="Admin.switchTab('booking')">預約紀錄</button>
+        <button class="sb-item" id="tab-upload" onclick="Admin.switchTab('upload')">上傳紀錄</button>
+        <button class="sb-item" id="tab-unbooked" onclick="Admin.switchTab('unbooked')">未預約客戶</button>
+      </div>
+    </div>
+    <div class="sb-group">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('calendar')">
+        <span>行事曆</span><span class="sb-group-arrow" id="sg-arrow-calendar">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-calendar">
+        <button class="sb-item" id="tab-calendar" onclick="Admin.switchTab('calendar')">行事曆</button>
+      </div>
+    </div>
+    <div class="sb-group">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('customer')">
+        <span>客戶管理</span><span class="sb-group-arrow" id="sg-arrow-customer">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-customer">
+        <button class="sb-item" id="tab-profile" onclick="Admin.switchTab('profile')">基本資料</button>
+        <button class="sb-item" id="tab-billing" onclick="Admin.switchTab('billing')">帳務資訊</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-settings">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('settings-sub')">
+        <span>設定</span><span class="sb-group-arrow" id="sg-arrow-settings-sub">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-settings-sub">
+        <button class="sb-item" id="tab-settings" onclick="Admin.switchTab('settings')">預約設定</button>
+      </div>
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-footer-user" id="nav-admin-info"></div>
+    <button class="btn-sb-logout" onclick="Admin.logout()">登出</button>
+  </div>
+</aside>
 
 <!-- 登入畫面 -->
 <div id="screen-login">
@@ -359,25 +458,6 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 <!-- 主畫面 -->
 <div id="screen-main" class="hidden">
   <div class="main-inner">
-
-    <!-- 建案選擇 -->
-    <div class="control-bar">
-      <label>建案選擇</label>
-      <select id="select-project">
-        <option value="">— 請選擇建案 —</option>
-      </select>
-      <span class="filter-sep" style="margin-left:.25rem">目前：</span>
-      <span class="current-project" id="current-project-name">尚未選擇</span>
-    </div>
-
-    <!-- 分頁 -->
-    <div class="tabs">
-      <button class="tab-btn active" id="tab-booking"  onclick="Admin.switchTab('booking')">📋 預約紀錄</button>
-      <button class="tab-btn"        id="tab-upload"   onclick="Admin.switchTab('upload')">📁 上傳紀錄</button>
-      <button class="tab-btn"        id="tab-unbooked"  onclick="Admin.switchTab('unbooked')">👤 未預約客戶</button>
-      <button class="tab-btn"        id="tab-settings"  onclick="Admin.switchTab('settings')">⚙️ 預約設定</button>
-      <button class="tab-btn"        id="tab-calendar"  onclick="Admin.switchTab('calendar')">📅 行事曆</button>
-    </div>
 
     <!-- 預約篩選 -->
     <div id="filter-booking" class="filter-bar">
@@ -613,6 +693,78 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </table>
     </div>
 
+    <!-- 基本資料面板 -->
+    <div id="profile-panel" class="hidden">
+      <div class="cust-search-card">
+        <div class="cust-search-title">客戶基本資料 — 搜尋</div>
+        <div class="cust-filter-grid">
+          <div class="cust-filter-field">
+            <label>姓名</label>
+            <input type="text" id="pf-name" placeholder="請輸入姓名"/>
+          </div>
+          <div class="cust-filter-field">
+            <label>戶別</label>
+            <input type="text" id="pf-unit" placeholder="請輸入戶別"/>
+          </div>
+          <div class="cust-filter-field">
+            <label>樓層</label>
+            <input type="text" id="pf-floor" placeholder="請輸入樓層"/>
+          </div>
+          <div class="cust-filter-field">
+            <label>身份證字號</label>
+            <input type="text" id="pf-idcard" placeholder="請輸入身份證字號"/>
+          </div>
+        </div>
+        <div class="cust-filter-btns">
+          <button class="btn-query" onclick="Admin.queryProfile()">查詢</button>
+          <button class="btn-reset" onclick="Admin.resetProfileFilter()">清除</button>
+        </div>
+      </div>
+      <div class="result-bar hidden" id="pf-result-bar">
+        <div class="result-count">共 <strong id="pf-result-count">0</strong> 筆</div>
+      </div>
+      <div class="table-wrap hidden" id="pf-table-wrap">
+        <table>
+          <thead id="pf-table-head"></thead>
+          <tbody id="pf-table-body"><tr class="empty-row"><td colspan="8">請輸入條件後按查詢</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 帳務資訊面板 -->
+    <div id="billing-panel" class="hidden">
+      <div class="cust-search-card">
+        <div class="cust-search-title">帳務資訊 — 搜尋</div>
+        <div class="cust-filter-grid">
+          <div class="cust-filter-field">
+            <label>姓名</label>
+            <input type="text" id="bl-name" placeholder="請輸入姓名"/>
+          </div>
+          <div class="cust-filter-field">
+            <label>戶別</label>
+            <input type="text" id="bl-unit" placeholder="請輸入戶別"/>
+          </div>
+          <div class="cust-filter-field">
+            <label>身份證字號</label>
+            <input type="text" id="bl-idcard" placeholder="請輸入身份證字號"/>
+          </div>
+        </div>
+        <div class="cust-filter-btns">
+          <button class="btn-query" onclick="Admin.queryBilling()">查詢</button>
+          <button class="btn-reset" onclick="Admin.resetBillingFilter()">清除</button>
+        </div>
+      </div>
+      <div class="result-bar hidden" id="bl-result-bar">
+        <div class="result-count">共 <strong id="bl-result-count">0</strong> 筆</div>
+      </div>
+      <div class="table-wrap hidden" id="bl-table-wrap">
+        <table>
+          <thead id="bl-table-head"></thead>
+          <tbody id="bl-table-body"><tr class="empty-row"><td colspan="10">請輸入條件後按查詢</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -675,26 +827,40 @@ var Admin = (function() {
   function logout() {
     sessionStorage.removeItem(SESSION_KEY);
     state.username = null; state.role = 'user'; state.data = [];
-    document.getElementById('navbar').classList.add('hidden');
+    var sb = document.getElementById('sidebar');
+    sb.classList.remove('visible'); sb.classList.remove('open');
+    document.getElementById('mobile-topbar').classList.remove('visible');
+    document.getElementById('sidebar-overlay').classList.remove('visible');
     document.getElementById('input-username').value = '';
     document.getElementById('input-password').value = '';
     showScreen('login');
   }
 
+  function toggleSidebar() {
+    var sb = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    var isOpen = sb.classList.toggle('open');
+    overlay.classList.toggle('visible', isOpen);
+  }
+
   function applyRolePermissions() {
     var isAdmin = state.role === 'admin';
-    var tabEl = document.getElementById('tab-settings');
+    var settingsTab = document.getElementById('tab-settings');
+    var settingsGroup = document.getElementById('sb-group-settings');
     if (isAdmin) {
-      tabEl.classList.remove('hidden');
+      settingsTab.classList.remove('hidden');
+      if (settingsGroup) settingsGroup.classList.remove('hidden');
     } else {
-      tabEl.classList.add('hidden');
+      settingsTab.classList.add('hidden');
+      if (settingsGroup) settingsGroup.classList.add('hidden');
       if (state.tab === 'settings') switchTab('booking');
     }
   }
 
   function enterMain() {
     document.getElementById('nav-admin-info').textContent = state.username;
-    document.getElementById('navbar').classList.remove('hidden');
+    document.getElementById('sidebar').classList.add('visible');
+    document.getElementById('mobile-topbar').classList.add('visible');
     showScreen('main');
     applyRolePermissions();
     loadProjects();
@@ -711,9 +877,6 @@ var Admin = (function() {
         sel.appendChild(opt);
       });
       sel.onchange = function() {
-        var idx = sel.selectedIndex;
-        var name = idx > 0 ? sel.options[idx].text : '尚未選擇';
-        document.getElementById('current-project-name').textContent = name;
         if (state.tab === 'settings') {
           if (sel.value) loadSettingsPanel(sel.value);
         } else if (state.tab === 'calendar') {
@@ -728,24 +891,34 @@ var Admin = (function() {
 
   function switchTab(tab) {
     state.tab = tab;
-    ['booking','upload','unbooked','settings','calendar'].forEach(function(t) {
-      document.getElementById('tab-' + t).classList.toggle('active', tab === t);
+    // Close mobile sidebar on navigation
+    var sb = document.getElementById('sidebar');
+    if (sb.classList.contains('open')) toggleSidebar();
+    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing'];
+    ALL_TABS.forEach(function(t) {
+      var el = document.getElementById('tab-' + t);
+      if (el) el.classList.toggle('active', tab === t);
     });
+    var isSettings = tab === 'settings';
+    var isCalendar = tab === 'calendar';
+    var isProfile  = tab === 'profile';
+    var isBilling  = tab === 'billing';
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
-    var isSettings = tab === 'settings';
-    var isCalendar = tab === 'calendar';
     document.getElementById('settings-panel').classList.toggle('hidden', !isSettings);
     document.getElementById('calendar-panel').classList.toggle('hidden', !isCalendar);
-    document.getElementById('result-bar').classList.toggle('hidden', isSettings || isCalendar);
-    document.getElementById('table-wrap').classList.toggle('hidden', isSettings || isCalendar);
+    document.getElementById('profile-panel').classList.toggle('hidden', !isProfile);
+    document.getElementById('billing-panel').classList.toggle('hidden', !isBilling);
+    document.getElementById('result-bar').classList.toggle('hidden', !isTable);
+    document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
     if (isSettings) {
       var projectCode = document.getElementById('select-project').value;
       if (projectCode) loadSettingsPanel(projectCode);
     } else if (isCalendar) {
       loadCalendar();
-    } else {
+    } else if (isTable) {
       resetTable();
     }
   }
@@ -1476,7 +1649,8 @@ var Admin = (function() {
   }
 
   function exportCalPdf() {
-    var projectName = document.getElementById('current-project-name').textContent;
+    var sel = document.getElementById('select-project');
+    var projectName = sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].text : '';
     var monthTitle  = document.getElementById('cal-title').textContent;
     var ph = document.getElementById('cal-print-header');
     if (ph) ph.textContent = projectName + '　' + monthTitle + '　預約行事曆';
@@ -1561,6 +1735,131 @@ var Admin = (function() {
   }
   // ────────────────────────────────────────────────────────────
 
+  // ── 側邊欄群組收合 ──────────────────────────────────────────
+  function toggleGroup(groupId) {
+    var items = document.getElementById('sg-' + groupId);
+    var arrow = document.getElementById('sg-arrow-' + groupId);
+    if (!items) return;
+    var collapsed = items.classList.toggle('collapsed');
+    if (arrow) arrow.textContent = collapsed ? '▶' : '▼';
+  }
+
+  // ── 基本資料搜尋 ──────────────────────────────────────────
+  function queryProfile() {
+    var projectCode = document.getElementById('select-project').value;
+    if (!projectCode) { showToast('請先選擇建案', 'error'); return; }
+    var filters = {
+      name:   document.getElementById('pf-name').value.trim(),
+      unit:   document.getElementById('pf-unit').value.trim(),
+      floor:  document.getElementById('pf-floor').value.trim(),
+      idCard: document.getElementById('pf-idcard').value.trim()
+    };
+    showLoading(true);
+    callServer('serverAdminGetCustomers', projectCode, filters)
+      .then(function(data) {
+        if (!Array.isArray(data)) {
+          showToast((data && data.message) || '功能尚未開放，請聯絡系統管理員', 'error');
+          showLoading(false); return;
+        }
+        renderProfileTable(data);
+      })
+      .catch(function(err) { showToast('查詢失敗：' + err.message, 'error'); })
+      .then(function() { showLoading(false); });
+  }
+
+  function resetProfileFilter() {
+    ['pf-name','pf-unit','pf-floor','pf-idcard'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('pf-result-bar').classList.add('hidden');
+    document.getElementById('pf-table-wrap').classList.add('hidden');
+  }
+
+  function renderProfileTable(data) {
+    document.getElementById('pf-result-count').textContent = data.length;
+    document.getElementById('pf-result-bar').classList.remove('hidden');
+    document.getElementById('pf-table-wrap').classList.remove('hidden');
+    var head = document.getElementById('pf-table-head');
+    var body = document.getElementById('pf-table-body');
+    head.innerHTML = '<tr><th>#</th><th>姓名</th><th>戶別</th><th>樓層</th><th>客變狀態</th><th>對保狀態</th><th>驗屋狀態</th><th>備註事項</th></tr>';
+    body.innerHTML = '';
+    if (!data.length) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="8">查無符合條件的資料</td></tr>'; return;
+    }
+    data.forEach(function(r, i) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + (i+1) + '</td>' +
+        '<td>' + esc(r.name||'—') + '</td>' +
+        '<td>' + esc(r.unit||'—') + '</td>' +
+        '<td>' + esc(r.floor||'—') + '</td>' +
+        '<td>' + esc(r.kvStatus||'—') + '</td>' +
+        '<td>' + esc(r.dbStatus||'—') + '</td>' +
+        '<td>' + esc(r.yhStatus||'—') + '</td>' +
+        '<td>' + esc(r.note||'—') + '</td>';
+      body.appendChild(tr);
+    });
+  }
+
+  // ── 帳務資訊搜尋 ──────────────────────────────────────────
+  function queryBilling() {
+    var projectCode = document.getElementById('select-project').value;
+    if (!projectCode) { showToast('請先選擇建案', 'error'); return; }
+    var filters = {
+      name:   document.getElementById('bl-name').value.trim(),
+      unit:   document.getElementById('bl-unit').value.trim(),
+      idCard: document.getElementById('bl-idcard').value.trim()
+    };
+    showLoading(true);
+    callServer('serverAdminGetBilling', projectCode, filters)
+      .then(function(data) {
+        if (!Array.isArray(data)) {
+          showToast((data && data.message) || '功能尚未開放，請聯絡系統管理員', 'error');
+          showLoading(false); return;
+        }
+        renderBillingTable(data);
+      })
+      .catch(function(err) { showToast('查詢失敗：' + err.message, 'error'); })
+      .then(function() { showLoading(false); });
+  }
+
+  function resetBillingFilter() {
+    ['bl-name','bl-unit','bl-idcard'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('bl-result-bar').classList.add('hidden');
+    document.getElementById('bl-table-wrap').classList.add('hidden');
+  }
+
+  function renderBillingTable(data) {
+    document.getElementById('bl-result-count').textContent = data.length;
+    document.getElementById('bl-result-bar').classList.remove('hidden');
+    document.getElementById('bl-table-wrap').classList.remove('hidden');
+    var head = document.getElementById('bl-table-head');
+    var body = document.getElementById('bl-table-body');
+    head.innerHTML = '<tr><th>#</th><th>姓名</th><th>戶別</th><th>期數</th><th>應繳金額</th><th>繳款期限</th><th>繳款日期</th><th>本期收到金額</th><th>發票號碼</th><th>發票日期</th></tr>';
+    body.innerHTML = '';
+    if (!data.length) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="10">查無符合條件的資料</td></tr>'; return;
+    }
+    data.forEach(function(r, i) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + (i+1) + '</td>' +
+        '<td>' + esc(r.name||'—') + '</td>' +
+        '<td>' + esc(r.unit||'—') + '</td>' +
+        '<td>' + esc(r.period||'—') + '</td>' +
+        '<td>' + esc(r.amount||'—') + '</td>' +
+        '<td>' + esc(r.dueDate||'—') + '</td>' +
+        '<td>' + esc(r.paidDate||'—') + '</td>' +
+        '<td>' + esc(r.received||'—') + '</td>' +
+        '<td>' + esc(r.invoiceNo||'—') + '</td>' +
+        '<td>' + esc(r.invoiceDate||'—') + '</td>';
+      body.appendChild(tr);
+    });
+  }
+  // ────────────────────────────────────────────────────────────
+
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.ms-wrap')) closeAllMs();
   });
@@ -1570,7 +1869,10 @@ var Admin = (function() {
            loadSlotCal, slotCalNav, selectSlotDate, closeDayPanel,
            showSlotEditForm, hideSlotEditForm, saveSlotEdit, deleteSlotItem,
            toggleBatchForm, submitBatch,
-           loadCalendar, calNav, exportCalPdf };
+           loadCalendar, calNav, exportCalPdf,
+           toggleSidebar, toggleGroup,
+           queryProfile, resetProfileFilter,
+           queryBilling, resetBillingFilter };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
