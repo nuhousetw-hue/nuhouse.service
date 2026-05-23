@@ -1275,13 +1275,16 @@ var App = (function() {
           h += '<div class="snake-line" style="background:' + lineStyle + ';left:' + sp + ';right:' + sp + '"></div>';
           row.forEach(function(p, ci) {
             var sc = p.status === '已完成' ? 'sn-done' : p.status === '進行中' ? 'sn-ongoing' : 'sn-pending';
-            h += '<div class="sn-slot ' + sc + '"><div class="snake-dot">' + (ri * COLS + ci + 1) + '</div></div>';
+            var isPhase0 = !p.phase || p.phase === '第0期' || p.phase === '第零期';
+            var dotNum = isPhase0 ? '' : (ri * COLS + ci + 1);
+            h += '<div class="sn-slot ' + sc + '"><div class="snake-dot">' + dotNum + '</div></div>';
           });
           h += '</div>';
           h += '<div class="snake-lbls ' + (isRtl ? 'rtl' : 'ltr') + '">';
           row.forEach(function(p, ci) {
             var sc = p.status === '已完成' ? 'sn-done' : p.status === '進行中' ? 'sn-ongoing' : 'sn-pending';
-            h += '<div class="sn-lbl ' + sc + '"><div class="snake-nm">' + esc(p.item) + '</div></div>';
+            var isPhase0 = !p.phase || p.phase === '第0期' || p.phase === '第零期';
+            h += '<div class="sn-lbl ' + sc + '">' + (isPhase0 ? '' : '<div class="snake-nm">' + esc(p.item) + '</div>') + '</div>';
           });
           h += '</div>';
           if (ri < snRows.length - 1) {
@@ -1399,7 +1402,9 @@ var App = (function() {
       var items = car.querySelectorAll('.progress-photo');
       if (!items.length || !document.contains(car)) { stop(); return; }
       cur = (i + count) % count;
-      items[cur].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+      var itemW = items[0].offsetWidth;
+      var gapPx = parseFloat(getComputedStyle(car).columnGap) || 12;
+      car.scrollTo({ left: cur * (itemW + gapPx), behavior: 'smooth' });
     }
     function start() {
       if (!timer) timer = setInterval(function() { goTo(cur + 1); }, 1500);
