@@ -1060,16 +1060,15 @@ var Admin = (function() {
   function _renderSettingsForm(currentSettings) {
     state.settingsServiceTypes = FIXED_SVC_TYPES;
     var html = '';
-    FIXED_SVC_TYPES.forEach(function(svc) {
+    FIXED_SVC_TYPES.forEach(function(svc, idx) {
       var cur = null;
       currentSettings.forEach(function(s) { if (s.serviceType === svc) cur = s; });
       var openVal  = cur ? storedToInput(cur.openTime)  : '';
       var closeVal = cur ? storedToInput(cur.closeTime) : '';
-      var safeId   = svc.replace(/[^a-zA-Z0-9]/g, '_');
       html += '<div class="settings-row">';
       html += '<div class="settings-svc">' + esc(svc) + '</div>';
-      html += '<div class="settings-field"><label>開放預約時間</label><input type="datetime-local" id="st-open-' + safeId + '" value="' + openVal + '"/></div>';
-      html += '<div class="settings-field"><label>結束預約時間</label><input type="datetime-local" id="st-close-' + safeId + '" value="' + closeVal + '"/></div>';
+      html += '<div class="settings-field"><label>開放預約時間</label><input type="datetime-local" id="st-open-' + idx + '" value="' + openVal + '"/></div>';
+      html += '<div class="settings-field"><label>結束預約時間</label><input type="datetime-local" id="st-close-' + idx + '" value="' + closeVal + '"/></div>';
       html += '</div>';
     });
     document.getElementById('settings-form').innerHTML = html;
@@ -1086,10 +1085,9 @@ var Admin = (function() {
     var projectCode = document.getElementById('select-project').value;
     if (!projectCode) { showToast('請先選擇建案', 'error'); return; }
     var settings = [];
-    state.settingsServiceTypes.forEach(function(svc) {
-      var safeId = svc.replace(/[^a-zA-Z0-9]/g, '_');
-      var openEl  = document.getElementById('st-open-'  + safeId);
-      var closeEl = document.getElementById('st-close-' + safeId);
+    state.settingsServiceTypes.forEach(function(svc, idx) {
+      var openEl  = document.getElementById('st-open-'  + idx);
+      var closeEl = document.getElementById('st-close-' + idx);
       settings.push({
         serviceType: svc,
         openTime:    openEl  ? inputToStored(openEl.value)  : '',
