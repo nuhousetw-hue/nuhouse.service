@@ -825,26 +825,27 @@ var App = (function() {
 
   function callServer(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
-    return new Promise(function(resolve, reject) {
-      var done = false;
-      var timer = setTimeout(function() {
-        if (!done) { done = true; reject(new Error('連線逾時，請稍後再試')); }
-      }, 30000);
-      fetch(GAS_URL, {
-        method: 'POST',
-        body: JSON.stringify({ fn: fn, args: args })
-      })
-      .then(function(r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(function(data) {
-        if (!done) { done = true; clearTimeout(timer); resolve(data); }
-      })
-      .catch(function(err) {
-        if (!done) { done = true; clearTimeout(timer); reject(err); }
+    var MAX_RETRIES = 3;
+    var RETRY_DELAY = 2000;
+    function attempt(left) {
+      return new Promise(function(resolve, reject) {
+        var done = false;
+        var timer = setTimeout(function() {
+          if (!done) { done = true; reject(new Error('連線逾時，請稍後再試')); }
+        }, 30000);
+        fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ fn: fn, args: args }) })
+          .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function(data) { if (!done) { done = true; clearTimeout(timer); resolve(data); } })
+          .catch(function(err) {
+            if (!done) {
+              done = true; clearTimeout(timer);
+              if (left > 0) { setTimeout(function() { resolve(attempt(left - 1)); }, RETRY_DELAY); }
+              else { reject(err); }
+            }
+          });
       });
-    });
+    }
+    return attempt(MAX_RETRIES);
   }
 
   var SCREENS = ['login','select-unit','dashboard','drawings','booking','docs','progress','profile','billing'];
