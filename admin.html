@@ -195,6 +195,10 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 .cal-unit{background:rgba(0,0,0,.07);border-radius:3px;padding:0 .25rem;}
 .cal-method{color:#777;font-style:italic;}
 .cal-more{font-size:.65rem;color:var(--text-muted);margin-top:.1rem;}
+.cal-slot-empty{font-size:.68rem;border-radius:3px;padding:.15rem .3rem;margin-bottom:.15rem;line-height:1.45;background:#f0faf0;border-left:2px dashed #66bb6a;color:#2e7d32;}
+.cal-slot-remain{font-size:.65rem;border-radius:3px;padding:.1rem .3rem;margin-bottom:.1rem;background:#fff8e1;border-left:2px solid #ffa000;color:#e65100;}
+.cal-slot-tag{font-weight:700;margin-right:.2rem;}
+.cal-slot-cap{color:#666;}
 .cal-empty-msg{text-align:center;color:var(--text-muted);padding:3rem 0;font-size:.9rem;}
 .btn-cal-export{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.35rem .85rem;font-size:.85rem;cursor:pointer;}
 .btn-cal-export:hover{background:var(--primary-dk);}
@@ -1614,6 +1618,7 @@ var Admin = (function() {
     year: new Date().getFullYear(),
     month: new Date().getMonth(),
     data: [],
+    slots: [],
     svcFilter: '',
     loadedProject: null, loadedYear: null, loadedMonth: null
   };
@@ -1638,13 +1643,17 @@ var Admin = (function() {
     var lastDate = new Date(y, m+1, 0).getDate();
     var lastDay  = y + '/' + _pad2(m+1) + '/' + _pad2(lastDate);
     showLoading(true);
-    callServer('serverAdminGetBookings', projectCode, firstDay, lastDay, '已預約')
-      .then(function(data) {
-        calState.data = Array.isArray(data) ? data : [];
+    Promise.all([
+      callServer('serverAdminGetBookings', projectCode, firstDay, lastDay, '已預約'),
+      callServer('serverAdminGetSlots', projectCode)
+    ])
+      .then(function(results) {
+        calState.data  = Array.isArray(results[0]) ? results[0] : [];
+        calState.slots = Array.isArray(results[1]) ? results[1] : [];
         calState.loadedProject = projectCode;
         calState.loadedYear    = y;
         calState.loadedMonth   = m;
-        buildCalSvcFilter(calState.data);
+        buildCalSvcFilter(calState.data, calState.slots);
         renderCalendar(calState.data);
         var now = new Date();
         var upd = now.getFullYear() + '/' + _pad2(now.getMonth()+1) + '/' + _pad2(now.getDate()) +
@@ -1674,9 +1683,10 @@ var Admin = (function() {
     loadCalendar(); // 月份不同會自動重新取資料
   }
 
-  function buildCalSvcFilter(data) {
+  function buildCalSvcFilter(data, slots) {
     var seen = {};
     data.forEach(function(r) { if (r.serviceType) seen[r.serviceType] = 1; });
+    (slots || []).forEach(function(s) { if (s.serviceType) seen[s.serviceType] = 1; });
     var sel = document.getElementById('cal-svc-filter');
     var cur = sel.value;
     sel.innerHTML = '<option value="">全部服務</option>';
@@ -1739,6 +1749,29 @@ var Admin = (function() {
         html += '</div></div>';
       });
       if (more > 0) html += '<div class="cal-more">還有 ' + more + ' 筆…</div>';
+
+      // 顯示尚未預約的時段
+      var daySlots = (calState.slots || []).filter(function(s) {
+        return s.date === dateStr && s.open &&
+          (!calState.svcFilter || s.serviceType === calState.svcFilter);
+      }).sort(function(a,b) { return (a.time||'').localeCompare(b.time||''); });
+
+      daySlots.forEach(function(s) {
+        var remain = s.capacity - s.bookedCount;
+        if (s.bookedCount === 0) {
+          html += '<div class="cal-slot-empty">';
+          html += '<span class="cal-slot-tag">○ ' + esc(s.time) + '</span>';
+          html += '<span>' + esc(s.serviceType) + '</span>';
+          html += '<span class="cal-slot-cap">（共' + s.capacity + '位）</span>';
+          html += '</div>';
+        } else if (remain > 0) {
+          html += '<div class="cal-slot-remain">';
+          html += '<span>' + esc(s.time) + ' ' + esc(s.serviceType) + '</span>';
+          html += '<span class="cal-slot-cap">　剩 ' + remain + ' 位</span>';
+          html += '</div>';
+        }
+      });
+
       html += '</div>';
     }
     document.getElementById('cal-grid').innerHTML = html;
