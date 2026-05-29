@@ -922,10 +922,7 @@ var App = (function() {
 
   function renderProfile() {
     var u = state.user; if (!u) return;
-    var id = u.idCard || '';
-    var masked = id.length > 4 ? id.slice(0,3) + '****' + id.slice(-1) : id;
     document.getElementById('profile-name').textContent = u.name || '—';
-    document.getElementById('profile-idcard').textContent = masked || '—';
     document.getElementById('profile-project').textContent = u.projectName || '—';
     document.getElementById('profile-unit').textContent = u.unit || '—';
     document.getElementById('profile-addr-reg').textContent = u.addressReg || '—';
