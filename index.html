@@ -944,7 +944,7 @@ var App = (function() {
     var hasMulti = !!(state.customer && state.customer.units && state.customer.units.length > 1) ||
                    !!(state.user && state.user.units && state.user.units.length > 1);
     document.getElementById('btn-back-units').classList.toggle('hidden', !hasMulti);
-    goTo('progress');
+    goTo('dashboard');
   }
 
   function backToUnits() {
