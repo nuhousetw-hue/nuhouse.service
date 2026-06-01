@@ -1734,9 +1734,7 @@ var Admin = (function() {
       var items = (byDate[dateStr] || []).slice().sort(function(a,b) {
         return (a.time||'').localeCompare(b.time||'');
       });
-      var maxShow = 3, more = items.length - maxShow;
-
-      items.slice(0, maxShow).forEach(function(r) {
+      items.forEach(function(r) {
         var svcCls = (r.serviceType||'').indexOf('客變') >= 0 ? 'svc-kv'
                    : (r.serviceType||'').indexOf('驗屋') >= 0 ? 'svc-yy'
                    : 'svc-other';
@@ -1748,7 +1746,6 @@ var Admin = (function() {
         if (r.method) html += '<span class="cal-method">&nbsp;' + esc(r.method) + '</span>';
         html += '</div></div>';
       });
-      if (more > 0) html += '<div class="cal-more">還有 ' + more + ' 筆…</div>';
 
       // 顯示尚未預約的時段
       var daySlots = (calState.slots || []).filter(function(s) {
