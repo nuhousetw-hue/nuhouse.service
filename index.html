@@ -513,17 +513,17 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 <div id="admin-tabs">
   <button class="admin-tab" data-screen="dashboard" onclick="App.goTo('dashboard')">首頁</button>
   <span class="tab-sep">｜</span>
-  <button class="admin-tab" data-screen="drawings" onclick="App.goTo('drawings')">客變圖資</button>
+  <button class="admin-tab" data-screen="docs" onclick="App.goTo('docs')">最新公告</button>
   <span class="tab-sep">｜</span>
   <button class="admin-tab" data-screen="booking" onclick="App.goTo('booking')">線上預約</button>
   <span class="tab-sep">｜</span>
-  <button class="admin-tab" data-screen="docs" onclick="App.goTo('docs')">相關檔案</button>
+  <button class="admin-tab" data-screen="drawings" onclick="App.goTo('drawings')">我的文件</button>
   <span class="tab-sep">｜</span>
   <button class="admin-tab" data-screen="progress" onclick="App.goTo('progress')">工程進度</button>
   <span class="tab-sep">｜</span>
-  <button class="admin-tab" data-screen="profile" onclick="App.goTo('profile')">基本資料</button>
-  <span class="tab-sep">｜</span>
   <button class="admin-tab" data-screen="billing" onclick="App.goTo('billing')">帳務資訊</button>
+  <span class="tab-sep">｜</span>
+  <button class="admin-tab" data-screen="profile" onclick="App.goTo('profile')">基本資料</button>
 </div>
 
 <!-- 登入 -->
@@ -651,10 +651,10 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
   </div>
 </section>
 
-<!-- 相關檔案 -->
+<!-- 最新公告 -->
 <section id="screen-docs" class="screen">
   <div class="container">
-    <h2 class="page-title">相關檔案</h2>
+    <h2 class="page-title">最新公告</h2>
     <div class="card">
       <div class="card-header">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
@@ -749,10 +749,10 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
   <button class="lightbox-close" onclick="App.closeLightbox()">✕</button>
 </div>
 
-<!-- 客變圖資 -->
+<!-- 我的文件 -->
 <section id="screen-drawings" class="screen">
   <div class="container">
-    <h2 class="page-title">客變圖資</h2>
+    <h2 class="page-title">我的文件</h2>
     <div class="card">
       <div class="card-header">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
