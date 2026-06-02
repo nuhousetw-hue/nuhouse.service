@@ -1750,7 +1750,7 @@ var Admin = (function() {
     var lastDay  = y + '/' + _pad2(m+1) + '/' + _pad2(lastDate);
     showLoading(true);
     Promise.all([
-      callServer('serverAdminGetBookings', projectCode, firstDay, lastDay, '已預約'),
+      callServer('serverAdminGetBookings', projectCode, firstDay, lastDay, '已預約', true),
       callServer('serverAdminGetSlots', projectCode)
     ])
       .then(function(results) {
