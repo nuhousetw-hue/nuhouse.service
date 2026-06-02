@@ -107,6 +107,10 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .dash-shortcut{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.5rem .75rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:.7rem;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .15s;box-shadow:var(--shadow-sm);width:100%;font-size:.88rem;font-weight:600;color:var(--text);}
 .dash-shortcut:hover{border-color:var(--primary);box-shadow:0 6px 24px rgba(176,16,32,.15);transform:translateY(-3px);color:var(--primary);}
 .dash-sc-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;}
+/* ── 我的文件 下載分類 ── */
+.download-category{margin-bottom:1.25rem;}
+.download-category:last-child{margin-bottom:0;}
+.download-category-title{font-size:.85rem;font-weight:700;color:var(--primary);letter-spacing:.05em;padding:.35rem .75rem;background:#fff0f1;border-left:3px solid var(--primary);border-radius:0 4px 4px 0;margin-bottom:.5rem;}
 /* ── 首頁 Home ── */
 .home-quickinfo{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.25rem;}
 .home-qi-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:.9rem .75rem;text-align:center;box-shadow:var(--shadow-sm);}
@@ -758,8 +762,7 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <h3>下載區</h3>
       </div>
-      <p class="card-desc">以下為您的戶型客變圖資，請下載後交予設計師參考。</p>
-      <div id="download-list" class="file-list"><p class="text-muted text-center">載入中…</p></div>
+      <div id="download-list"><p class="text-muted text-center">載入中…</p></div>
     </div>
     <div class="card">
       <div class="card-header">
@@ -1282,10 +1285,33 @@ var App = (function() {
   function loadDownloads() {
     var el = document.getElementById('download-list');
     el.innerHTML = '<p class="text-muted text-center">載入中…</p>';
-    callServer('serverGetFiles', state.user.folderId)
-      .then(function(files) {
-        if (!files.length) { el.innerHTML = '<p class="text-muted text-center">目前尚無可下載的圖資，請聯絡客服</p>'; return; }
-        el.innerHTML = ''; files.forEach(function(f) { el.appendChild(buildFileItem(f)); });
+    callServer('serverGetCustomerFiles', state.user.folderId)
+      .then(function(categories) {
+        if (!Array.isArray(categories) || !categories.length) {
+          el.innerHTML = '<p class="text-muted text-center">目前尚無可下載的文件，請聯絡客服</p>'; return;
+        }
+        el.innerHTML = '';
+        categories.forEach(function(cat) {
+          var section = document.createElement('div');
+          section.className = 'download-category';
+          var title = document.createElement('div');
+          title.className = 'download-category-title';
+          title.textContent = cat.category;
+          section.appendChild(title);
+          if (!cat.files.length) {
+            var empty = document.createElement('p');
+            empty.className = 'text-muted text-center';
+            empty.style.padding = '.5rem 0';
+            empty.textContent = '目前尚無文件，請聯絡客服';
+            section.appendChild(empty);
+          } else {
+            var list = document.createElement('div');
+            list.className = 'file-list';
+            cat.files.forEach(function(f) { list.appendChild(buildFileItem(f)); });
+            section.appendChild(list);
+          }
+          el.appendChild(section);
+        });
       })
       .catch(function() { el.innerHTML = '<p class="text-muted text-center">載入失敗，請稍後再試</p>'; });
   }
