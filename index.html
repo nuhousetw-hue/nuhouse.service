@@ -1356,13 +1356,26 @@ var App = (function() {
     document.getElementById('pdf-preview-frame').src = url;
     document.getElementById('pdf-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    history.pushState({ pdfModal: true }, '');
   }
 
   function closePdfPreview() {
-    document.getElementById('pdf-modal').classList.add('hidden');
+    var modal = document.getElementById('pdf-modal');
+    if (modal.classList.contains('hidden')) return;
+    modal.classList.add('hidden');
     document.getElementById('pdf-preview-frame').src = '';
     document.body.style.overflow = '';
+    if (history.state && history.state.pdfModal) history.back();
   }
+
+  window.addEventListener('popstate', function() {
+    var modal = document.getElementById('pdf-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+      modal.classList.add('hidden');
+      document.getElementById('pdf-preview-frame').src = '';
+      document.body.style.overflow = '';
+    }
+  });
 
   var onDragOver  = function(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); };
   var onDragLeave = function() { document.getElementById('drop-zone').classList.remove('drag-over'); };
