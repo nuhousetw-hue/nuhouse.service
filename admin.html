@@ -119,7 +119,7 @@ input,select{font:inherit;}
 /* Result bar */
 .result-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:.5rem;}
 .result-count{font-size:.9rem;color:var(--text-muted);}
-.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.1rem;}
+.stats-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.1rem;max-width:480px;}
 .stat-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1rem 1.1rem;text-align:center;}
 .stat-card-label{font-size:.82rem;font-weight:600;color:var(--text-muted);margin-bottom:.3rem;}
 .stat-card-value{font-size:2rem;font-weight:800;color:var(--primary);line-height:1.1;}
@@ -693,24 +693,14 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <!-- 儀表板 -->
     <div class="stats-bar hidden" id="stats-bar">
       <div class="stat-card">
-        <div class="stat-card-label">預約總筆數</div>
-        <div class="stat-card-value" id="stat-total-booking">—</div>
-        <div class="stat-card-sub">所有已預約</div>
+        <div class="stat-card-label" id="stat-label-period">查詢期間</div>
+        <div class="stat-card-value" id="stat-period-count">—</div>
+        <div class="stat-card-sub" id="stat-sub-period">筆</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">今日預約</div>
-        <div class="stat-card-value" id="stat-today-booking">—</div>
-        <div class="stat-card-sub" id="stat-today-label">今天</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">上傳總筆數</div>
-        <div class="stat-card-value" id="stat-total-upload">—</div>
-        <div class="stat-card-sub">所有上傳</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label">今日上傳</div>
-        <div class="stat-card-value" id="stat-today-upload">—</div>
-        <div class="stat-card-sub" id="stat-upload-today-label">今天</div>
+        <div class="stat-card-label" id="stat-label-total">總計</div>
+        <div class="stat-card-value" id="stat-total-count">—</div>
+        <div class="stat-card-sub">所有紀錄</div>
       </div>
     </div>
 
@@ -965,6 +955,16 @@ var Admin = (function() {
     document.getElementById('billing-panel').classList.toggle('hidden', !isBilling);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
+    var showStats = (tab === 'booking' || tab === 'upload');
+    var statsBar = document.getElementById('stats-bar');
+    if (showStats) {
+      statsBar.classList.remove('hidden');
+      updateStatLabels();
+      var pc = document.getElementById('select-project').value;
+      if (pc) loadStats(pc);
+    } else {
+      statsBar.classList.add('hidden');
+    }
     if (isSettings) {
       var projectCode = document.getElementById('select-project').value;
       if (projectCode) loadSettingsPanel(projectCode);
@@ -1088,21 +1088,22 @@ var Admin = (function() {
 
   var sortState = { col: -1, dir: 1 };
 
-  function loadStats(projectCode, targetDate) {
+  function updateStatLabels() {
+    var isBooking = state.tab === 'booking';
+    document.getElementById('stat-label-period').textContent = isBooking ? '查詢期間預約' : '查詢期間上傳';
+    document.getElementById('stat-label-total').textContent  = isBooking ? '預約總筆數'   : '上傳總筆數';
+    document.getElementById('stat-sub-period').textContent   = isBooking ? '筆預約'       : '筆上傳';
+  }
+
+  function loadStats(projectCode) {
     var bar = document.getElementById('stats-bar');
-    ['stat-total-booking','stat-today-booking','stat-total-upload','stat-today-upload'].forEach(function(id) {
-      document.getElementById(id).textContent = '…';
-    });
     bar.classList.remove('hidden');
-    var label = targetDate || '今天';
-    document.getElementById('stat-today-label').textContent = label;
-    document.getElementById('stat-upload-today-label').textContent = label;
-    callServer('serverAdminGetStats', projectCode, targetDate || '').then(function(s) {
-      document.getElementById('stat-total-booking').textContent  = s.totalBookings;
-      document.getElementById('stat-today-booking').textContent  = s.todayBookings;
-      document.getElementById('stat-total-upload').textContent   = s.totalUploads;
-      document.getElementById('stat-today-upload').textContent   = s.todayUploads;
-    }).catch(function() { bar.classList.add('hidden'); });
+    updateStatLabels();
+    document.getElementById('stat-total-count').textContent = '…';
+    callServer('serverAdminGetStats', projectCode, '').then(function(s) {
+      var total = state.tab === 'booking' ? s.totalBookings : s.totalUploads;
+      document.getElementById('stat-total-count').textContent = total;
+    }).catch(function() {});
   }
 
   function onDateChange(tab) {
@@ -1112,11 +1113,7 @@ var Admin = (function() {
     var toId   = tab === 'booking' ? 'booking-date-to'   : 'upload-date-to';
     var from   = document.getElementById(fromId).value;
     var to     = document.getElementById(toId).value;
-    if (from && !to) {
-      document.getElementById(toId).value = from;
-    }
-    var targetDate = from ? from.replace(/-/g, '/') : '';
-    loadStats(pc, targetDate);
+    if (from && !to) document.getElementById(toId).value = from;
     query();
   }
 
@@ -1226,6 +1223,8 @@ var Admin = (function() {
 
   function renderTable(data) {
     document.getElementById('result-count').textContent = data.length;
+    var periodEl = document.getElementById('stat-period-count');
+    if (periodEl) periodEl.textContent = data.length;
     var head = document.getElementById('table-head');
     var body = document.getElementById('table-body');
     head.innerHTML = ''; body.innerHTML = '';
