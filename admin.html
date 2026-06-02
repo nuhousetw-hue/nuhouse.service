@@ -119,12 +119,15 @@ input,select{font:inherit;}
 /* Result bar */
 .result-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:.5rem;}
 .result-count{font-size:.9rem;color:var(--text-muted);}
-.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:1rem;}
-.stat-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:.75rem 1rem;text-align:center;}
-.stat-card-label{font-size:.72rem;color:var(--text-muted);margin-bottom:.2rem;}
-.stat-card-value{font-size:1.4rem;font-weight:700;color:var(--primary);}
-.stat-card-sub{font-size:.7rem;color:var(--text-muted);}
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.1rem;}
+.stat-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1rem 1.1rem;text-align:center;}
+.stat-card-label{font-size:.82rem;font-weight:600;color:var(--text-muted);margin-bottom:.3rem;}
+.stat-card-value{font-size:2rem;font-weight:800;color:var(--primary);line-height:1.1;}
+.stat-card-sub{font-size:.75rem;color:var(--text-muted);margin-top:.2rem;}
 @media(max-width:640px){.stats-bar{grid-template-columns:repeat(2,1fr);}}
+.sort-th{cursor:pointer;user-select:none;}
+.sort-th:hover{background:rgba(176,16,32,.08);}
+.sort-icon{margin-left:.3rem;font-size:.7rem;color:var(--text-muted);}
 .btn-dl-file{display:inline-block;background:var(--primary);color:#fff;border-radius:4px;padding:.2rem .6rem;font-size:.78rem;font-weight:600;text-decoration:none;white-space:nowrap;}
 .btn-dl-file:hover{background:var(--primary-dk);}
 .result-count strong{color:var(--text);font-size:1rem;}
@@ -475,17 +478,17 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <!-- 預約篩選 -->
     <div id="filter-booking" class="filter-bar">
       <label>預約日期</label>
-      <input type="date" id="booking-date-from"/>
+      <input type="date" id="booking-date-from" onchange="Admin.onDateChange('booking')"/>
       <span class="filter-sep">～</span>
-      <input type="date" id="booking-date-to"/>
+      <input type="date" id="booking-date-to" onchange="Admin.onDateChange('booking')"/>
       <label style="margin-left:.5rem">狀態</label>
-      <select id="booking-status">
+      <select id="booking-status" onchange="Admin.query()">
         <option value="">全部</option>
         <option value="已預約">已預約</option>
         <option value="已取消">已取消</option>
       </select>
       <label style="margin-left:.5rem">服務項目</label>
-      <select id="booking-service">
+      <select id="booking-service" onchange="Admin.query()">
         <option value="">全部</option>
       </select>
       <button class="btn-query" onclick="Admin.query()">查詢</button>
@@ -495,9 +498,9 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <!-- 上傳篩選 -->
     <div id="filter-upload" class="filter-bar hidden">
       <label>上傳日期</label>
-      <input type="date" id="upload-date-from"/>
+      <input type="date" id="upload-date-from" onchange="Admin.onDateChange('upload')"/>
       <span class="filter-sep">～</span>
-      <input type="date" id="upload-date-to"/>
+      <input type="date" id="upload-date-to" onchange="Admin.onDateChange('upload')"/>
       <button class="btn-query" onclick="Admin.query()">查詢</button>
       <button class="btn-reset" onclick="Admin.resetFilters()">清除</button>
     </div>
@@ -692,22 +695,22 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       <div class="stat-card">
         <div class="stat-card-label">預約總筆數</div>
         <div class="stat-card-value" id="stat-total-booking">—</div>
-        <div class="stat-card-sub">已預約</div>
+        <div class="stat-card-sub">所有已預約</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">本月預約</div>
-        <div class="stat-card-value" id="stat-month-booking">—</div>
-        <div class="stat-card-sub">本月已預約</div>
+        <div class="stat-card-label">今日預約</div>
+        <div class="stat-card-value" id="stat-today-booking">—</div>
+        <div class="stat-card-sub" id="stat-today-label">今天</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-label">上傳總筆數</div>
         <div class="stat-card-value" id="stat-total-upload">—</div>
-        <div class="stat-card-sub">客戶上傳</div>
+        <div class="stat-card-sub">所有上傳</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">本月上傳</div>
-        <div class="stat-card-value" id="stat-month-upload">—</div>
-        <div class="stat-card-sub">本月上傳</div>
+        <div class="stat-card-label">今日上傳</div>
+        <div class="stat-card-value" id="stat-today-upload">—</div>
+        <div class="stat-card-sub" id="stat-upload-today-label">今天</div>
       </div>
     </div>
 
@@ -1083,20 +1086,38 @@ var Admin = (function() {
     updateMsLabel(id);
   }
 
-  function loadStats(projectCode) {
+  var sortState = { col: -1, dir: 1 };
+
+  function loadStats(projectCode, targetDate) {
     var bar = document.getElementById('stats-bar');
-    ['stat-total-booking','stat-month-booking','stat-total-upload','stat-month-upload'].forEach(function(id) {
+    ['stat-total-booking','stat-today-booking','stat-total-upload','stat-today-upload'].forEach(function(id) {
       document.getElementById(id).textContent = '…';
     });
     bar.classList.remove('hidden');
-    callServer('serverAdminGetStats', projectCode).then(function(s) {
-      document.getElementById('stat-total-booking').textContent = s.totalBookings;
-      document.getElementById('stat-month-booking').textContent = s.monthBookings;
-      document.getElementById('stat-total-upload').textContent  = s.totalUploads;
-      document.getElementById('stat-month-upload').textContent  = s.monthUploads;
-    }).catch(function() {
-      bar.classList.add('hidden');
-    });
+    var label = targetDate || '今天';
+    document.getElementById('stat-today-label').textContent = label;
+    document.getElementById('stat-upload-today-label').textContent = label;
+    callServer('serverAdminGetStats', projectCode, targetDate || '').then(function(s) {
+      document.getElementById('stat-total-booking').textContent  = s.totalBookings;
+      document.getElementById('stat-today-booking').textContent  = s.todayBookings;
+      document.getElementById('stat-total-upload').textContent   = s.totalUploads;
+      document.getElementById('stat-today-upload').textContent   = s.todayUploads;
+    }).catch(function() { bar.classList.add('hidden'); });
+  }
+
+  function onDateChange(tab) {
+    var pc = document.getElementById('select-project').value;
+    if (!pc) return;
+    var fromId = tab === 'booking' ? 'booking-date-from' : 'upload-date-from';
+    var toId   = tab === 'booking' ? 'booking-date-to'   : 'upload-date-to';
+    var from   = document.getElementById(fromId).value;
+    var to     = document.getElementById(toId).value;
+    if (from && !to) {
+      document.getElementById(toId).value = from;
+    }
+    var targetDate = from ? from.replace(/-/g, '/') : '';
+    loadStats(pc, targetDate);
+    query();
   }
 
   function loadUnitOptions(projectCode) {
@@ -1183,19 +1204,44 @@ var Admin = (function() {
     if (cur) sel.value = cur;
   }
 
+  function makeSortTh(label, col) {
+    var icon = sortState.col === col ? (sortState.dir === 1 ? ' ▲' : ' ▼') : ' ⇅';
+    return '<th class="sort-th" onclick="Admin.doSort(' + col + ')">' + label + '<span class="sort-icon">' + icon + '</span></th>';
+  }
+
+  function doSort(col) {
+    if (sortState.col === col) sortState.dir *= -1;
+    else { sortState.col = col; sortState.dir = 1; }
+    renderTable(state.data);
+  }
+
+  function getSortedData(data, keys) {
+    if (sortState.col < 0 || sortState.col >= keys.length) return data.slice();
+    var key = keys[sortState.col];
+    return data.slice().sort(function(a, b) {
+      var av = String(a[key] || ''), bv = String(b[key] || '');
+      return av < bv ? -sortState.dir : av > bv ? sortState.dir : 0;
+    });
+  }
+
   function renderTable(data) {
     document.getElementById('result-count').textContent = data.length;
     var head = document.getElementById('table-head');
     var body = document.getElementById('table-body');
     head.innerHTML = ''; body.innerHTML = '';
     if (!data.length) {
-      var cols = state.tab === 'booking' ? 10 : state.tab === 'unbooked' ? 6 : 6;
+      var cols = state.tab === 'booking' ? 10 : state.tab === 'unbooked' ? 6 : 7;
       body.innerHTML = '<tr class="empty-row"><td colspan="' + cols + '">查無符合條件的資料</td></tr>';
       return;
     }
     if (state.tab === 'booking') {
-      head.innerHTML = '<tr><th>#</th><th>建立時間</th><th>客戶姓名</th><th>戶號</th><th>身份證字號</th><th>服務項目</th><th>方式</th><th>預約日期</th><th>預約時段</th><th>狀態</th></tr>';
-      data.forEach(function(r, i) {
+      var bKeys = ['_no','createdAt','name','unit','idCard','serviceType','method','date','time','status'];
+      var sorted = getSortedData(data, bKeys);
+      head.innerHTML = '<tr><th>#</th>' +
+        makeSortTh('建立時間',1) + makeSortTh('客戶姓名',2) + makeSortTh('戶號',3) +
+        makeSortTh('身份證字號',4) + makeSortTh('服務項目',5) + makeSortTh('方式',6) +
+        makeSortTh('預約日期',7) + makeSortTh('預約時段',8) + makeSortTh('狀態',9) + '</tr>';
+      sorted.forEach(function(r, i) {
         var tr = document.createElement('tr');
         var cls = r.status === '已預約' ? 'badge-booked' : 'badge-cancelled';
         tr.innerHTML =
@@ -1212,8 +1258,12 @@ var Admin = (function() {
         body.appendChild(tr);
       });
     } else if (state.tab === 'upload') {
-      head.innerHTML = '<tr><th>#</th><th>上傳時間</th><th>客戶姓名</th><th>戶號</th><th>身份證字號</th><th>檔案名稱</th><th>下載</th></tr>';
-      data.forEach(function(r, i) {
+      var uKeys = ['_no','createdAt','name','unit','idCard','fileName'];
+      var sortedU = getSortedData(data, uKeys);
+      head.innerHTML = '<tr><th>#</th>' +
+        makeSortTh('上傳時間',1) + makeSortTh('客戶姓名',2) + makeSortTh('戶號',3) +
+        makeSortTh('身份證字號',4) + makeSortTh('檔案名稱',5) + '<th>下載</th></tr>';
+      sortedU.forEach(function(r, i) {
         var tr = document.createElement('tr');
         var dlBtn = r.fileId
           ? '<a href="https://drive.google.com/uc?export=download&id=' + esc(r.fileId) + '" target="_blank" rel="noopener" class="btn-dl-file">下載</a>'
@@ -1229,8 +1279,12 @@ var Admin = (function() {
         body.appendChild(tr);
       });
     } else {
-      head.innerHTML = '<tr><th>#</th><th>客戶姓名</th><th>戶號</th><th>戶型</th><th>樓層</th><th>身份證字號</th></tr>';
-      data.forEach(function(r, i) {
+      var uBKeys = ['_no','name','unit','unitType','floor','idCard'];
+      var sortedB = getSortedData(data, uBKeys);
+      head.innerHTML = '<tr><th>#</th>' +
+        makeSortTh('客戶姓名',1) + makeSortTh('戶號',2) + makeSortTh('戶型',3) +
+        makeSortTh('樓層',4) + makeSortTh('身份證字號',5) + '</tr>';
+      sortedB.forEach(function(r, i) {
         var tr = document.createElement('tr');
         tr.innerHTML =
           '<td>' + (i+1) + '</td>' +
@@ -1957,7 +2011,7 @@ var Admin = (function() {
     if (!e.target.closest('.ms-wrap')) closeAllMs();
   });
 
-  return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs,
+  return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, onDateChange, doSort,
            saveSettings, switchStgTab,
            loadSlotCal, slotCalNav, selectSlotDate, closeDayPanel,
            showSlotEditForm, hideSlotEditForm, saveSlotEdit, deleteSlotItem,
