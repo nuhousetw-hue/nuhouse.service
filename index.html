@@ -155,6 +155,18 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .file-size{font-size:.78rem;color:var(--text-muted);flex-shrink:0;}
 .btn-download{display:inline-flex;align-items:center;gap:.4rem;background:var(--primary);color:#fff;border:none;padding:.45rem .9rem;border-radius:6px;font-size:.82rem;font-weight:600;flex-shrink:0;text-decoration:none;transition:background .2s;}
 .btn-download:hover{background:var(--primary-lt);}
+.btn-preview{display:inline-flex;align-items:center;gap:.35rem;background:#fff;color:var(--primary);border:1.5px solid var(--primary);padding:.43rem .8rem;border-radius:6px;font-size:.82rem;font-weight:600;flex-shrink:0;cursor:pointer;transition:background .2s;}
+.btn-preview:hover{background:#fff0f1;}
+.file-actions{display:flex;gap:.5rem;flex-shrink:0;}
+.pdf-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;}
+.pdf-modal.hidden{display:none;}
+.pdf-modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.65);}
+.pdf-modal-content{position:relative;width:92vw;height:88vh;max-width:860px;background:#fff;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+.pdf-modal-header{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;background:var(--primary);color:#fff;flex-shrink:0;}
+.pdf-modal-title{font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pdf-modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:6px;font-size:1.1rem;cursor:pointer;flex-shrink:0;}
+.pdf-modal-close:hover{background:rgba(255,255,255,.35);}
+.pdf-modal-content iframe{flex:1;width:100%;border:none;}
 .drop-zone{margin:.5rem 1.5rem 1rem;border:2px dashed var(--border);border-radius:var(--radius);padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;color:var(--text-muted);}
 .drop-zone svg{margin:0 auto .75rem;color:var(--primary);}
 .drop-zone p{font-size:.95rem;font-weight:500;color:var(--text);}
@@ -449,7 +461,9 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
   .unit-card{padding:1.5rem .75rem;}
   .file-list{padding:.75rem 1rem 1rem;}
   .file-item{flex-wrap:wrap;gap:.65rem;padding:.8rem .9rem;}
-  .btn-download{width:100%;justify-content:center;min-height:44px;}
+  .file-actions{width:100%;}
+  .btn-download,.btn-preview{flex:1;justify-content:center;min-height:44px;}
+  .pdf-modal-content{width:100vw;height:100vh;border-radius:0;}
   .drop-zone{margin:.5rem .75rem 1rem;padding:1.75rem 1rem;}
   #upload-queue,.upload-history-wrap{padding:0 .75rem;}
   .booking-wrap{padding:.85rem;}
@@ -1319,14 +1333,35 @@ var App = (function() {
   function buildFileItem(f) {
     var ext = (f.ext || '').toLowerCase();
     var cls = ext === 'pdf' ? 'pdf' : (ext === 'dwg' || ext === 'dxf') ? 'cad' : 'other';
+    var isPdf = ext === 'pdf';
     var div = document.createElement('div');
     div.className = 'file-item';
+    var previewBtn = isPdf && f.fileId
+      ? '<button class="btn-preview" onclick="App.openPdfPreview(\'' + f.fileId + '\',\'' + esc(f.name) + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>預覽</button>'
+      : '';
     div.innerHTML =
       '<div class="file-icon ' + cls + '">' + (ext.toUpperCase() || 'FILE') + '</div>' +
       '<span class="file-name">' + esc(f.name) + '</span>' +
       (f.size ? '<span class="file-size">' + fmtSize(f.size) + '</span>' : '') +
-      '<a href="' + f.downloadUrl + '" target="_blank" rel="noopener" class="btn-download"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下載</a>';
+      '<div class="file-actions">' +
+        previewBtn +
+        '<a href="' + f.downloadUrl + '" target="_blank" rel="noopener" class="btn-download"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下載</a>' +
+      '</div>';
     return div;
+  }
+
+  function openPdfPreview(fileId, fileName) {
+    var url = 'https://drive.google.com/file/d/' + fileId + '/preview';
+    document.getElementById('pdf-modal-title').textContent = fileName || '文件預覽';
+    document.getElementById('pdf-preview-frame').src = url;
+    document.getElementById('pdf-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePdfPreview() {
+    document.getElementById('pdf-modal').classList.add('hidden');
+    document.getElementById('pdf-preview-frame').src = '';
+    document.body.style.overflow = '';
   }
 
   var onDragOver  = function(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); };
@@ -1647,10 +1682,23 @@ var App = (function() {
   return { init, login, logout, goTo, backToUnits, onDragOver, onDragLeave, onDrop, onFileSelect,
            switchService, selectSlot, selectMethod, confirmBooking, showCancelConfirm, clearCancel, doCancelBooking,
            modifyBooking, cancelModify, switchCalMonth, selectDate,
-           togglePhotos, openLightbox, closeLightbox };
+           togglePhotos, openLightbox, closeLightbox,
+           openPdfPreview, closePdfPreview };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
 </script>
+
+<!-- PDF 預覽 Modal -->
+<div id="pdf-modal" class="pdf-modal hidden">
+  <div class="pdf-modal-overlay" onclick="App.closePdfPreview()"></div>
+  <div class="pdf-modal-content">
+    <div class="pdf-modal-header">
+      <span class="pdf-modal-title" id="pdf-modal-title">文件預覽</span>
+      <button class="pdf-modal-close" onclick="App.closePdfPreview()">✕</button>
+    </div>
+    <iframe id="pdf-preview-frame" src="" allowfullscreen></iframe>
+  </div>
+</div>
 </body>
 </html>
