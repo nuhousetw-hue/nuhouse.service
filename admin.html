@@ -828,33 +828,70 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <div id="proxy-panel" class="hidden">
       <div class="proxy-card">
         <div class="cust-search-title">代客預約</div>
-        <div class="proxy-label">第一步：輸入戶號查詢客戶</div>
-        <div style="display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;">
-          <input type="text" id="proxy-unit-input" placeholder="例如 A1-02F" style="flex:1;min-width:140px;"/>
-          <button class="btn-query" onclick="Admin.proxySearchCustomer()">查詢</button>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem;margin-top:.85rem;">
+
+          <!-- 戶別 -->
+          <div class="cust-filter-field">
+            <label>戶別</label>
+            <select id="proxy-sel-unittype" onchange="Admin.proxyOnUnitTypeChange()">
+              <option value="">— 請選擇 —</option>
+            </select>
+          </div>
+
+          <!-- 樓層 -->
+          <div class="cust-filter-field">
+            <label>樓層</label>
+            <select id="proxy-sel-floor" onchange="Admin.proxyOnFloorChange()" disabled>
+              <option value="">— 請先選戶別 —</option>
+            </select>
+          </div>
+
+          <!-- 服務項目 -->
+          <div class="cust-filter-field" id="proxy-svc-field" style="display:none;">
+            <label>服務項目</label>
+            <select id="proxy-sel-svc" onchange="Admin.proxyOnSvcChange()">
+              <option value="">— 請選擇 —</option>
+            </select>
+          </div>
+
+          <!-- 日期 -->
+          <div class="cust-filter-field" id="proxy-date-field" style="display:none;">
+            <label>日期</label>
+            <select id="proxy-sel-date" onchange="Admin.proxyOnDateChange()">
+              <option value="">— 請選擇 —</option>
+            </select>
+          </div>
+
+          <!-- 時段 -->
+          <div class="cust-filter-field" id="proxy-time-field" style="display:none;">
+            <label>時段</label>
+            <select id="proxy-sel-time" onchange="Admin.proxyOnTimeChange()">
+              <option value="">— 請選擇 —</option>
+            </select>
+          </div>
+
+          <!-- 驗屋方式 -->
+          <div class="cust-filter-field" id="proxy-method-field" style="display:none;">
+            <label>驗屋方式</label>
+            <select id="proxy-sel-method" onchange="Admin.proxyOnMethodChange()">
+              <option value="自行驗屋">自行驗屋（營造廠陪同）</option>
+              <option value="驗屋公司">驗屋公司（無營造廠陪同）</option>
+            </select>
+          </div>
+
         </div>
-        <div id="proxy-customer-info" class="hidden proxy-customer-info">
+
+        <!-- 客戶資訊 -->
+        <div id="proxy-customer-info" class="hidden proxy-customer-info" style="margin-top:.85rem;">
           <div class="proxy-info-item">姓名：<strong id="proxy-name">—</strong></div>
           <div class="proxy-info-item">戶號：<strong id="proxy-unit-show">—</strong></div>
         </div>
-        <div id="proxy-step2" class="hidden">
-          <div class="proxy-label">第二步：選擇服務項目</div>
-          <div class="proxy-svc-list" id="proxy-svc-list"></div>
-          <div id="proxy-step3" class="hidden">
-            <div class="proxy-label">第三步：選擇時段</div>
-            <div class="proxy-slot-list" id="proxy-slot-list"></div>
-            <div id="proxy-step4" class="hidden">
-              <div class="proxy-label">第四步：驗屋方式</div>
-              <div class="proxy-method-row">
-                <button class="proxy-method-btn active" id="proxy-method-visit" onclick="Admin.proxySelectMethod('到場')">到場</button>
-                <button class="proxy-method-btn" id="proxy-method-video" onclick="Admin.proxySelectMethod('視訊')">視訊</button>
-              </div>
-            </div>
-            <div id="proxy-step-confirm" class="hidden" style="margin-top:1rem;">
-              <div id="proxy-summary" style="background:#f8f9fc;border-radius:8px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.9rem;line-height:1.8;"></div>
-              <button class="btn-save-settings" onclick="Admin.proxySubmit()">確認代客預約</button>
-            </div>
-          </div>
+
+        <!-- 確認摘要 -->
+        <div id="proxy-step-confirm" class="hidden" style="margin-top:1rem;">
+          <div id="proxy-summary" style="background:#f8f9fc;border-radius:8px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.9rem;line-height:1.9;border:1px solid var(--border);"></div>
+          <button class="btn-save-settings" onclick="Admin.proxySubmit()">確認代客預約</button>
+          <button class="btn-reset" style="margin-left:.65rem;" onclick="Admin.proxyReset()">重新選擇</button>
         </div>
       </div>
     </div>
@@ -1039,6 +1076,10 @@ var Admin = (function() {
       if (projectCode) loadSettingsPanel(projectCode);
     } else if (isCalendar) {
       loadCalendar();
+    } else if (isProxy) {
+      proxyReset();
+      var pc2 = document.getElementById('select-project').value;
+      if (pc2) proxyInitUnitOptions(pc2);
     } else if (isTable) {
       resetTable();
     }
@@ -1196,118 +1237,158 @@ var Admin = (function() {
   }
 
   // ── 代客預約 ──────────────────────────────────────────
-  var proxyState = { customer: null, slots: [], svc: null, slot: null, method: '到場' };
+  var proxyState = { customer: null, slots: [], allFloors: [] };
 
-  function proxyReset() {
-    proxyState = { customer: null, slots: [], svc: null, slot: null, method: '到場' };
-    document.getElementById('proxy-unit-input').value = '';
+  function proxyHideFrom(fromField) {
+    var fields = ['proxy-svc-field','proxy-date-field','proxy-time-field','proxy-method-field'];
+    var idx = fields.indexOf(fromField);
+    for (var i = idx; i < fields.length; i++) {
+      document.getElementById(fields[i]).style.display = 'none';
+      var sel = document.getElementById(fields[i]).querySelector('select');
+      if (sel) { sel.innerHTML = '<option value="">— 請選擇 —</option>'; }
+    }
     document.getElementById('proxy-customer-info').classList.add('hidden');
-    document.getElementById('proxy-step2').classList.add('hidden');
-    document.getElementById('proxy-step3').classList.add('hidden');
-    document.getElementById('proxy-step4').classList.add('hidden');
     document.getElementById('proxy-step-confirm').classList.add('hidden');
   }
 
-  function proxySearchCustomer() {
+  function proxyReset() {
+    proxyState = { customer: null, slots: [], allFloors: [] };
+    document.getElementById('proxy-sel-unittype').value = '';
+    var floorSel = document.getElementById('proxy-sel-floor');
+    floorSel.innerHTML = '<option value="">— 請先選戶別 —</option>';
+    floorSel.disabled = true;
+    proxyHideFrom('proxy-svc-field');
+  }
+
+  function proxyInitUnitOptions(projectCode) {
+    callServer('serverAdminGetUnitOptions', projectCode).then(function(opts) {
+      var utSel = document.getElementById('proxy-sel-unittype');
+      utSel.innerHTML = '<option value="">— 請選擇 —</option>';
+      (opts.unitTypes || []).forEach(function(u) {
+        var o = document.createElement('option'); o.value = u; o.textContent = u; utSel.appendChild(o);
+      });
+      proxyState.allFloors = opts.floors || [];
+    });
+  }
+
+  function proxyOnUnitTypeChange() {
+    var ut = document.getElementById('proxy-sel-unittype').value;
+    var floorSel = document.getElementById('proxy-sel-floor');
+    proxyHideFrom('proxy-svc-field');
+    if (!ut) { floorSel.innerHTML = '<option value="">— 請先選戶別 —</option>'; floorSel.disabled = true; return; }
+    floorSel.innerHTML = '<option value="">— 請選擇樓層 —</option>';
+    proxyState.allFloors.forEach(function(f) {
+      var o = document.createElement('option'); o.value = f; o.textContent = f; floorSel.appendChild(o);
+    });
+    floorSel.disabled = false;
+  }
+
+  function proxyOnFloorChange() {
     var pc   = document.getElementById('select-project').value;
-    var unit = document.getElementById('proxy-unit-input').value.trim();
-    if (!pc)   { showToast('請先選擇建案', 'error'); return; }
-    if (!unit) { showToast('請輸入戶號', 'error'); return; }
+    var ut   = document.getElementById('proxy-sel-unittype').value;
+    var fl   = document.getElementById('proxy-sel-floor').value;
+    if (!ut || !fl) return;
+    var unit = ut + '-' + fl;
+    proxyHideFrom('proxy-svc-field');
     showLoading(true);
     callServer('serverAdminGetCustomerByUnit', pc, unit)
       .then(function(c) {
-        showLoading(false);
-        if (!c) { showToast('查無此戶號客戶', 'error'); return; }
+        if (!c) { showLoading(false); showToast('查無此戶號客戶（' + unit + '）', 'error'); return; }
         proxyState.customer = c;
-        document.getElementById('proxy-name').textContent     = c.name;
+        document.getElementById('proxy-name').textContent      = c.name;
         document.getElementById('proxy-unit-show').textContent = c.unit;
         document.getElementById('proxy-customer-info').classList.remove('hidden');
-        // 載入可用時段
         return callServer('serverGetBookingSlots', pc, c.unit);
       })
       .then(function(slots) {
+        showLoading(false);
         if (!slots) return;
-        proxyState.slots = slots;
-        // 整理服務項目
+        proxyState.slots = slots.filter(function(s) { return s.available; });
         var svcs = {};
-        slots.forEach(function(s) { if (s.available) svcs[s.serviceType] = 1; });
-        var svcList = document.getElementById('proxy-svc-list');
-        svcList.innerHTML = '';
-        if (!Object.keys(svcs).length) {
-          svcList.innerHTML = '<span style="color:var(--text-muted);font-size:.88rem;">目前無可預約時段</span>';
-        } else {
-          Object.keys(svcs).forEach(function(svc) {
-            var btn = document.createElement('button');
-            btn.className = 'proxy-svc-btn';
-            btn.textContent = svc;
-            btn.onclick = function() { proxySelectSvc(svc); };
-            svcList.appendChild(btn);
-          });
-        }
-        document.getElementById('proxy-step2').classList.remove('hidden');
-        document.getElementById('proxy-step3').classList.add('hidden');
-        document.getElementById('proxy-step-confirm').classList.add('hidden');
+        proxyState.slots.forEach(function(s) { svcs[s.serviceType] = 1; });
+        var svcSel = document.getElementById('proxy-sel-svc');
+        svcSel.innerHTML = '<option value="">— 請選擇 —</option>';
+        Object.keys(svcs).forEach(function(svc) {
+          var o = document.createElement('option'); o.value = svc; o.textContent = svc; svcSel.appendChild(o);
+        });
+        document.getElementById('proxy-svc-field').style.display = '';
       })
-      .catch(function() { showLoading(false); showToast('查詢失敗，請稍後再試', 'error'); });
+      .catch(function() { showLoading(false); showToast('查詢失敗', 'error'); });
   }
 
-  function proxySelectSvc(svc) {
-    proxyState.svc = svc; proxyState.slot = null;
-    document.querySelectorAll('.proxy-svc-btn').forEach(function(b) {
-      b.classList.toggle('active', b.textContent === svc);
+  function proxyOnSvcChange() {
+    var svc = document.getElementById('proxy-sel-svc').value;
+    proxyHideFrom('proxy-date-field');
+    if (!svc) return;
+    var dates = {};
+    proxyState.slots.filter(function(s) { return s.serviceType === svc; })
+      .sort(function(a,b) { return a.date.localeCompare(b.date); })
+      .forEach(function(s) { dates[s.date] = 1; });
+    var dateSel = document.getElementById('proxy-sel-date');
+    dateSel.innerHTML = '<option value="">— 請選擇日期 —</option>';
+    Object.keys(dates).forEach(function(d) {
+      var o = document.createElement('option'); o.value = d; o.textContent = d; dateSel.appendChild(o);
     });
-    // 顯示該服務的可用時段
-    var filtered = proxyState.slots.filter(function(s) { return s.serviceType === svc && s.available; });
-    var slotList = document.getElementById('proxy-slot-list');
-    slotList.innerHTML = '';
-    filtered.sort(function(a,b) { return a.date.localeCompare(b.date) || a.time.localeCompare(b.time); });
-    filtered.forEach(function(s) {
-      var btn = document.createElement('button');
-      btn.className = 'proxy-slot-btn';
-      btn.innerHTML = '<div style="font-weight:700">' + esc(s.date) + '</div><div>' + esc(s.time) + '</div>';
-      btn.onclick = function() { proxySelectSlot(s, btn); };
-      slotList.appendChild(btn);
+    document.getElementById('proxy-date-field').style.display = '';
+  }
+
+  function proxyOnDateChange() {
+    var svc  = document.getElementById('proxy-sel-svc').value;
+    var date = document.getElementById('proxy-sel-date').value;
+    proxyHideFrom('proxy-time-field');
+    if (!date) return;
+    var times = proxyState.slots.filter(function(s) { return s.serviceType === svc && s.date === date; })
+      .sort(function(a,b) { return a.time.localeCompare(b.time); });
+    var timeSel = document.getElementById('proxy-sel-time');
+    timeSel.innerHTML = '<option value="">— 請選擇時段 —</option>';
+    times.forEach(function(s) {
+      var o = document.createElement('option'); o.value = s.time; o.textContent = s.time; timeSel.appendChild(o);
     });
-    document.getElementById('proxy-step3').classList.remove('hidden');
-    document.getElementById('proxy-step4').classList.add('hidden');
+    document.getElementById('proxy-time-field').style.display = '';
+  }
+
+  function proxyOnTimeChange() {
+    var svc  = document.getElementById('proxy-sel-svc').value;
+    var time = document.getElementById('proxy-sel-time').value;
+    document.getElementById('proxy-method-field').style.display = 'none';
     document.getElementById('proxy-step-confirm').classList.add('hidden');
-  }
-
-  function proxySelectSlot(slot, btn) {
-    proxyState.slot = slot;
-    document.querySelectorAll('.proxy-slot-btn').forEach(function(b) { b.classList.remove('active'); });
-    btn.classList.add('active');
-    var isYanwu = (slot.serviceType || '').indexOf('驗屋') >= 0;
-    document.getElementById('proxy-step4').classList.toggle('hidden', !isYanwu);
+    if (!time) return;
+    var isYanwu = svc.indexOf('驗屋') >= 0;
+    if (isYanwu) {
+      document.getElementById('proxy-method-field').style.display = '';
+    }
     proxyUpdateSummary();
     document.getElementById('proxy-step-confirm').classList.remove('hidden');
   }
 
-  function proxySelectMethod(method) {
-    proxyState.method = method;
-    document.getElementById('proxy-method-visit').classList.toggle('active', method === '到場');
-    document.getElementById('proxy-method-video').classList.toggle('active', method === '視訊');
-    proxyUpdateSummary();
-  }
+  function proxyOnMethodChange() { proxyUpdateSummary(); }
 
   function proxyUpdateSummary() {
-    var c = proxyState.customer, s = proxyState.slot;
-    if (!c || !s) return;
-    var isYanwu = (s.serviceType || '').indexOf('驗屋') >= 0;
+    var c    = proxyState.customer;
+    var svc  = document.getElementById('proxy-sel-svc').value;
+    var date = document.getElementById('proxy-sel-date').value;
+    var time = document.getElementById('proxy-sel-time').value;
+    var isYanwu = svc.indexOf('驗屋') >= 0;
+    var method = isYanwu ? document.getElementById('proxy-sel-method').value : '';
+    if (!c || !svc || !date || !time) return;
     document.getElementById('proxy-summary').innerHTML =
       '客戶：<strong>' + esc(c.name) + '</strong>（' + esc(c.unit) + '）<br>' +
-      '服務項目：<strong>' + esc(s.serviceType) + '</strong><br>' +
-      '預約時間：<strong>' + esc(s.date) + ' ' + esc(s.time) + '</strong>' +
-      (isYanwu ? '<br>驗屋方式：<strong>' + esc(proxyState.method) + '</strong>' : '');
+      '服務項目：<strong>' + esc(svc) + '</strong><br>' +
+      '預約時間：<strong>' + esc(date) + '　' + esc(time) + '</strong>' +
+      (isYanwu ? '<br>驗屋方式：<strong>' + esc(method) + '</strong>' : '');
   }
 
   function proxySubmit() {
-    var pc = document.getElementById('select-project').value;
-    var c  = proxyState.customer, s = proxyState.slot;
-    if (!pc || !c || !s) { showToast('資料不完整', 'error'); return; }
-    var isYanwu = (s.serviceType || '').indexOf('驗屋') >= 0;
+    var pc   = document.getElementById('select-project').value;
+    var c    = proxyState.customer;
+    var svc  = document.getElementById('proxy-sel-svc').value;
+    var date = document.getElementById('proxy-sel-date').value;
+    var time = document.getElementById('proxy-sel-time').value;
+    if (!pc || !c || !svc || !date || !time) { showToast('資料不完整，請確認所有欄位', 'error'); return; }
+    var isYanwu = svc.indexOf('驗屋') >= 0;
+    var method  = isYanwu ? document.getElementById('proxy-sel-method').value : '';
     showLoading(true);
-    callServer('serverCreateBooking', pc, c.idCard, c.unit, s.serviceType, s.date, s.time, c.name, null, null, isYanwu ? proxyState.method : '')
+    callServer('serverCreateBooking', pc, c.idCard, c.unit, svc, date, time, c.name, null, null, method)
       .then(function(res) {
         showLoading(false);
         if (res && res.success) {
@@ -2222,7 +2303,9 @@ var Admin = (function() {
            toggleSidebar, toggleGroup,
            queryProfile, resetProfileFilter,
            queryBilling, resetBillingFilter,
-           proxySearchCustomer, proxySelectSvc, proxySelectSlot, proxySelectMethod, proxySubmit };
+           proxyOnUnitTypeChange, proxyOnFloorChange, proxyOnSvcChange,
+           proxyOnDateChange, proxyOnTimeChange, proxyOnMethodChange,
+           proxyReset, proxySubmit };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
