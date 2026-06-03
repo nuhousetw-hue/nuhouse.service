@@ -67,6 +67,21 @@ input,select{font:inherit;}
 
 /* Customer search panels */
 .cust-search-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1.25rem 1.5rem;margin-bottom:.85rem;}
+.proxy-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1.25rem 1.5rem;margin-bottom:.85rem;}
+.proxy-customer-info{background:#f0faf0;border:1.5px solid #66bb6a;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;}
+.proxy-info-item{font-size:.9rem;} .proxy-info-item strong{color:var(--primary);}
+.proxy-svc-list{display:flex;gap:.65rem;flex-wrap:wrap;margin:.65rem 0;}
+.proxy-svc-btn{border:1.5px solid var(--border);border-radius:8px;padding:.5rem 1.1rem;background:#fff;cursor:pointer;font-size:.9rem;font-weight:600;transition:all .15s;}
+.proxy-svc-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.proxy-slot-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.55rem;margin:.65rem 0;}
+.proxy-slot-btn{border:1.5px solid var(--border);border-radius:8px;padding:.55rem .75rem;background:#fff;cursor:pointer;font-size:.85rem;text-align:center;transition:all .15s;}
+.proxy-slot-btn:hover:not(:disabled){border-color:var(--primary);background:#fff8f8;}
+.proxy-slot-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.proxy-slot-btn:disabled{opacity:.4;cursor:not-allowed;}
+.proxy-method-row{display:flex;gap:.65rem;margin:.65rem 0;}
+.proxy-method-btn{border:1.5px solid var(--border);border-radius:8px;padding:.5rem 1.1rem;background:#fff;cursor:pointer;font-size:.9rem;transition:all .15s;}
+.proxy-method-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.proxy-label{font-size:.82rem;font-weight:700;color:var(--text-muted);margin:.85rem 0 .35rem;}
 .cust-search-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1.5px solid var(--border);}
 .cust-filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.65rem;margin-bottom:.85rem;}
 .cust-filter-field{display:flex;flex-direction:column;gap:.28rem;}
@@ -424,6 +439,14 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </button>
       <div class="sb-group-items" id="sg-calendar">
         <button class="sb-item" id="tab-calendar" onclick="Admin.switchTab('calendar')">行事曆</button>
+      </div>
+    </div>
+    <div class="sb-group">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('proxy')">
+        <span>代客預約</span><span class="sb-group-arrow" id="sg-arrow-proxy">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-proxy">
+        <button class="sb-item" id="tab-proxy" onclick="Admin.switchTab('proxy')">代客預約</button>
       </div>
     </div>
     <div class="sb-group">
@@ -795,6 +818,41 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+    <!-- 代客預約 -->
+    <div id="proxy-panel" class="hidden">
+      <div class="proxy-card">
+        <div class="cust-search-title">代客預約</div>
+        <div class="proxy-label">第一步：輸入戶號查詢客戶</div>
+        <div style="display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="proxy-unit-input" placeholder="例如 A1-02F" style="flex:1;min-width:140px;"/>
+          <button class="btn-query" onclick="Admin.proxySearchCustomer()">查詢</button>
+        </div>
+        <div id="proxy-customer-info" class="hidden proxy-customer-info">
+          <div class="proxy-info-item">姓名：<strong id="proxy-name">—</strong></div>
+          <div class="proxy-info-item">戶號：<strong id="proxy-unit-show">—</strong></div>
+        </div>
+        <div id="proxy-step2" class="hidden">
+          <div class="proxy-label">第二步：選擇服務項目</div>
+          <div class="proxy-svc-list" id="proxy-svc-list"></div>
+          <div id="proxy-step3" class="hidden">
+            <div class="proxy-label">第三步：選擇時段</div>
+            <div class="proxy-slot-list" id="proxy-slot-list"></div>
+            <div id="proxy-step4" class="hidden">
+              <div class="proxy-label">第四步：驗屋方式</div>
+              <div class="proxy-method-row">
+                <button class="proxy-method-btn active" id="proxy-method-visit" onclick="Admin.proxySelectMethod('到場')">到場</button>
+                <button class="proxy-method-btn" id="proxy-method-video" onclick="Admin.proxySelectMethod('視訊')">視訊</button>
+              </div>
+            </div>
+            <div id="proxy-step-confirm" class="hidden" style="margin-top:1rem;">
+              <div id="proxy-summary" style="background:#f8f9fc;border-radius:8px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.9rem;line-height:1.8;"></div>
+              <button class="btn-save-settings" onclick="Admin.proxySubmit()">確認代客預約</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -936,7 +994,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing'];
+    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -945,7 +1003,8 @@ var Admin = (function() {
     var isCalendar = tab === 'calendar';
     var isProfile  = tab === 'profile';
     var isBilling  = tab === 'billing';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling;
+    var isProxy    = tab === 'proxy';
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -953,6 +1012,7 @@ var Admin = (function() {
     document.getElementById('calendar-panel').classList.toggle('hidden', !isCalendar);
     document.getElementById('profile-panel').classList.toggle('hidden', !isProfile);
     document.getElementById('billing-panel').classList.toggle('hidden', !isBilling);
+    document.getElementById('proxy-panel').classList.toggle('hidden', !isProxy);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
     var showStats = (tab === 'booking' || tab === 'upload');
@@ -1115,6 +1175,131 @@ var Admin = (function() {
     var to     = document.getElementById(toId).value;
     if (from && !to) document.getElementById(toId).value = from;
     query();
+  }
+
+  // ── 代客預約 ──────────────────────────────────────────
+  var proxyState = { customer: null, slots: [], svc: null, slot: null, method: '到場' };
+
+  function proxyReset() {
+    proxyState = { customer: null, slots: [], svc: null, slot: null, method: '到場' };
+    document.getElementById('proxy-unit-input').value = '';
+    document.getElementById('proxy-customer-info').classList.add('hidden');
+    document.getElementById('proxy-step2').classList.add('hidden');
+    document.getElementById('proxy-step3').classList.add('hidden');
+    document.getElementById('proxy-step4').classList.add('hidden');
+    document.getElementById('proxy-step-confirm').classList.add('hidden');
+  }
+
+  function proxySearchCustomer() {
+    var pc   = document.getElementById('select-project').value;
+    var unit = document.getElementById('proxy-unit-input').value.trim();
+    if (!pc)   { showToast('請先選擇建案', 'error'); return; }
+    if (!unit) { showToast('請輸入戶號', 'error'); return; }
+    showLoading(true);
+    callServer('serverAdminGetCustomerByUnit', pc, unit)
+      .then(function(c) {
+        showLoading(false);
+        if (!c) { showToast('查無此戶號客戶', 'error'); return; }
+        proxyState.customer = c;
+        document.getElementById('proxy-name').textContent     = c.name;
+        document.getElementById('proxy-unit-show').textContent = c.unit;
+        document.getElementById('proxy-customer-info').classList.remove('hidden');
+        // 載入可用時段
+        return callServer('serverGetBookingSlots', pc, c.unit);
+      })
+      .then(function(slots) {
+        if (!slots) return;
+        proxyState.slots = slots;
+        // 整理服務項目
+        var svcs = {};
+        slots.forEach(function(s) { if (s.available) svcs[s.serviceType] = 1; });
+        var svcList = document.getElementById('proxy-svc-list');
+        svcList.innerHTML = '';
+        if (!Object.keys(svcs).length) {
+          svcList.innerHTML = '<span style="color:var(--text-muted);font-size:.88rem;">目前無可預約時段</span>';
+        } else {
+          Object.keys(svcs).forEach(function(svc) {
+            var btn = document.createElement('button');
+            btn.className = 'proxy-svc-btn';
+            btn.textContent = svc;
+            btn.onclick = function() { proxySelectSvc(svc); };
+            svcList.appendChild(btn);
+          });
+        }
+        document.getElementById('proxy-step2').classList.remove('hidden');
+        document.getElementById('proxy-step3').classList.add('hidden');
+        document.getElementById('proxy-step-confirm').classList.add('hidden');
+      })
+      .catch(function() { showLoading(false); showToast('查詢失敗，請稍後再試', 'error'); });
+  }
+
+  function proxySelectSvc(svc) {
+    proxyState.svc = svc; proxyState.slot = null;
+    document.querySelectorAll('.proxy-svc-btn').forEach(function(b) {
+      b.classList.toggle('active', b.textContent === svc);
+    });
+    // 顯示該服務的可用時段
+    var filtered = proxyState.slots.filter(function(s) { return s.serviceType === svc && s.available; });
+    var slotList = document.getElementById('proxy-slot-list');
+    slotList.innerHTML = '';
+    filtered.sort(function(a,b) { return a.date.localeCompare(b.date) || a.time.localeCompare(b.time); });
+    filtered.forEach(function(s) {
+      var btn = document.createElement('button');
+      btn.className = 'proxy-slot-btn';
+      btn.innerHTML = '<div style="font-weight:700">' + esc(s.date) + '</div><div>' + esc(s.time) + '</div>';
+      btn.onclick = function() { proxySelectSlot(s, btn); };
+      slotList.appendChild(btn);
+    });
+    document.getElementById('proxy-step3').classList.remove('hidden');
+    document.getElementById('proxy-step4').classList.add('hidden');
+    document.getElementById('proxy-step-confirm').classList.add('hidden');
+  }
+
+  function proxySelectSlot(slot, btn) {
+    proxyState.slot = slot;
+    document.querySelectorAll('.proxy-slot-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    var isYanwu = (slot.serviceType || '').indexOf('驗屋') >= 0;
+    document.getElementById('proxy-step4').classList.toggle('hidden', !isYanwu);
+    proxyUpdateSummary();
+    document.getElementById('proxy-step-confirm').classList.remove('hidden');
+  }
+
+  function proxySelectMethod(method) {
+    proxyState.method = method;
+    document.getElementById('proxy-method-visit').classList.toggle('active', method === '到場');
+    document.getElementById('proxy-method-video').classList.toggle('active', method === '視訊');
+    proxyUpdateSummary();
+  }
+
+  function proxyUpdateSummary() {
+    var c = proxyState.customer, s = proxyState.slot;
+    if (!c || !s) return;
+    var isYanwu = (s.serviceType || '').indexOf('驗屋') >= 0;
+    document.getElementById('proxy-summary').innerHTML =
+      '客戶：<strong>' + esc(c.name) + '</strong>（' + esc(c.unit) + '）<br>' +
+      '服務項目：<strong>' + esc(s.serviceType) + '</strong><br>' +
+      '預約時間：<strong>' + esc(s.date) + ' ' + esc(s.time) + '</strong>' +
+      (isYanwu ? '<br>驗屋方式：<strong>' + esc(proxyState.method) + '</strong>' : '');
+  }
+
+  function proxySubmit() {
+    var pc = document.getElementById('select-project').value;
+    var c  = proxyState.customer, s = proxyState.slot;
+    if (!pc || !c || !s) { showToast('資料不完整', 'error'); return; }
+    var isYanwu = (s.serviceType || '').indexOf('驗屋') >= 0;
+    showLoading(true);
+    callServer('serverCreateBooking', pc, c.idCard, c.unit, s.serviceType, s.date, s.time, c.name, null, null, isYanwu ? proxyState.method : '')
+      .then(function(res) {
+        showLoading(false);
+        if (res && res.success) {
+          showToast('代客預約成功！', 'success');
+          proxyReset();
+        } else {
+          showToast('預約失敗：' + ((res && res.message) || '未知錯誤'), 'error');
+        }
+      })
+      .catch(function() { showLoading(false); showToast('送出失敗，請稍後再試', 'error'); });
   }
 
   function loadUnitOptions(projectCode) {
@@ -2018,7 +2203,8 @@ var Admin = (function() {
            loadCalendar, calNav, exportCalPdf,
            toggleSidebar, toggleGroup,
            queryProfile, resetProfileFilter,
-           queryBilling, resetBillingFilter };
+           queryBilling, resetBillingFilter,
+           proxySearchCustomer, proxySelectSvc, proxySelectSlot, proxySelectMethod, proxySubmit };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
