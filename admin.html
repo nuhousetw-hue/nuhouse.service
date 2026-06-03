@@ -876,12 +876,10 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
             </select>
           </div>
 
-          <!-- 驗屋方式 -->
+          <!-- 服務方式 -->
           <div class="cust-filter-field" id="proxy-method-field" style="display:none;">
-            <label>驗屋方式</label>
+            <label id="proxy-method-label">方式</label>
             <select id="proxy-sel-method" onchange="Admin.proxyOnMethodChange()">
-              <option value="自行驗屋">自行驗屋（營造廠陪同）</option>
-              <option value="驗屋公司">驗屋公司（無營造廠陪同）</option>
             </select>
           </div>
 
@@ -1361,8 +1359,21 @@ var Admin = (function() {
     document.getElementById('proxy-method-field').style.display = 'none';
     document.getElementById('proxy-step-confirm').classList.add('hidden');
     if (!time) return;
-    var isYanwu = svc.indexOf('驗屋') >= 0;
+    var isYanwu  = svc.indexOf('驗屋') >= 0;
+    var isKebien = svc.indexOf('客變') >= 0;
+    var methodSel = document.getElementById('proxy-sel-method');
     if (isYanwu) {
+      document.getElementById('proxy-method-label').textContent = '驗屋方式';
+      methodSel.innerHTML =
+        '<option value="自行驗屋">自行驗屋（營造廠陪同）</option>' +
+        '<option value="驗屋公司">驗屋公司（無營造廠陪同）</option>';
+      document.getElementById('proxy-method-field').style.display = '';
+    } else if (isKebien) {
+      document.getElementById('proxy-method-label').textContent = '客變方式';
+      methodSel.innerHTML =
+        '<option value="僅選材選色">僅選材選色（不客變）</option>' +
+        '<option value="自行客變">自行客變</option>' +
+        '<option value="設計師陪同">設計師陪同</option>';
       document.getElementById('proxy-method-field').style.display = '';
     }
     proxyUpdateSummary();
@@ -1376,14 +1387,15 @@ var Admin = (function() {
     var svc  = document.getElementById('proxy-sel-svc').value;
     var date = document.getElementById('proxy-sel-date').value;
     var time = document.getElementById('proxy-sel-time').value;
-    var isYanwu = svc.indexOf('驗屋') >= 0;
-    var method = isYanwu ? document.getElementById('proxy-sel-method').value : '';
+    var needsMethod = svc.indexOf('驗屋') >= 0 || svc.indexOf('客變') >= 0;
+    var method = needsMethod ? document.getElementById('proxy-sel-method').value : '';
+    var methodLabel = svc.indexOf('驗屋') >= 0 ? '驗屋方式' : '客變方式';
     if (!c || !svc || !date || !time) return;
     document.getElementById('proxy-summary').innerHTML =
       '客戶：<strong>' + esc(c.name) + '</strong>（' + esc(c.unit) + '）<br>' +
       '服務項目：<strong>' + esc(svc) + '</strong><br>' +
       '預約時間：<strong>' + esc(date) + '　' + esc(time) + '</strong>' +
-      (isYanwu ? '<br>驗屋方式：<strong>' + esc(method) + '</strong>' : '');
+      (needsMethod && method ? '<br>' + methodLabel + '：<strong>' + esc(method) + '</strong>' : '');
   }
 
   function proxySubmit() {
@@ -1393,8 +1405,8 @@ var Admin = (function() {
     var date = document.getElementById('proxy-sel-date').value;
     var time = document.getElementById('proxy-sel-time').value;
     if (!pc || !c || !svc || !date || !time) { showToast('資料不完整，請確認所有欄位', 'error'); return; }
-    var isYanwu = svc.indexOf('驗屋') >= 0;
-    var method  = isYanwu ? document.getElementById('proxy-sel-method').value : '';
+    var needsMethod = svc.indexOf('驗屋') >= 0 || svc.indexOf('客變') >= 0;
+    var method = needsMethod ? document.getElementById('proxy-sel-method').value : '';
     showLoading(true);
     callServer('serverCreateBooking', pc, c.idCard, c.unit, svc, date, time, c.name, null, null, method)
       .then(function(res) {
