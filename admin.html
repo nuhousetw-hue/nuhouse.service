@@ -82,6 +82,12 @@ input,select{font:inherit;}
 .proxy-method-btn{border:1.5px solid var(--border);border-radius:8px;padding:.5rem 1.1rem;background:#fff;cursor:pointer;font-size:.9rem;transition:all .15s;}
 .proxy-method-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
 .proxy-label{font-size:.82rem;font-weight:700;color:var(--text-muted);margin:.85rem 0 .35rem;}
+#proxy-panel .cust-filter-field label{font-size:1rem;font-weight:700;}
+#proxy-panel select{font-size:1rem;padding:.5rem .7rem;}
+#proxy-panel .proxy-customer-info{font-size:1rem;}
+#proxy-panel .proxy-info-item{font-size:1rem;}
+#proxy-panel #proxy-summary{font-size:1rem;line-height:2;}
+#proxy-panel .btn-save-settings{font-size:1rem;padding:.6rem 1.8rem;}
 .cust-search-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1.5px solid var(--border);}
 .cust-filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.65rem;margin-bottom:.85rem;}
 .cust-filter-field{display:flex;flex-direction:column;gap:.28rem;}
@@ -1240,14 +1246,16 @@ var Admin = (function() {
   var proxyState = { customer: null, slots: [], allFloors: [] };
 
   function proxyHideFrom(fromField) {
-    var fields = ['proxy-svc-field','proxy-date-field','proxy-time-field','proxy-method-field'];
-    var idx = fields.indexOf(fromField);
-    for (var i = idx; i < fields.length; i++) {
-      document.getElementById(fields[i]).style.display = 'none';
-      var sel = document.getElementById(fields[i]).querySelector('select');
-      if (sel) { sel.innerHTML = '<option value="">— 請選擇 —</option>'; }
+    var resetFields = ['proxy-svc-field','proxy-date-field','proxy-time-field'];
+    var allFields   = ['proxy-svc-field','proxy-date-field','proxy-time-field','proxy-method-field'];
+    var idx = allFields.indexOf(fromField);
+    for (var i = idx; i < allFields.length; i++) {
+      document.getElementById(allFields[i]).style.display = 'none';
+      if (resetFields.indexOf(allFields[i]) >= 0) {
+        var sel = document.getElementById(allFields[i]).querySelector('select');
+        if (sel) sel.innerHTML = '<option value="">— 請選擇 —</option>';
+      }
     }
-    document.getElementById('proxy-customer-info').classList.add('hidden');
     document.getElementById('proxy-step-confirm').classList.add('hidden');
   }
 
