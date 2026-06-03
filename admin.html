@@ -134,7 +134,8 @@ input,select{font:inherit;}
 /* Result bar */
 .result-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:.5rem;}
 .result-count{font-size:.9rem;color:var(--text-muted);}
-.stats-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.1rem;max-width:480px;}
+.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.1rem;max-width:720px;}
+@media(max-width:640px){.stats-bar{grid-template-columns:repeat(3,1fr);}}
 .stat-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1rem 1.1rem;text-align:center;}
 .stat-card-label{font-size:.82rem;font-weight:600;color:var(--text-muted);margin-bottom:.3rem;}
 .stat-card-value{font-size:2rem;font-weight:800;color:var(--primary);line-height:1.1;}
@@ -716,14 +717,19 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <!-- 儀表板 -->
     <div class="stats-bar hidden" id="stats-bar">
       <div class="stat-card">
+        <div class="stat-card-label" id="stat-label-total">總數</div>
+        <div class="stat-card-value" id="stat-total-count">—</div>
+        <div class="stat-card-sub">所有紀錄</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label" id="stat-label-today">今日</div>
+        <div class="stat-card-value" id="stat-today-count">—</div>
+        <div class="stat-card-sub" id="stat-today-date">今天</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-card-label" id="stat-label-period">查詢期間</div>
         <div class="stat-card-value" id="stat-period-count">—</div>
         <div class="stat-card-sub" id="stat-sub-period">筆</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label" id="stat-label-total">總計</div>
-        <div class="stat-card-value" id="stat-total-count">—</div>
-        <div class="stat-card-sub">所有紀錄</div>
       </div>
     </div>
 
@@ -983,7 +989,10 @@ var Admin = (function() {
         } else {
           resetTable();
         }
-        if (sel.value) { loadUnitOptions(sel.value); loadStats(sel.value); }
+        if (sel.value) {
+          loadUnitOptions(sel.value);
+          if (state.tab === 'booking' || state.tab === 'upload') loadStats(sel.value);
+        }
         else { document.getElementById('stats-bar').classList.add('hidden'); }
       };
     });
@@ -1150,19 +1159,28 @@ var Admin = (function() {
 
   function updateStatLabels() {
     var isBooking = state.tab === 'booking';
+    document.getElementById('stat-label-total').textContent  = isBooking ? '預約總數'   : '上傳總數';
+    document.getElementById('stat-label-today').textContent  = isBooking ? '今日預約'   : '今日上傳';
     document.getElementById('stat-label-period').textContent = isBooking ? '查詢期間預約' : '查詢期間上傳';
-    document.getElementById('stat-label-total').textContent  = isBooking ? '預約總筆數'   : '上傳總筆數';
-    document.getElementById('stat-sub-period').textContent   = isBooking ? '筆預約'       : '筆上傳';
+    document.getElementById('stat-sub-period').textContent   = isBooking ? '筆預約'     : '筆上傳';
   }
 
   function loadStats(projectCode) {
     var bar = document.getElementById('stats-bar');
     bar.classList.remove('hidden');
     updateStatLabels();
-    document.getElementById('stat-total-count').textContent = '…';
-    callServer('serverAdminGetStats', projectCode, '').then(function(s) {
-      var total = state.tab === 'booking' ? s.totalBookings : s.totalUploads;
-      document.getElementById('stat-total-count').textContent = total;
+    ['stat-total-count','stat-today-count'].forEach(function(id) {
+      document.getElementById(id).textContent = '…';
+    });
+    var today = new Date();
+    var todayStr = today.getFullYear() + '/' +
+      String(today.getMonth()+1).padStart(2,'0') + '/' +
+      String(today.getDate()).padStart(2,'0');
+    document.getElementById('stat-today-date').textContent = todayStr;
+    callServer('serverAdminGetStats', projectCode, todayStr).then(function(s) {
+      var isBooking = state.tab === 'booking';
+      document.getElementById('stat-total-count').textContent = isBooking ? s.totalBookings : s.totalUploads;
+      document.getElementById('stat-today-count').textContent = isBooking ? s.todayBookings : s.todayUploads;
     }).catch(function() {});
   }
 
