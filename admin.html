@@ -833,7 +833,10 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <!-- 代客預約 -->
     <div id="proxy-panel" class="hidden">
       <div class="proxy-card">
-        <div class="cust-search-title">代客預約</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem;">
+          <div class="cust-search-title" style="margin-bottom:0;">代客預約</div>
+          <button class="btn-reset" onclick="Admin.proxyReset()">清除</button>
+        </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem;margin-top:.85rem;">
 
           <!-- 戶別 -->
@@ -1258,11 +1261,12 @@ var Admin = (function() {
   }
 
   function proxyReset() {
-    proxyState = { customer: null, slots: [], allFloors: [] };
+    proxyState = { customer: null, slots: [], allFloors: proxyState.allFloors };
     document.getElementById('proxy-sel-unittype').value = '';
     var floorSel = document.getElementById('proxy-sel-floor');
     floorSel.innerHTML = '<option value="">— 請先選戶別 —</option>';
     floorSel.disabled = true;
+    document.getElementById('proxy-customer-info').classList.add('hidden');
     proxyHideFrom('proxy-svc-field');
   }
 
