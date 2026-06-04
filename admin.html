@@ -463,6 +463,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       <div class="sb-group-items" id="sg-customer">
         <button class="sb-item" id="tab-profile" onclick="Admin.switchTab('profile')">基本資料</button>
         <button class="sb-item" id="tab-billing" onclick="Admin.switchTab('billing')">帳務資訊</button>
+        <button class="sb-item" id="tab-addcustomer" onclick="Admin.switchTab('addcustomer')">新增客戶</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-settings">
@@ -830,6 +831,36 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+    <!-- 新增客戶 -->
+    <div id="addcustomer-panel" class="hidden">
+      <div class="cust-search-card">
+        <div class="cust-search-title">新增客戶資料</div>
+        <p style="font-size:.85rem;color:var(--text-muted);margin:.4rem 0 1rem;">新增後客戶即可使用身分證字號登入前台系統。</p>
+        <div class="cust-filter-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
+          <div class="cust-filter-field">
+            <label>身分證字號 <span style="color:var(--primary)">*</span></label>
+            <input type="text" id="ac-idcard" placeholder="例如 A123456789" style="text-transform:uppercase;"/>
+          </div>
+          <div class="cust-filter-field">
+            <label>姓名 <span style="color:var(--primary)">*</span></label>
+            <input type="text" id="ac-name" placeholder="請輸入客戶姓名"/>
+          </div>
+          <div class="cust-filter-field">
+            <label>戶號 <span style="color:var(--primary)">*</span></label>
+            <input type="text" id="ac-unit" placeholder="例如 A1-02F"/>
+          </div>
+          <div class="cust-filter-field">
+            <label>Google Drive 資料夾 ID <span style="color:var(--text-muted);font-weight:400;">（選填）</span></label>
+            <input type="text" id="ac-folderid" placeholder="資料夾 ID（可事後補填）"/>
+          </div>
+        </div>
+        <div class="cust-filter-btns" style="margin-top:1rem;">
+          <button class="btn-query" onclick="Admin.addCustomerSubmit()">新增客戶</button>
+          <button class="btn-reset" onclick="Admin.addCustomerReset()">清除</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 代客預約 -->
     <div id="proxy-panel" class="hidden">
       <div class="proxy-card">
@@ -1047,7 +1078,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy'];
+    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -1056,8 +1087,9 @@ var Admin = (function() {
     var isCalendar = tab === 'calendar';
     var isProfile  = tab === 'profile';
     var isBilling  = tab === 'billing';
-    var isProxy    = tab === 'proxy';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy;
+    var isProxy       = tab === 'proxy';
+    var isAddCustomer = tab === 'addcustomer';
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -1066,6 +1098,7 @@ var Admin = (function() {
     document.getElementById('profile-panel').classList.toggle('hidden', !isProfile);
     document.getElementById('billing-panel').classList.toggle('hidden', !isBilling);
     document.getElementById('proxy-panel').classList.toggle('hidden', !isProxy);
+    document.getElementById('addcustomer-panel').classList.toggle('hidden', !isAddCustomer);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
     var showStats = (tab === 'booking' || tab === 'upload');
@@ -1258,6 +1291,37 @@ var Admin = (function() {
       }
     }
     document.getElementById('proxy-step-confirm').classList.add('hidden');
+  }
+
+  // ── 新增客戶 ──────────────────────────────────────────
+  function addCustomerReset() {
+    ['ac-idcard','ac-name','ac-unit','ac-folderid'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+  }
+
+  function addCustomerSubmit() {
+    var pc       = document.getElementById('select-project').value;
+    var idCard   = document.getElementById('ac-idcard').value.trim().toUpperCase();
+    var name     = document.getElementById('ac-name').value.trim();
+    var unit     = document.getElementById('ac-unit').value.trim();
+    var folderId = document.getElementById('ac-folderid').value.trim();
+    if (!pc)     { showToast('請先選擇建案', 'error'); return; }
+    if (!idCard) { showToast('請輸入身分證字號', 'error'); return; }
+    if (!name)   { showToast('請輸入姓名', 'error'); return; }
+    if (!unit)   { showToast('請輸入戶號', 'error'); return; }
+    showLoading(true);
+    callServer('serverAdminAddCustomer', pc, idCard, unit, name, folderId)
+      .then(function(res) {
+        showLoading(false);
+        if (res && res.success) {
+          showToast('客戶「' + name + '」已成功新增！', 'success');
+          addCustomerReset();
+        } else {
+          showToast('新增失敗：' + ((res && res.message) || '未知錯誤'), 'error');
+        }
+      })
+      .catch(function() { showLoading(false); showToast('送出失敗，請稍後再試', 'error'); });
   }
 
   function proxyReset() {
@@ -2329,7 +2393,8 @@ var Admin = (function() {
            queryBilling, resetBillingFilter,
            proxyOnUnitTypeChange, proxyOnFloorChange, proxyOnSvcChange,
            proxyOnDateChange, proxyOnTimeChange, proxyOnMethodChange,
-           proxyReset, proxySubmit };
+           proxyReset, proxySubmit,
+           addCustomerSubmit, addCustomerReset };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
