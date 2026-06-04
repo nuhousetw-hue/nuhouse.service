@@ -831,32 +831,44 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
-    <!-- 新增客戶 -->
+    <!-- 新增/修改客戶 -->
     <div id="addcustomer-panel" class="hidden">
       <div class="cust-search-card">
-        <div class="cust-search-title">新增客戶資料</div>
-        <p style="font-size:.85rem;color:var(--text-muted);margin:.4rem 0 1rem;">新增後客戶即可使用身分證字號登入前台系統。</p>
-        <div class="cust-filter-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
+        <div class="cust-search-title">新增／修改客戶資料</div>
+
+        <!-- 第一步：選戶別與樓層 -->
+        <div class="cust-filter-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-top:.85rem;">
           <div class="cust-filter-field">
-            <label>身分證字號 <span style="color:var(--primary)">*</span></label>
-            <input type="text" id="ac-idcard" placeholder="例如 A123456789" style="text-transform:uppercase;"/>
+            <label>戶別</label>
+            <select id="ac-sel-unittype" onchange="Admin.acOnUnitTypeChange()">
+              <option value="">— 請先選擇建案 —</option>
+            </select>
           </div>
           <div class="cust-filter-field">
-            <label>姓名 <span style="color:var(--primary)">*</span></label>
-            <input type="text" id="ac-name" placeholder="請輸入客戶姓名"/>
-          </div>
-          <div class="cust-filter-field">
-            <label>戶號 <span style="color:var(--primary)">*</span></label>
-            <input type="text" id="ac-unit" placeholder="例如 A1-02F"/>
-          </div>
-          <div class="cust-filter-field">
-            <label>Google Drive 資料夾 ID <span style="color:var(--text-muted);font-weight:400;">（選填）</span></label>
-            <input type="text" id="ac-folderid" placeholder="已設定母資料夾則自動建立，可留空"/>
+            <label>樓層</label>
+            <select id="ac-sel-floor" onchange="Admin.acOnFloorChange()" disabled>
+              <option value="">— 請先選戶別 —</option>
+            </select>
           </div>
         </div>
-        <div class="cust-filter-btns" style="margin-top:1rem;">
-          <button class="btn-query" onclick="Admin.addCustomerSubmit()">新增客戶</button>
-          <button class="btn-reset" onclick="Admin.addCustomerReset()">清除</button>
+
+        <!-- 客戶資料表單 -->
+        <div id="ac-form" class="hidden" style="margin-top:1rem;">
+          <div id="ac-status-banner" style="padding:.6rem 1rem;border-radius:8px;margin-bottom:.85rem;font-size:.88rem;font-weight:600;"></div>
+          <div class="cust-filter-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
+            <div class="cust-filter-field">
+              <label>身分證字號 <span style="color:var(--primary)">*</span></label>
+              <input type="text" id="ac-idcard" placeholder="例如 A123456789" style="text-transform:uppercase;"/>
+            </div>
+            <div class="cust-filter-field">
+              <label>姓名 <span style="color:var(--primary)">*</span></label>
+              <input type="text" id="ac-name" placeholder="請輸入客戶姓名"/>
+            </div>
+          </div>
+          <div class="cust-filter-btns" style="margin-top:1rem;">
+            <button class="btn-query" id="ac-submit-btn" onclick="Admin.addCustomerSubmit()">儲存</button>
+            <button class="btn-reset" onclick="Admin.addCustomerReset()">清除</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1116,6 +1128,10 @@ var Admin = (function() {
       if (projectCode) loadSettingsPanel(projectCode);
     } else if (isCalendar) {
       loadCalendar();
+    } else if (isAddCustomer) {
+      addCustomerReset();
+      var pc3 = document.getElementById('select-project').value;
+      if (pc3) acInitOptions(pc3);
     } else if (isProxy) {
       proxyReset();
       var pc2 = document.getElementById('select-project').value;
@@ -1293,32 +1309,103 @@ var Admin = (function() {
     document.getElementById('proxy-step-confirm').classList.add('hidden');
   }
 
-  // ── 新增客戶 ──────────────────────────────────────────
-  function addCustomerReset() {
-    ['ac-idcard','ac-name','ac-unit','ac-folderid'].forEach(function(id) {
-      document.getElementById(id).value = '';
+  // ── 新增/修改客戶 ──────────────────────────────────────────
+  var acState = { allFloors: [], currentUnit: null, isEdit: false };
+
+  function acInitOptions(projectCode) {
+    acState.allFloors = [];
+    var utSel = document.getElementById('ac-sel-unittype');
+    utSel.innerHTML = '<option value="">— 請選擇 —</option>';
+    var flSel = document.getElementById('ac-sel-floor');
+    flSel.innerHTML = '<option value="">— 請先選戶別 —</option>';
+    flSel.disabled = true;
+    document.getElementById('ac-form').classList.add('hidden');
+    callServer('serverAdminGetUnitOptions', projectCode).then(function(opts) {
+      (opts.unitTypes || []).forEach(function(u) {
+        var o = document.createElement('option'); o.value = u; o.textContent = u; utSel.appendChild(o);
+      });
+      acState.allFloors = opts.floors || [];
     });
   }
 
+  function acOnUnitTypeChange() {
+    var ut = document.getElementById('ac-sel-unittype').value;
+    var flSel = document.getElementById('ac-sel-floor');
+    document.getElementById('ac-form').classList.add('hidden');
+    if (!ut) { flSel.innerHTML = '<option value="">— 請先選戶別 —</option>'; flSel.disabled = true; return; }
+    flSel.innerHTML = '<option value="">— 請選擇樓層 —</option>';
+    acState.allFloors.forEach(function(f) {
+      var o = document.createElement('option'); o.value = f; o.textContent = f; flSel.appendChild(o);
+    });
+    flSel.disabled = false;
+  }
+
+  function acOnFloorChange() {
+    var pc = document.getElementById('select-project').value;
+    var ut = document.getElementById('ac-sel-unittype').value;
+    var fl = document.getElementById('ac-sel-floor').value;
+    if (!ut || !fl) return;
+    var unit = ut + '-' + fl;
+    acState.currentUnit = unit;
+    showLoading(true);
+    callServer('serverAdminGetCustomerByUnit', pc, unit)
+      .then(function(c) {
+        showLoading(false);
+        var banner = document.getElementById('ac-status-banner');
+        if (c && c.name) {
+          // 修改模式
+          acState.isEdit = true;
+          banner.style.background = '#fff3e0';
+          banner.style.color = '#e65100';
+          banner.textContent = '修改模式｜' + unit + '　現有客戶：' + c.name + '（' + c.idCard + '）';
+          document.getElementById('ac-idcard').value = c.idCard;
+          document.getElementById('ac-name').value   = c.name;
+          document.getElementById('ac-submit-btn').textContent = '更新客戶資料';
+        } else {
+          // 新增模式
+          acState.isEdit = false;
+          banner.style.background = '#e8f5e9';
+          banner.style.color = '#2e7d32';
+          banner.textContent = '新增模式｜' + unit + '　尚無客戶，請填入資料';
+          document.getElementById('ac-idcard').value = '';
+          document.getElementById('ac-name').value   = '';
+          document.getElementById('ac-submit-btn').textContent = '新增客戶';
+        }
+        document.getElementById('ac-form').classList.remove('hidden');
+      })
+      .catch(function() { showLoading(false); showToast('查詢失敗', 'error'); });
+  }
+
+  function addCustomerReset() {
+    document.getElementById('ac-sel-unittype').value = '';
+    var flSel = document.getElementById('ac-sel-floor');
+    flSel.innerHTML = '<option value="">— 請先選戶別 —</option>';
+    flSel.disabled = true;
+    document.getElementById('ac-form').classList.add('hidden');
+    acState.currentUnit = null; acState.isEdit = false;
+  }
+
   function addCustomerSubmit() {
-    var pc       = document.getElementById('select-project').value;
-    var idCard   = document.getElementById('ac-idcard').value.trim().toUpperCase();
-    var name     = document.getElementById('ac-name').value.trim();
-    var unit     = document.getElementById('ac-unit').value.trim();
-    var folderId = document.getElementById('ac-folderid').value.trim();
+    var pc     = document.getElementById('select-project').value;
+    var unit   = acState.currentUnit;
+    var idCard = document.getElementById('ac-idcard').value.trim().toUpperCase();
+    var name   = document.getElementById('ac-name').value.trim();
     if (!pc)     { showToast('請先選擇建案', 'error'); return; }
+    if (!unit)   { showToast('請先選擇戶別與樓層', 'error'); return; }
     if (!idCard) { showToast('請輸入身分證字號', 'error'); return; }
     if (!name)   { showToast('請輸入姓名', 'error'); return; }
-    if (!unit)   { showToast('請輸入戶號', 'error'); return; }
     showLoading(true);
-    callServer('serverAdminAddCustomer', pc, idCard, unit, name, folderId)
+    callServer('serverAdminSaveCustomer', pc, unit, idCard, name)
       .then(function(res) {
         showLoading(false);
         if (res && res.success) {
-          showToast('客戶「' + name + '」已成功新增！', 'success');
+          var msg = res.mode === 'update' ? '客戶資料已更新！' : '客戶「' + name + '」已成功新增！';
+          showToast(msg, 'success');
           addCustomerReset();
+          var pc2 = document.getElementById('select-project').value;
+          if (pc2) acInitOptions(pc2);
         } else {
-          showToast('新增失敗：' + ((res && res.message) || '未知錯誤'), 'error');
+          showToast('失敗：' + ((res && res.message) || '未知錯誤'), 'error');
         }
       })
       .catch(function() { showLoading(false); showToast('送出失敗，請稍後再試', 'error'); });
@@ -2394,7 +2481,7 @@ var Admin = (function() {
            proxyOnUnitTypeChange, proxyOnFloorChange, proxyOnSvcChange,
            proxyOnDateChange, proxyOnTimeChange, proxyOnMethodChange,
            proxyReset, proxySubmit,
-           addCustomerSubmit, addCustomerReset };
+           addCustomerSubmit, addCustomerReset, acOnUnitTypeChange, acOnFloorChange };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
