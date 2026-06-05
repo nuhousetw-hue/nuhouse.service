@@ -111,6 +111,8 @@ input,select{font:inherit;}
 
 /* Main */
 #screen-main{margin-left:var(--sidebar-w);padding-top:1.25rem;padding-bottom:2rem;}
+#current-project-badge{position:fixed;top:.7rem;right:1.25rem;z-index:550;background:var(--primary);color:#fff;border-radius:20px;padding:.28rem 1rem;font-size:.85rem;font-weight:700;display:none;box-shadow:0 2px 8px rgba(176,16,32,.25);letter-spacing:.03em;}
+#current-project-badge.visible{display:block;}
 .main-inner{max-width:1200px;margin:0 auto;padding:0 1.25rem;}
 
 /* Control bar */
@@ -249,7 +251,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 @media print{
   body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   #sidebar,#mobile-topbar,#sidebar-overlay,.control-bar,#filter-booking,#filter-upload,#filter-unbooked,
-  #result-bar,#table-wrap,#settings-panel,#profile-panel,#billing-panel,
+  #result-bar,#table-wrap,#settings-panel,#profile-panel,#billing-panel,#current-project-badge,
   .cal-nav-btn,.cal-filters,#cal-export-btn{display:none!important;}
   #screen-main{padding-top:0!important;margin-left:0!important;}
   .main-inner{padding:0!important;max-width:100%!important;}
@@ -380,6 +382,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   #sidebar{transform:translateX(-100%);transition:transform .25s ease;z-index:601;}
   #sidebar.visible.open{transform:translateX(0);}
   #screen-main{margin-left:0!important;padding-top:calc(var(--nav-h) + 1.25rem);}
+  #current-project-badge{top:calc(var(--nav-h) + .4rem);right:.75rem;font-size:.78rem;padding:.24rem .8rem;}
 }
 @media(min-width:769px){
   #mobile-topbar{display:none!important;}
@@ -504,6 +507,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 
 <!-- 主畫面 -->
 <div id="screen-main" class="hidden">
+  <div id="current-project-badge"></div>
   <div class="main-inner">
 
     <!-- 預約篩選 -->
@@ -1023,6 +1027,7 @@ var Admin = (function() {
     sb.classList.remove('visible'); sb.classList.remove('open');
     document.getElementById('mobile-topbar').classList.remove('visible');
     document.getElementById('sidebar-overlay').classList.remove('visible');
+    document.getElementById('current-project-badge').classList.remove('visible');
     document.getElementById('input-username').value = '';
     document.getElementById('input-password').value = '';
     showScreen('login');
@@ -1058,6 +1063,18 @@ var Admin = (function() {
     loadProjects();
   }
 
+  function updateProjectBadge() {
+    var sel   = document.getElementById('select-project');
+    var badge = document.getElementById('current-project-badge');
+    if (!badge) return;
+    if (sel.value && sel.selectedIndex > 0) {
+      badge.textContent = '📍 ' + sel.options[sel.selectedIndex].text;
+      badge.classList.add('visible');
+    } else {
+      badge.classList.remove('visible');
+    }
+  }
+
   function loadProjects() {
     callServer('serverGetProjects').then(function(projects) {
       state.projects = projects;
@@ -1069,10 +1086,16 @@ var Admin = (function() {
         sel.appendChild(opt);
       });
       sel.onchange = function() {
+        updateProjectBadge();
         if (state.tab === 'settings') {
           if (sel.value) loadSettingsPanel(sel.value);
         } else if (state.tab === 'calendar') {
           loadCalendar();
+        } else if (state.tab === 'addcustomer') {
+          if (sel.value) acInitOptions(sel.value);
+        } else if (state.tab === 'proxy') {
+          proxyReset();
+          if (sel.value) proxyInitUnitOptions(sel.value);
         } else {
           resetTable();
         }
