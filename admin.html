@@ -154,6 +154,33 @@ input,select{font:inherit;}
 .sort-icon{margin-left:.3rem;font-size:.7rem;color:var(--text-muted);}
 .btn-dl-file{display:inline-block;background:var(--primary);color:#fff;border-radius:4px;padding:.2rem .6rem;font-size:.78rem;font-weight:600;text-decoration:none;white-space:nowrap;}
 .btn-dl-file:hover{background:var(--primary-dk);}
+/* 工程進度管理 */
+.prog-edit-input{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:.4rem .55rem;font-size:.9rem;background:#fff;}
+.prog-edit-input:focus{border-color:var(--primary);outline:none;}
+.prog-status-select{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:.4rem .55rem;font-size:.9rem;background:#fff;}
+.btn-prog-photo{background:#eef3ff;color:#1a56db;border:1.5px solid #1a56db;border-radius:6px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+.btn-prog-photo:hover{background:#1a56db;color:#fff;}
+.btn-prog-save{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.35rem .7rem;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+.btn-prog-del{background:#fff;color:#d32f2f;border:1.5px solid #d32f2f;border-radius:6px;padding:.35rem .6rem;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+.btn-prog-del:hover{background:#d32f2f;color:#fff;}
+.prog-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;}
+.prog-modal.hidden{display:none;}
+.prog-modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);}
+.prog-modal-content{position:relative;width:92vw;max-width:760px;height:85vh;background:#fff;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+.prog-modal-header{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.1rem;background:var(--primary);color:#fff;flex-shrink:0;}
+.prog-modal-title{font-size:1rem;font-weight:700;}
+.prog-modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:6px;font-size:1.1rem;cursor:pointer;}
+.prog-modal-close:hover{background:rgba(255,255,255,.35);}
+.prog-modal-body{flex:1;overflow-y:auto;padding:1.1rem;}
+.prog-upload-zone{border:2px dashed var(--border);border-radius:10px;padding:1.5rem 1rem;text-align:center;cursor:pointer;color:var(--text-muted);transition:border-color .2s,background .2s;}
+.prog-upload-zone:hover{border-color:var(--primary);background:#fff8f8;}
+.prog-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.65rem;margin-top:1rem;}
+.prog-photo-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#eee;}
+.prog-photo-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.prog-photo-del{position:absolute;top:4px;right:4px;background:rgba(211,47,47,.92);color:#fff;border:none;width:26px;height:26px;border-radius:50%;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.prog-photo-del:hover{background:#b71c1c;}
+.prog-photo-empty{grid-column:1/-1;text-align:center;color:var(--text-muted);padding:1.5rem 0;font-size:.9rem;}
+@media(max-width:640px){.prog-modal-content{width:100vw;height:100vh;border-radius:0;}}
 .result-count strong{color:var(--text);font-size:1rem;}
 .btn-export{background:var(--success);color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.85rem;display:flex;align-items:center;gap:.4rem;}
 .btn-export:hover{background:#176d30;}
@@ -467,6 +494,14 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
         <button class="sb-item" id="tab-profile" onclick="Admin.switchTab('profile')">基本資料</button>
         <button class="sb-item" id="tab-billing" onclick="Admin.switchTab('billing')">帳務資訊</button>
         <button class="sb-item" id="tab-addcustomer" onclick="Admin.switchTab('addcustomer')">新增客戶</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-progress">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('progress-sub')">
+        <span>工程進度</span><span class="sb-group-arrow" id="sg-arrow-progress-sub">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-progress-sub">
+        <button class="sb-item" id="tab-progress" onclick="Admin.switchTab('progress')">進度管理</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-settings">
@@ -877,6 +912,23 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+    <!-- 工程進度管理 -->
+    <div id="progress-panel" class="hidden">
+      <div class="cust-search-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+          <div class="cust-search-title" style="margin-bottom:0;">工程進度管理</div>
+          <button class="btn-query" onclick="Admin.progAddRow()">+ 新增一期</button>
+        </div>
+        <p style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 0;">編輯各期工程進度文字與照片。預定日期可自由填寫（如「114年第1季」）。</p>
+      </div>
+      <div class="table-wrap" id="prog-table-wrap">
+        <table>
+          <thead><tr><th>階段</th><th>項目</th><th>預定日期</th><th>狀態</th><th>照片</th><th>操作</th></tr></thead>
+          <tbody id="prog-table-body"><tr class="empty-row"><td colspan="6">請先選擇建案</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- 代客預約 -->
     <div id="proxy-panel" class="hidden">
       <div class="proxy-card">
@@ -950,6 +1002,26 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- 工程進度照片管理 Modal -->
+<div id="prog-photo-modal" class="prog-modal hidden">
+  <div class="prog-modal-overlay" onclick="Admin.progClosePhotos()"></div>
+  <div class="prog-modal-content">
+    <div class="prog-modal-header">
+      <span class="prog-modal-title" id="prog-modal-title">照片管理</span>
+      <button class="prog-modal-close" onclick="Admin.progClosePhotos()">✕</button>
+    </div>
+    <div class="prog-modal-body">
+      <div class="prog-upload-zone" onclick="document.getElementById('prog-file-input').click()">
+        <input type="file" id="prog-file-input" accept="image/*" multiple style="display:none" onchange="Admin.progUploadPhotos(event)"/>
+        <div style="font-size:2rem;">📷</div>
+        <p>點擊上傳照片（可多張，支援手機拍照）</p>
+      </div>
+      <div id="prog-upload-status" class="hidden" style="text-align:center;color:var(--primary);font-size:.9rem;margin:.5rem 0;"></div>
+      <div id="prog-photo-grid" class="prog-photo-grid"></div>
+    </div>
   </div>
 </div>
 
@@ -1044,13 +1116,16 @@ var Admin = (function() {
     var isAdmin = state.role === 'admin';
     var settingsTab = document.getElementById('tab-settings');
     var settingsGroup = document.getElementById('sb-group-settings');
+    var progressGroup = document.getElementById('sb-group-progress');
     if (isAdmin) {
       settingsTab.classList.remove('hidden');
       if (settingsGroup) settingsGroup.classList.remove('hidden');
+      if (progressGroup) progressGroup.classList.remove('hidden');
     } else {
       settingsTab.classList.add('hidden');
       if (settingsGroup) settingsGroup.classList.add('hidden');
-      if (state.tab === 'settings') switchTab('booking');
+      if (progressGroup) progressGroup.classList.add('hidden');
+      if (state.tab === 'settings' || state.tab === 'progress') switchTab('booking');
     }
   }
 
@@ -1096,6 +1171,8 @@ var Admin = (function() {
         } else if (state.tab === 'proxy') {
           proxyReset();
           if (sel.value) proxyInitUnitOptions(sel.value);
+        } else if (state.tab === 'progress') {
+          if (sel.value) loadProgress(sel.value);
         } else {
           resetTable();
         }
@@ -1113,7 +1190,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer'];
+    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','progress'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -1124,7 +1201,8 @@ var Admin = (function() {
     var isBilling  = tab === 'billing';
     var isProxy       = tab === 'proxy';
     var isAddCustomer = tab === 'addcustomer';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer;
+    var isProgress    = tab === 'progress';
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -1134,6 +1212,7 @@ var Admin = (function() {
     document.getElementById('billing-panel').classList.toggle('hidden', !isBilling);
     document.getElementById('proxy-panel').classList.toggle('hidden', !isProxy);
     document.getElementById('addcustomer-panel').classList.toggle('hidden', !isAddCustomer);
+    document.getElementById('progress-panel').classList.toggle('hidden', !isProgress);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
     var showStats = (tab === 'booking' || tab === 'upload');
@@ -1159,6 +1238,10 @@ var Admin = (function() {
       proxyReset();
       var pc2 = document.getElementById('select-project').value;
       if (pc2) proxyInitUnitOptions(pc2);
+    } else if (isProgress) {
+      var pc4 = document.getElementById('select-project').value;
+      if (pc4) loadProgress(pc4);
+      else document.getElementById('prog-table-body').innerHTML = '<tr class="empty-row"><td colspan="6">請先選擇建案</td></tr>';
     } else if (isTable) {
       resetTable();
     }
@@ -1432,6 +1515,180 @@ var Admin = (function() {
         }
       })
       .catch(function() { showLoading(false); showToast('送出失敗，請稍後再試', 'error'); });
+  }
+
+  // ── 工程進度管理 ──────────────────────────────────────────
+  var progState = { rows: [], currentFolderId: null, currentPhase: null };
+
+  function loadProgress(projectCode) {
+    var body = document.getElementById('prog-table-body');
+    body.innerHTML = '<tr class="empty-row"><td colspan="6">載入中…</td></tr>';
+    callServer('serverAdminGetProgress', projectCode)
+      .then(function(rows) {
+        progState.rows = Array.isArray(rows) ? rows : [];
+        renderProgTable();
+      })
+      .catch(function() { body.innerHTML = '<tr class="empty-row"><td colspan="6">載入失敗</td></tr>'; });
+  }
+
+  var PROG_STATUS = ['未開始', '進行中', '已完成'];
+
+  function renderProgTable() {
+    var body = document.getElementById('prog-table-body');
+    body.innerHTML = '';
+    if (!progState.rows.length) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">尚無工程進度，請按「新增一期」</td></tr>';
+      return;
+    }
+    progState.rows.forEach(function(r) {
+      var tr = document.createElement('tr');
+      var statusOpts = PROG_STATUS.map(function(s) {
+        return '<option value="' + s + '"' + (r.status === s ? ' selected' : '') + '>' + s + '</option>';
+      }).join('');
+      // 若現有狀態不在清單內，補一個選項
+      if (r.status && PROG_STATUS.indexOf(r.status) < 0) {
+        statusOpts = '<option value="' + esc(r.status) + '" selected>' + esc(r.status) + '</option>' + statusOpts;
+      }
+      tr.innerHTML =
+        '<td><input class="prog-edit-input" id="prog-phase-' + r.rowIdx + '" value="' + esc(r.phase) + '"/></td>' +
+        '<td><input class="prog-edit-input" id="prog-item-' + r.rowIdx + '" value="' + esc(r.item) + '"/></td>' +
+        '<td><input class="prog-edit-input" id="prog-due-' + r.rowIdx + '" value="' + esc(r.dueDate) + '" placeholder="如 114年第1季"/></td>' +
+        '<td><select class="prog-status-select" id="prog-status-' + r.rowIdx + '">' + statusOpts + '</select></td>' +
+        '<td><button class="btn-prog-photo" onclick="Admin.progOpenPhotos(' + r.rowIdx + ')">📷 照片</button></td>' +
+        '<td style="white-space:nowrap;"><button class="btn-prog-save" onclick="Admin.progSaveRow(' + r.rowIdx + ')">儲存</button> ' +
+        '<button class="btn-prog-del" onclick="Admin.progDeleteRow(' + r.rowIdx + ')">刪除</button></td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function progSaveRow(rowIdx) {
+    var pc = document.getElementById('select-project').value;
+    var phase  = document.getElementById('prog-phase-' + rowIdx).value.trim();
+    var item   = document.getElementById('prog-item-' + rowIdx).value.trim();
+    var due    = document.getElementById('prog-due-' + rowIdx).value.trim();
+    var status = document.getElementById('prog-status-' + rowIdx).value;
+    if (!phase) { showToast('階段不可空白', 'error'); return; }
+    showLoading(true);
+    callServer('serverAdminSaveProgress', pc, rowIdx, phase, item, due, status)
+      .then(function(res) {
+        showLoading(false);
+        if (res && res.success) showToast('已儲存', 'success');
+        else showToast('儲存失敗：' + ((res && res.message) || ''), 'error');
+      })
+      .catch(function() { showLoading(false); showToast('儲存失敗', 'error'); });
+  }
+
+  function progAddRow() {
+    var pc = document.getElementById('select-project').value;
+    if (!pc) { showToast('請先選擇建案', 'error'); return; }
+    var phase = prompt('請輸入新階段名稱（例如：第21期）');
+    if (!phase || !phase.trim()) return;
+    showLoading(true);
+    callServer('serverAdminAddProgress', pc, phase.trim(), '', '', '未開始')
+      .then(function(res) {
+        showLoading(false);
+        if (res && res.success) {
+          showToast('已新增「' + phase.trim() + '」', 'success');
+          loadProgress(pc);
+        } else showToast('新增失敗：' + ((res && res.message) || ''), 'error');
+      })
+      .catch(function() { showLoading(false); showToast('新增失敗', 'error'); });
+  }
+
+  function progDeleteRow(rowIdx) {
+    var row = progState.rows.find(function(r) { return r.rowIdx === rowIdx; });
+    var phaseName = row ? row.phase : '此期';
+    if (!confirm('確定刪除「' + phaseName + '」？\n該期照片資料夾會移到垃圾桶（可救回）。')) return;
+    var pc = document.getElementById('select-project').value;
+    showLoading(true);
+    callServer('serverAdminDeleteProgress', pc, rowIdx)
+      .then(function(res) {
+        showLoading(false);
+        if (res && res.success) { showToast('已刪除', 'success'); loadProgress(pc); }
+        else showToast('刪除失敗：' + ((res && res.message) || ''), 'error');
+      })
+      .catch(function() { showLoading(false); showToast('刪除失敗', 'error'); });
+  }
+
+  // ── 照片管理 modal ──
+  function progOpenPhotos(rowIdx) {
+    var row = progState.rows.find(function(r) { return r.rowIdx === rowIdx; });
+    if (!row) return;
+    if (!row.folderId) { showToast('此期尚無照片資料夾，請聯絡管理員', 'error'); return; }
+    progState.currentFolderId = row.folderId;
+    progState.currentPhase = row.phase;
+    document.getElementById('prog-modal-title').textContent = row.phase + ' — 照片管理';
+    document.getElementById('prog-photo-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    progLoadPhotos();
+  }
+
+  function progClosePhotos() {
+    document.getElementById('prog-photo-modal').classList.add('hidden');
+    document.getElementById('prog-photo-grid').innerHTML = '';
+    document.body.style.overflow = '';
+    progState.currentFolderId = null;
+  }
+
+  function progLoadPhotos() {
+    var grid = document.getElementById('prog-photo-grid');
+    grid.innerHTML = '<div class="prog-photo-empty">載入中…</div>';
+    callServer('serverAdminGetProgressPhotos', progState.currentFolderId)
+      .then(function(photos) {
+        if (!Array.isArray(photos) || !photos.length) {
+          grid.innerHTML = '<div class="prog-photo-empty">尚無照片，請上傳</div>'; return;
+        }
+        grid.innerHTML = '';
+        photos.forEach(function(p) {
+          var div = document.createElement('div');
+          div.className = 'prog-photo-item';
+          div.innerHTML = '<img src="' + p.url + '" loading="lazy"/>' +
+            '<button class="prog-photo-del" onclick="Admin.progDeletePhoto(\'' + p.fileId + '\')">✕</button>';
+          grid.appendChild(div);
+        });
+      })
+      .catch(function() { grid.innerHTML = '<div class="prog-photo-empty">載入失敗</div>'; });
+  }
+
+  function progUploadPhotos(e) {
+    var files = Array.prototype.slice.call(e.target.files);
+    e.target.value = '';
+    if (!files.length) return;
+    var statusEl = document.getElementById('prog-upload-status');
+    statusEl.classList.remove('hidden');
+    var done = 0, total = files.length;
+    statusEl.textContent = '上傳中… 0/' + total;
+
+    function uploadOne(idx) {
+      if (idx >= files.length) {
+        statusEl.textContent = '上傳完成！';
+        setTimeout(function() { statusEl.classList.add('hidden'); }, 1500);
+        progLoadPhotos();
+        return;
+      }
+      var file = files[idx];
+      var reader = new FileReader();
+      reader.onload = function() {
+        var base64 = reader.result.split(',')[1];
+        callServer('serverAdminUploadProgressPhoto', progState.currentFolderId, file.name, file.type || 'image/jpeg', base64)
+          .then(function() { done++; statusEl.textContent = '上傳中… ' + done + '/' + total; uploadOne(idx + 1); })
+          .catch(function() { done++; uploadOne(idx + 1); });
+      };
+      reader.readAsDataURL(file);
+    }
+    uploadOne(0);
+  }
+
+  function progDeletePhoto(fileId) {
+    if (!confirm('確定刪除此照片？（移到垃圾桶，可救回）')) return;
+    showLoading(true);
+    callServer('serverAdminDeleteProgressPhoto', fileId)
+      .then(function(res) {
+        showLoading(false);
+        if (res && res.success) { showToast('已刪除', 'success'); progLoadPhotos(); }
+        else showToast('刪除失敗', 'error');
+      })
+      .catch(function() { showLoading(false); showToast('刪除失敗', 'error'); });
   }
 
   function proxyReset() {
@@ -2504,7 +2761,9 @@ var Admin = (function() {
            proxyOnUnitTypeChange, proxyOnFloorChange, proxyOnSvcChange,
            proxyOnDateChange, proxyOnTimeChange, proxyOnMethodChange,
            proxyReset, proxySubmit,
-           addCustomerSubmit, addCustomerReset, acOnUnitTypeChange, acOnFloorChange };
+           addCustomerSubmit, addCustomerReset, acOnUnitTypeChange, acOnFloorChange,
+           progAddRow, progSaveRow, progDeleteRow,
+           progOpenPhotos, progClosePhotos, progUploadPhotos, progDeletePhoto };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
