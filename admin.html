@@ -1132,6 +1132,12 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .kb-pick-line{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem;}
   .kb-pick-tag{font-size:.82rem;font-weight:700;color:#999;min-width:36px;}
   .kb-opt-item.selected{background:#1e8e3e;border-color:#1e8e3e;}
+  .kb-card{border:1px solid var(--border);border-radius:10px;padding:.5rem .9rem;margin:.7rem 0;background:#fff;}
+  .kb-row{display:flex;align-items:flex-start;gap:.6rem;padding:.4rem 0;text-align:left;border-top:1px dashed #f0f0f0;}
+  .kb-row:first-child{border-top:none;}
+  .kb-row-label{flex:0 0 52px;font-weight:700;color:#555;font-size:.92rem;padding-top:.5rem;text-align:left;}
+  .kb-row-val{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;word-break:break-word;font-size:1rem;color:#222;padding-top:.35rem;}
+  .kb-row-val .kb-note-input{flex:1;min-width:180px;}
   .kb-doc-subtitle{font-size:1.05rem;font-weight:800;margin:1rem 0 .4rem;color:#B01020;}
   .kb-doc{background:#fff;padding:1.4rem 1.6rem;color:#1a2a4a;}
   .kb-doc-title{font-size:1.3rem;font-weight:800;text-align:center;margin-bottom:.5rem;}
@@ -3301,47 +3307,45 @@ var Admin = (function() {
     var html = '';
     Object.keys(bySection).forEach(function(sec) {
       html += '<div class="kb-section"><div class="kb-section-title">' + kbEsc(sec) + '</div>';
-      var bySpace = {};
-      bySection[sec].forEach(function(it) { (bySpace[it.space] = bySpace[it.space] || []).push(it); });
-      Object.keys(bySpace).forEach(function(sp) {
-        html += '<div class="kb-space"><div class="kb-space-name">' + kbEsc(sp) + '</div>';
-        bySpace[sp].forEach(function(it) {
-          var key = kbKey(it);
-          var kAttr = encodeURIComponent(key);
-          var isEquip = it.section === '設備';
-          var defOpts = isEquip ? ['安裝', '退選', '點交不安裝'] : ['Type A', 'Type B', 'Type C', '退選'];
-          var optList = (it.options && it.options.length) ? it.options : defOpts;
-          var itemList = String(it.item || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
-          var multiItem = itemList.length > 1;
-          var single = multiItem ? '' : (itemList[0] || '');
-          // 預設單一項目（多選則待現場挑）
-          kbState.selections[key] = { item: single, choice: '', note: '' };
-          var nameParts = [];
-          if (!isEquip && it.position) nameParts.push(it.position);
-          if (single) nameParts.push(single);
-          var nameLabel = nameParts.join('・') || it.position || (isEquip ? '設備' : '');
-          html += '<div class="kb-item"><div class="kb-item-name">' + kbEsc(nameLabel) + '</div><div class="kb-pick-groups">';
-          if (multiItem) {
-            html += '<div class="kb-pick-line"><span class="kb-pick-tag">項目</span>';
-            itemList.forEach(function(v) {
-              html += '<button type="button" class="kb-opt kb-opt-item" data-key="' + kAttr + '" data-val="' + kbEsc(v) + '" onclick="Admin.kbPickItem(this)">' + kbEsc(v) + '</button>';
-            });
-            html += '</div>';
-          }
-          html += '<div class="kb-pick-line"><span class="kb-pick-tag">選項</span>';
-          optList.forEach(function(op) {
-            html += '<button type="button" class="kb-opt" data-key="' + kAttr + '" data-val="' + kbEsc(op) + '" onclick="Admin.kbPick(this)">' + kbEsc(op) + '</button>';
+      bySection[sec].forEach(function(it) {
+        var key = kbKey(it);
+        var kAttr = encodeURIComponent(key);
+        var isEquip = it.section === '設備';
+        var defOpts = isEquip ? ['安裝', '退選', '點交不安裝'] : ['Type A', 'Type B', 'Type C', '退選'];
+        var optList = (it.options && it.options.length) ? it.options : defOpts;
+        var itemList = String(it.item || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+        var multiItem = itemList.length > 1;
+        var single = multiItem ? '' : (itemList[0] || '');
+        // 預設單一項目（多選則待現場挑）
+        kbState.selections[key] = { item: single, choice: '', note: '' };
+        html += '<div class="kb-card">';
+        if (it.space) html += kbRow('空間', kbEsc(it.space));
+        if (it.position) html += kbRow('位置', kbEsc(it.position));
+        if (multiItem) {
+          var ib = '';
+          itemList.forEach(function(v) {
+            ib += '<button type="button" class="kb-opt kb-opt-item" data-key="' + kAttr + '" data-val="' + kbEsc(v) + '" onclick="Admin.kbPickItem(this)">' + kbEsc(v) + '</button>';
           });
-          html += '</div>';
-          html += '<input class="kb-note-input" data-key="' + kAttr + '" placeholder="備註（選填）" oninput="Admin.kbPickNote(this)"/>';
-          html += '</div></div>';
+          html += kbRow('項目', ib);
+        } else if (single) {
+          html += kbRow('項目', kbEsc(single));
+        }
+        var ob = '';
+        optList.forEach(function(op) {
+          ob += '<button type="button" class="kb-opt" data-key="' + kAttr + '" data-val="' + kbEsc(op) + '" onclick="Admin.kbPick(this)">' + kbEsc(op) + '</button>';
         });
+        html += kbRow('選項', ob);
+        html += kbRow('備註', '<input class="kb-note-input" data-key="' + kAttr + '" placeholder="備註（選填）" oninput="Admin.kbPickNote(this)"/>');
         html += '</div>';
       });
       html += '</div>';
     });
     document.getElementById('kb-form').innerHTML = html;
     wrap.classList.remove('hidden');
+  }
+
+  function kbRow(label, contentHtml) {
+    return '<div class="kb-row"><span class="kb-row-label">' + label + '：</span><span class="kb-row-val">' + contentHtml + '</span></div>';
   }
 
   function kbKey(it) {
