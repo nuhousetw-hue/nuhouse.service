@@ -5,6 +5,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>新濠建設機構 | 後台管理</title>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --primary:#B01020;--primary-dk:#8C0D19;
@@ -512,6 +514,15 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
         <button class="sb-item" id="tab-progress" onclick="Admin.switchTab('progress')">進度管理</button>
       </div>
     </div>
+    <div class="sb-group" id="sb-group-kebian">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('kebian-sub')">
+        <span>客變選材</span><span class="sb-group-arrow" id="sg-arrow-kebian-sub">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-kebian-sub">
+        <button class="sb-item" id="tab-kebian" onclick="Admin.switchTab('kebian')">選材作業</button>
+        <button class="sb-item" id="tab-kbtpl" onclick="Admin.switchTab('kbtpl')">範本編輯</button>
+      </div>
+    </div>
     <div class="sb-group" id="sb-group-settings">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('settings-sub')">
         <span>設定</span><span class="sb-group-arrow" id="sg-arrow-settings-sub">▼</span>
@@ -962,6 +973,56 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+    <!-- 客變選材作業 -->
+    <div id="kebian-panel" class="hidden">
+      <div class="cust-search-card">
+        <div class="cust-search-title" style="margin-bottom:.3rem;">客變選材作業</div>
+        <p style="font-size:.85rem;color:var(--text-muted);margin:0 0 .8rem;">選擇建案與戶號後，依現場確認逐項點選，最後客戶與服務人員於平板上簽名存檔。</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem;">
+          <div class="cust-filter-field">
+            <label>戶別</label>
+            <select id="kb-unittype" onchange="Admin.kbOnPickChange()"><option value="">— 請選擇 —</option></select>
+          </div>
+          <div class="cust-filter-field">
+            <label>樓層</label>
+            <select id="kb-floor" onchange="Admin.kbOnPickChange()"><option value="">— 請選擇 —</option></select>
+          </div>
+          <div class="cust-filter-field">
+            <label>服務人員</label>
+            <input id="kb-staff-name" placeholder="承辦同仁姓名"/>
+          </div>
+        </div>
+        <div id="kb-cust-info" class="hidden" style="margin-top:.8rem;background:#f8f9fc;border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;font-size:.95rem;"></div>
+      </div>
+      <div id="kb-form-wrap" class="hidden">
+        <div id="kb-form"></div>
+        <div style="margin:1rem 0 2rem;">
+          <button class="btn-query" style="font-size:1.05rem;padding:.7rem 1.6rem;" onclick="Admin.kbPreview()">預覽並簽名 →</button>
+          <button class="btn-reset" style="margin-left:.65rem;" onclick="Admin.kbReset()">清除重填</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 客變範本編輯 -->
+    <div id="kbtpl-panel" class="hidden">
+      <div class="cust-search-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+          <div class="cust-search-title" style="margin-bottom:0;">客變範本編輯</div>
+          <div>
+            <button class="btn-reset" onclick="Admin.kbtplAdd()">+ 新增項目</button>
+            <button class="btn-query" onclick="Admin.kbtplSave()">儲存範本</button>
+          </div>
+        </div>
+        <p style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 0;">此範本所有建案共用。選項以逗號分隔（留空則現場自行填寫）。排序數字越小越前面。取消勾選「啟用」可暫時隱藏該項目。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th style="width:110px;">區段</th><th>空間</th><th>項目</th><th style="width:80px;">類型</th><th>選項（逗號分隔）</th><th style="width:80px;">排序</th><th style="width:60px;">啟用</th><th style="width:70px;">操作</th></tr></thead>
+          <tbody id="kbtpl-body"><tr class="empty-row"><td colspan="8">載入中…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- 代客預約 -->
     <div id="proxy-panel" class="hidden">
       <div class="proxy-card">
@@ -1035,6 +1096,68 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- 客變選材樣式 -->
+<style>
+  .kb-section{margin:1rem 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .kb-section-title{background:var(--primary);color:#fff;font-weight:700;font-size:1.05rem;padding:.6rem 1rem;}
+  .kb-space{border-top:1px solid var(--border);}
+  .kb-space:first-child{border-top:none;}
+  .kb-space-name{background:#f5f6fa;font-weight:700;color:#444;padding:.45rem 1rem;font-size:.95rem;}
+  .kb-item{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;padding:.7rem 1rem;border-top:1px dashed #ececec;}
+  .kb-item-name{min-width:130px;font-weight:600;color:#333;}
+  .kb-opts{display:flex;flex-wrap:wrap;gap:.5rem;flex:1;}
+  .kb-opt{background:#fff;border:2px solid var(--border);border-radius:8px;padding:.55rem 1.1rem;font-size:1rem;cursor:pointer;color:#333;transition:all .12s;}
+  .kb-opt:hover{border-color:var(--primary);}
+  .kb-opt.selected{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700;}
+  .kb-opt-input{border:2px solid var(--border);border-radius:8px;padding:.5rem .9rem;font-size:1rem;min-width:200px;}
+  .kb-doc{background:#fff;padding:1.4rem 1.6rem;color:#1a2a4a;}
+  .kb-doc-title{font-size:1.3rem;font-weight:800;text-align:center;margin-bottom:.5rem;}
+  .kb-doc-meta{font-size:1rem;margin-bottom:.9rem;line-height:1.7;}
+  .kb-doc-table{width:100%;border-collapse:collapse;font-size:.92rem;}
+  .kb-doc-table th,.kb-doc-table td{border:1px solid #bbb;padding:.4rem .6rem;text-align:left;}
+  .kb-doc-table th{background:#f0f0f0;}
+  .kb-sign-row{display:flex;gap:1.2rem;margin-top:1.2rem;flex-wrap:wrap;}
+  .kb-sign-box{flex:1;min-width:260px;}
+  .kb-sign-label{font-weight:700;margin-bottom:.3rem;}
+  .kb-sign-box canvas{border:1px solid #999;border-radius:6px;width:100%;height:140px;background:#fff;touch-action:none;display:block;}
+  .kb-doc-date{margin-top:1rem;font-size:.9rem;color:#555;}
+  .kb-sign-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.8rem 0;}
+  .btn-mini-del{background:#fff;border:1px solid var(--danger);color:var(--danger);border-radius:6px;padding:.3rem .7rem;cursor:pointer;font-size:.85rem;}
+  #kbtpl-body input[type=text],#kbtpl-body input:not([type]),#kbtpl-body select{width:100%;padding:.35rem .4rem;border:1px solid var(--border);border-radius:5px;font-size:.88rem;}
+</style>
+
+<!-- 客變預覽簽名 Modal -->
+<div id="kb-modal" class="prog-modal hidden">
+  <div class="prog-modal-overlay" onclick="Admin.kbCloseModal()"></div>
+  <div class="prog-modal-content" style="height:auto;max-height:92vh;max-width:860px;overflow:auto;">
+    <div class="prog-modal-header">
+      <span class="prog-modal-title">確認選材內容並簽名</span>
+      <button class="prog-modal-close" onclick="Admin.kbCloseModal()">✕</button>
+    </div>
+    <div class="prog-modal-body">
+      <div id="kb-doc" class="kb-doc">
+        <div id="kb-doc-content"></div>
+        <div class="kb-sign-row">
+          <div class="kb-sign-box">
+            <div class="kb-sign-label">客戶簽名</div>
+            <canvas id="kb-sign-cust" width="380" height="140"></canvas>
+          </div>
+          <div class="kb-sign-box">
+            <div class="kb-sign-label">服務人員簽名（<span id="kb-doc-sign-staff-name"></span>）</div>
+            <canvas id="kb-sign-staff" width="380" height="140"></canvas>
+          </div>
+        </div>
+        <div class="kb-doc-date" id="kb-doc-date"></div>
+      </div>
+      <div class="kb-sign-actions">
+        <button class="btn-reset" onclick="Admin.kbClearSign('cust')">清除客戶簽名</button>
+        <button class="btn-reset" onclick="Admin.kbClearSign('staff')">清除服務人員簽名</button>
+      </div>
+      <button class="btn-save-settings" id="kb-save-btn" style="font-size:1.05rem;" onclick="Admin.kbSave()">確認簽名並存檔</button>
+    </div>
   </div>
 </div>
 
@@ -1199,6 +1322,7 @@ var Admin = (function() {
     proxy:    { box: 'sb-group-proxy',    tab: 'proxy' },
     customer: { box: 'sb-group-customer', tab: 'profile' },
     progress: { box: 'sb-group-progress', tab: 'progress' },
+    kebian:   { box: 'sb-group-kebian',   tab: 'kebian' },
     settings: { box: 'sb-group-settings', tab: 'settings' }
   };
 
@@ -1217,6 +1341,9 @@ var Admin = (function() {
     // 帳號權限管理：僅 admin
     var accGroup = document.getElementById('sb-group-accounts');
     if (accGroup) accGroup.classList.toggle('hidden', !isAdmin);
+    // 客變範本編輯：僅 admin（一般客變帳號只做選材作業）
+    var kbtplBtn = document.getElementById('tab-kbtpl');
+    if (kbtplBtn) kbtplBtn.classList.toggle('hidden', !isAdmin);
     // 若目前所在分頁無權限，切到第一個有權限的分頁
     var curGroup = tabToGroup(state.tab);
     if (curGroup && perms.indexOf(curGroup) < 0 && !(state.tab === 'accounts' && isAdmin)) {
@@ -1230,6 +1357,7 @@ var Admin = (function() {
     if (tab === 'proxy') return 'proxy';
     if (['profile','billing','addcustomer'].indexOf(tab) >= 0) return 'customer';
     if (tab === 'progress') return 'progress';
+    if (tab === 'kebian' || tab === 'kbtpl') return 'kebian';
     if (tab === 'settings') return 'settings';
     return null;
   }
@@ -1284,6 +1412,8 @@ var Admin = (function() {
           if (sel.value) proxyInitUnitOptions(sel.value);
         } else if (state.tab === 'progress') {
           if (sel.value) loadProgress(sel.value);
+        } else if (state.tab === 'kebian') {
+          kbEnter(sel.value);
         } else {
           resetTable();
         }
@@ -1301,7 +1431,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','progress','accounts'];
+    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','progress','kebian','kbtpl','accounts'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -1313,8 +1443,10 @@ var Admin = (function() {
     var isProxy       = tab === 'proxy';
     var isAddCustomer = tab === 'addcustomer';
     var isProgress    = tab === 'progress';
+    var isKebian      = tab === 'kebian';
+    var isKbtpl       = tab === 'kbtpl';
     var isAccounts    = tab === 'accounts';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isAccounts;
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isAccounts;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -1325,6 +1457,8 @@ var Admin = (function() {
     document.getElementById('proxy-panel').classList.toggle('hidden', !isProxy);
     document.getElementById('addcustomer-panel').classList.toggle('hidden', !isAddCustomer);
     document.getElementById('progress-panel').classList.toggle('hidden', !isProgress);
+    document.getElementById('kebian-panel').classList.toggle('hidden', !isKebian);
+    document.getElementById('kbtpl-panel').classList.toggle('hidden', !isKbtpl);
     document.getElementById('accounts-panel').classList.toggle('hidden', !isAccounts);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
@@ -1355,6 +1489,11 @@ var Admin = (function() {
       var pc4 = document.getElementById('select-project').value;
       if (pc4) loadProgress(pc4);
       else document.getElementById('prog-table-body').innerHTML = '<tr class="empty-row"><td colspan="6">請先選擇建案</td></tr>';
+    } else if (isKebian) {
+      var pck = document.getElementById('select-project').value;
+      kbEnter(pck);
+    } else if (isKbtpl) {
+      kbtplLoad();
     } else if (isAccounts) {
       loadAccounts();
     } else if (isTable) {
@@ -3009,6 +3148,362 @@ var Admin = (function() {
     if (!e.target.closest('.ms-wrap')) closeAllMs();
   });
 
+  // ════════════════════════════════════════════════
+  //  客變選材系統
+  // ════════════════════════════════════════════════
+  var kbState = { project: '', template: [], customer: null, selections: {}, staff: '' };
+  var kbtplState = { rows: [] };
+
+  function kbEsc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function kbProjectName() {
+    var p = (state.projects || []).find(function(x) { return x.code === kbState.project; });
+    return p ? p.name : '';
+  }
+
+  function kbFillSelect(id, list) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">— 請選擇 —</option>';
+    (list || []).forEach(function(v) {
+      var o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+    sel.value = cur;
+  }
+
+  function kbEnter(projectCode) {
+    kbState.project = projectCode || '';
+    kbState.customer = null;
+    kbState.selections = {};
+    document.getElementById('kb-cust-info').classList.add('hidden');
+    document.getElementById('kb-form-wrap').classList.add('hidden');
+    document.getElementById('kb-unittype').value = '';
+    document.getElementById('kb-floor').value = '';
+    if (!projectCode) {
+      kbFillSelect('kb-unittype', []);
+      kbFillSelect('kb-floor', []);
+      return;
+    }
+    callServer('serverAdminGetUnitOptions', projectCode).then(function(opts) {
+      kbFillSelect('kb-unittype', opts.unitTypes);
+      kbFillSelect('kb-floor', opts.floors);
+    });
+    callServer('serverGetKebianTemplate').then(function(tpl) {
+      kbState.template = tpl || [];
+    });
+  }
+
+  function kbReset() {
+    kbState.customer = null;
+    kbState.selections = {};
+    document.getElementById('kb-unittype').value = '';
+    document.getElementById('kb-floor').value = '';
+    document.getElementById('kb-staff-name').value = '';
+    document.getElementById('kb-cust-info').classList.add('hidden');
+    document.getElementById('kb-form-wrap').classList.add('hidden');
+    document.getElementById('kb-form').innerHTML = '';
+  }
+
+  function kbOnPickChange() {
+    var ut = document.getElementById('kb-unittype').value;
+    var fl = document.getElementById('kb-floor').value;
+    var info = document.getElementById('kb-cust-info');
+    if (!ut || !fl) {
+      info.classList.add('hidden');
+      document.getElementById('kb-form-wrap').classList.add('hidden');
+      return;
+    }
+    var unit = ut + '-' + fl;
+    callServer('serverAdminGetCustomerByUnit', kbState.project, unit).then(function(c) {
+      if (!c || !c.folderId) {
+        info.innerHTML = '⚠️ 查無「' + kbEsc(unit) + '」的客戶資料，請確認戶別樓層或先於「客戶管理」建立。';
+        info.classList.remove('hidden');
+        document.getElementById('kb-form-wrap').classList.add('hidden');
+        kbState.customer = null;
+        return;
+      }
+      c.unit = unit;
+      kbState.customer = c;
+      info.innerHTML = '姓名：<strong>' + kbEsc(c.name || '—') + '</strong>　　戶號：<strong>' + kbEsc(unit) + '</strong>';
+      info.classList.remove('hidden');
+      kbRenderForm();
+    });
+  }
+
+  function kbRenderForm() {
+    kbState.selections = {};
+    var tpl = kbState.template || [];
+    var wrap = document.getElementById('kb-form-wrap');
+    if (!tpl.length) {
+      document.getElementById('kb-form').innerHTML = '<div class="cust-search-card">尚未設定範本，請先至「範本編輯」建立項目。</div>';
+      wrap.classList.remove('hidden');
+      return;
+    }
+    var bySection = {};
+    tpl.forEach(function(it) { (bySection[it.section] = bySection[it.section] || []).push(it); });
+    var html = '';
+    Object.keys(bySection).forEach(function(sec) {
+      html += '<div class="kb-section"><div class="kb-section-title">' + kbEsc(sec) + '</div>';
+      var bySpace = {};
+      bySection[sec].forEach(function(it) { (bySpace[it.space] = bySpace[it.space] || []).push(it); });
+      Object.keys(bySpace).forEach(function(sp) {
+        html += '<div class="kb-space"><div class="kb-space-name">' + kbEsc(sp) + '</div>';
+        bySpace[sp].forEach(function(it) {
+          var key = it.section + '|' + it.space + '|' + it.item;
+          var kAttr = encodeURIComponent(key);
+          html += '<div class="kb-item"><div class="kb-item-name">' + kbEsc(it.item) + '</div><div class="kb-opts">';
+          if (it.options && it.options.length) {
+            it.options.forEach(function(op) {
+              html += '<button type="button" class="kb-opt" data-key="' + kAttr + '" data-val="' + kbEsc(op) + '" onclick="Admin.kbPick(this)">' + kbEsc(op) + '</button>';
+            });
+          } else {
+            html += '<input class="kb-opt-input" data-key="' + kAttr + '" placeholder="（自行填寫）" oninput="Admin.kbPickInput(this)"/>';
+          }
+          html += '</div></div>';
+        });
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('kb-form').innerHTML = html;
+    wrap.classList.remove('hidden');
+  }
+
+  function kbPick(btn) {
+    var key = decodeURIComponent(btn.getAttribute('data-key'));
+    var sibs = btn.parentNode.querySelectorAll('.kb-opt');
+    Array.prototype.forEach.call(sibs, function(s) { s.classList.remove('selected'); });
+    btn.classList.add('selected');
+    kbState.selections[key] = btn.getAttribute('data-val');
+  }
+
+  function kbPickInput(inp) {
+    var key = decodeURIComponent(inp.getAttribute('data-key'));
+    var v = inp.value.trim();
+    if (v) kbState.selections[key] = v;
+    else delete kbState.selections[key];
+  }
+
+  function kbPreview() {
+    if (!kbState.customer) { showToast('請先選擇戶號', 'error'); return; }
+    var staff = document.getElementById('kb-staff-name').value.trim();
+    if (!staff) { showToast('請輸入服務人員姓名', 'error'); return; }
+    kbState.staff = staff;
+    var tpl = kbState.template || [];
+    var rows = '';
+    tpl.forEach(function(it) {
+      var key = it.section + '|' + it.space + '|' + it.item;
+      var v = kbState.selections[key] || '';
+      rows += '<tr><td>' + kbEsc(it.section) + '</td><td>' + kbEsc(it.space) + '</td><td>' + kbEsc(it.item) + '</td><td>' + (v ? kbEsc(v) : '—') + '</td></tr>';
+    });
+    var c = kbState.customer;
+    var docHtml = ''
+      + '<div class="kb-doc-title">新濠建設機構　客變選材確認單</div>'
+      + '<div class="kb-doc-meta">建案：' + kbEsc(kbProjectName()) + '　　戶號：' + kbEsc(c.unit) + '　　客戶：' + kbEsc(c.name || '—') + '</div>'
+      + '<table class="kb-doc-table"><thead><tr><th>區段</th><th>空間</th><th>項目</th><th>選擇</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    document.getElementById('kb-doc-content').innerHTML = docHtml;
+    document.getElementById('kb-doc-sign-staff-name').textContent = staff;
+    document.getElementById('kb-doc-date').textContent = '簽署日期：' + kbToday();
+    document.getElementById('kb-modal').classList.remove('hidden');
+    kbInitCanvas('kb-sign-cust');
+    kbInitCanvas('kb-sign-staff');
+  }
+
+  function kbToday() {
+    var d = new Date();
+    return d.getFullYear() + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2);
+  }
+
+  function kbCloseModal() {
+    document.getElementById('kb-modal').classList.add('hidden');
+  }
+
+  function kbInitCanvas(id) {
+    var cv = document.getElementById(id);
+    var ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.strokeStyle = '#15203a';
+    cv.dataset.dirty = '';
+    if (cv.dataset.bound) return;
+    cv.dataset.bound = '1';
+    var drawing = false, last = null;
+    function pos(e) {
+      var r = cv.getBoundingClientRect();
+      var t = e.touches && e.touches.length ? e.touches[0] : e;
+      return { x: (t.clientX - r.left) * (cv.width / r.width), y: (t.clientY - r.top) * (cv.height / r.height) };
+    }
+    function start(e) { drawing = true; last = pos(e); e.preventDefault(); }
+    function move(e) {
+      if (!drawing) return;
+      var p = pos(e);
+      ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+      last = p; cv.dataset.dirty = '1'; e.preventDefault();
+    }
+    function end() { drawing = false; }
+    cv.addEventListener('mousedown', start);
+    cv.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    cv.addEventListener('touchstart', start, { passive: false });
+    cv.addEventListener('touchmove', move, { passive: false });
+    cv.addEventListener('touchend', end);
+  }
+
+  function kbClearSign(which) {
+    var cv = document.getElementById(which === 'cust' ? 'kb-sign-cust' : 'kb-sign-staff');
+    cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
+    cv.dataset.dirty = '';
+  }
+
+  function kbSave() {
+    var custCv = document.getElementById('kb-sign-cust');
+    var staffCv = document.getElementById('kb-sign-staff');
+    if (!custCv.dataset.dirty) { showToast('請客戶簽名', 'error'); return; }
+    if (!staffCv.dataset.dirty) { showToast('請服務人員簽名', 'error'); return; }
+    if (typeof html2canvas !== 'function' || !window.jspdf) { showToast('PDF 元件載入中，請稍候再試', 'error'); return; }
+    var btn = document.getElementById('kb-save-btn');
+    btn.disabled = true; btn.textContent = '產生中…';
+    html2canvas(document.getElementById('kb-doc'), { scale: 2, backgroundColor: '#ffffff' }).then(function(canvas) {
+      var pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+      var pw = pdf.internal.pageSize.getWidth();
+      var ph = pdf.internal.pageSize.getHeight();
+      var iw = pw - 20;
+      var fullIh = canvas.height * iw / canvas.width;
+      if (fullIh <= ph - 20) {
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 10, 10, iw, fullIh);
+      } else {
+        var pageImgHpx = (ph - 20) * canvas.width / iw;
+        var rendered = 0, pageNum = 0;
+        while (rendered < canvas.height) {
+          var sliceH = Math.min(pageImgHpx, canvas.height - rendered);
+          var tmp = document.createElement('canvas');
+          tmp.width = canvas.width; tmp.height = sliceH;
+          tmp.getContext('2d').drawImage(canvas, 0, rendered, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+          if (pageNum > 0) pdf.addPage();
+          pdf.addImage(tmp.toDataURL('image/jpeg', 0.92), 'JPEG', 10, 10, iw, sliceH * iw / canvas.width);
+          rendered += sliceH; pageNum++;
+        }
+      }
+      var base64 = pdf.output('datauristring').split(',')[1];
+      var c = kbState.customer;
+      return callServer('serverSaveKebianRecord', {
+        projectCode: kbState.project,
+        projectName: kbProjectName(),
+        unit: c.unit,
+        customerName: c.name,
+        idCard: c.idCard,
+        folderId: c.folderId,
+        selections: kbState.selections,
+        serviceName: kbState.staff,
+        pdfBase64: base64,
+        pdfFileName: '選材紀錄_' + c.unit + '_' + kbToday().replace(/\//g, '') + '.pdf'
+      });
+    }).then(function(res) {
+      btn.disabled = false; btn.textContent = '確認簽名並存檔';
+      if (res && res.success) {
+        showToast('已存檔，客戶可於「我的文件」查看', 'success');
+        kbCloseModal();
+        kbReset();
+      } else {
+        showToast((res && res.message) || '存檔失敗', 'error');
+      }
+    }).catch(function(e) {
+      btn.disabled = false; btn.textContent = '確認簽名並存檔';
+      showToast('產生失敗：' + (e && e.message || e), 'error');
+    });
+  }
+
+  // ── 範本編輯器 ──
+  function kbtplLoad() {
+    document.getElementById('kbtpl-body').innerHTML = '<tr class="empty-row"><td colspan="8">載入中…</td></tr>';
+    callServer('serverAdminGetKebianTemplate').then(function(rows) {
+      kbtplState.rows = (rows || []).map(function(r) {
+        return {
+          section: r.section || '選色選樣',
+          space: r.space || '',
+          item: r.item || '',
+          type: r.type || '單選',
+          options: (r.options || []).join(','),
+          order: r.order || 0,
+          enabled: r.enabled !== false
+        };
+      });
+      kbtplRender();
+    });
+  }
+
+  function kbtplReadDom() {
+    var arr = [];
+    var trs = document.querySelectorAll('#kbtpl-body tr.kbtpl-row');
+    Array.prototype.forEach.call(trs, function(tr) {
+      arr.push({
+        section: tr.querySelector('.kt-section').value,
+        space: tr.querySelector('.kt-space').value.trim(),
+        item: tr.querySelector('.kt-item').value.trim(),
+        type: tr.querySelector('.kt-type').value,
+        options: tr.querySelector('.kt-options').value.trim(),
+        order: Number(tr.querySelector('.kt-order').value) || 0,
+        enabled: tr.querySelector('.kt-enabled').checked
+      });
+    });
+    return arr;
+  }
+
+  function kbtplRender() {
+    var rows = kbtplState.rows || [];
+    if (!rows.length) {
+      document.getElementById('kbtpl-body').innerHTML = '<tr class="empty-row"><td colspan="8">尚無項目，請按「新增項目」</td></tr>';
+      return;
+    }
+    var html = '';
+    rows.forEach(function(r, i) {
+      html += '<tr class="kbtpl-row">'
+        + '<td><select class="kt-section"><option' + (r.section === '選色選樣' ? ' selected' : '') + '>選色選樣</option><option' + (r.section === '設備' ? ' selected' : '') + '>設備</option></select></td>'
+        + '<td><input class="kt-space" type="text" value="' + kbEsc(r.space) + '"/></td>'
+        + '<td><input class="kt-item" type="text" value="' + kbEsc(r.item) + '"/></td>'
+        + '<td><select class="kt-type"><option' + (r.type === '單選' ? ' selected' : '') + '>單選</option></select></td>'
+        + '<td><input class="kt-options" type="text" value="' + kbEsc(r.options) + '" placeholder="逗號分隔，留空=自行填寫"/></td>'
+        + '<td><input class="kt-order" type="number" value="' + (r.order || 0) + '"/></td>'
+        + '<td style="text-align:center;"><input class="kt-enabled" type="checkbox"' + (r.enabled ? ' checked' : '') + '/></td>'
+        + '<td><button class="btn-mini-del" onclick="Admin.kbtplDelete(' + i + ')">刪除</button></td>'
+        + '</tr>';
+    });
+    document.getElementById('kbtpl-body').innerHTML = html;
+  }
+
+  function kbtplAdd() {
+    kbtplState.rows = kbtplReadDom();
+    var nextOrder = kbtplState.rows.length
+      ? Math.max.apply(null, kbtplState.rows.map(function(r) { return r.order || 0; })) + 10
+      : 10;
+    kbtplState.rows.push({ section: '選色選樣', space: '', item: '', type: '單選', options: '', order: nextOrder, enabled: true });
+    kbtplRender();
+  }
+
+  function kbtplDelete(i) {
+    kbtplState.rows = kbtplReadDom();
+    kbtplState.rows.splice(i, 1);
+    kbtplRender();
+  }
+
+  function kbtplSave() {
+    var rows = kbtplReadDom().filter(function(r) { return r.item; });
+    callServer('serverAdminSaveKebianTemplate', rows).then(function(res) {
+      if (res && res.success) {
+        showToast('範本已儲存', 'success');
+        kbtplLoad();
+      } else {
+        showToast((res && res.message) || '儲存失敗', 'error');
+      }
+    });
+  }
+
   return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, onDateChange, doSort,
            saveSettings, switchStgTab,
            loadSlotCal, slotCalNav, selectSlotDate, closeDayPanel,
@@ -3024,7 +3519,10 @@ var Admin = (function() {
            addCustomerSubmit, addCustomerReset, acOnUnitTypeChange, acOnFloorChange,
            progAddRow, progSaveRow, progDeleteRow,
            progOpenPhotos, progClosePhotos, progUploadPhotos, progDeletePhoto,
-           acctOpenForm, acctCloseForm, acctOnRoleChange, acctSave, acctDelete };
+           acctOpenForm, acctCloseForm, acctOnRoleChange, acctSave, acctDelete,
+           kbEnter, kbReset, kbOnPickChange, kbPick, kbPickInput, kbPreview,
+           kbCloseModal, kbClearSign, kbSave,
+           kbtplLoad, kbtplAdd, kbtplDelete, kbtplSave };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
