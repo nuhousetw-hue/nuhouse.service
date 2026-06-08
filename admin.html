@@ -3322,7 +3322,8 @@ var Admin = (function() {
     var c = kbState.customer;
     var docHtml = ''
       + '<div class="kb-doc-title">新濠建設機構　客變選材確認單</div>'
-      + '<div class="kb-doc-meta">建案：' + kbEsc(kbProjectName()) + '　　戶號：' + kbEsc(c.unit) + '　　客戶：' + kbEsc(c.name || '—') + '</div>';
+      + '<div class="kb-doc-meta">建案：' + kbEsc(kbProjectName()) + '　　戶號：' + kbEsc(c.unit) + '　　客戶：' + kbEsc(c.name || '—')
+      + '<br>服務人員：' + kbEsc(staff) + '　　日期：' + kbToday() + '</div>';
     if (colorRows) {
       docHtml += '<div class="kb-doc-subtitle">壹、選色選樣</div>'
         + '<table class="kb-doc-table"><thead><tr><th>空間</th><th>位置</th><th>挑選項目</th><th>選材選樣</th><th>備註</th></tr></thead><tbody>' + colorRows + '</tbody></table>';
