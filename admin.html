@@ -3616,7 +3616,7 @@ var Admin = (function() {
   }
 
   function kbtplSave() {
-    var rows = kbtplReadDom().filter(function(r) { return r.item; });
+    var rows = kbtplReadDom().filter(function(r) { return r.space || r.position || r.item || r.options; });
     callServer('serverAdminSaveKebianTemplate', rows).then(function(res) {
       if (res && res.success) {
         showToast('範本已儲存', 'success');
