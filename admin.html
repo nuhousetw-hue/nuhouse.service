@@ -1014,7 +1014,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
           </div>
         </div>
         <p style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 0;line-height:1.7;">
-          此範本所有建案共用，排序數字越小越前面，取消「啟用」可暫時隱藏。每個項目選材時都可點選「選項」並填備註。<br>
+          此範本所有建案共用，用操作欄的 <strong>▲▼</strong> 調整上下順序，取消「啟用」可暫時隱藏。每個項目選材時都可點選「選項」並填備註。<br>
           ・<strong>項目</strong>可<strong>留空</strong>（只依空間/位置選選項）；填一個＝單一；用<strong>逗號</strong>填多個（例：<code>地磚,石材,木地板</code>）＝現場先挑項目再選選項。<br>
           ・<strong>選項</strong>欄以<strong>逗號</strong>分隔（例：<code>Type A,Type B,Type C,退選</code>），可自由增減、修改文字。<br>
           ・<strong>選色選樣</strong>：填 空間／位置（地坪、牆面…）／項目（地磚、木地板…）。　<strong>設備</strong>：填 空間／項目（設備名稱），位置可免填。
@@ -1022,8 +1022,8 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
       <div class="table-wrap">
         <table style="table-layout:fixed;width:100%;min-width:760px;">
-          <thead><tr><th style="width:100px;">區段</th><th>空間</th><th>位置</th><th>項目</th><th>選項（逗號分隔）</th><th style="width:60px;">排序</th><th style="width:48px;">啟用</th><th style="width:56px;">操作</th></tr></thead>
-          <tbody id="kbtpl-body"><tr class="empty-row"><td colspan="8">載入中…</td></tr></tbody>
+          <thead><tr><th style="width:100px;">區段</th><th>空間</th><th>位置</th><th>項目</th><th>選項（逗號分隔）</th><th style="width:48px;">啟用</th><th style="width:108px;">操作</th></tr></thead>
+          <tbody id="kbtpl-body"><tr class="empty-row"><td colspan="7">載入中…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1143,6 +1143,10 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .btn-mini-del{background:#fff;border:1px solid var(--danger);color:var(--danger);border-radius:6px;padding:.3rem .7rem;cursor:pointer;font-size:.85rem;}
   #kbtpl-body input[type=text],#kbtpl-body input[type=number],#kbtpl-body input:not([type]),#kbtpl-body select{width:100%;box-sizing:border-box;padding:.35rem .4rem;border:1px solid var(--border);border-radius:5px;font-size:.88rem;}
   #kbtpl-body td{padding:.3rem .35rem;vertical-align:middle;}
+  #kbtpl-body .kt-actions{white-space:nowrap;text-align:center;}
+  #kbtpl-body .kt-actions button{width:auto;display:inline-block;margin:0 1px;}
+  .kt-move{background:#fff;border:1px solid var(--border);border-radius:5px;padding:.18rem .35rem;cursor:pointer;font-size:.72rem;line-height:1;color:#555;}
+  .kt-move:hover{border-color:var(--primary);color:var(--primary);}
 </style>
 
 <!-- 客變預覽簽名 Modal -->
@@ -3544,7 +3548,7 @@ var Admin = (function() {
 
   // ── 範本編輯器 ──
   function kbtplLoad() {
-    document.getElementById('kbtpl-body').innerHTML = '<tr class="empty-row"><td colspan="8">載入中…</td></tr>';
+    document.getElementById('kbtpl-body').innerHTML = '<tr class="empty-row"><td colspan="7">載入中…</td></tr>';
     callServer('serverAdminGetKebianTemplate').then(function(rows) {
       kbtplState.rows = (rows || []).map(function(r) {
         return {
@@ -3564,14 +3568,14 @@ var Admin = (function() {
   function kbtplReadDom() {
     var arr = [];
     var trs = document.querySelectorAll('#kbtpl-body tr.kbtpl-row');
-    Array.prototype.forEach.call(trs, function(tr) {
+    Array.prototype.forEach.call(trs, function(tr, i) {
       arr.push({
         section: tr.querySelector('.kt-section').value,
         space: tr.querySelector('.kt-space').value.trim(),
         position: tr.querySelector('.kt-position').value.trim(),
         item: tr.querySelector('.kt-item').value.trim(),
         options: tr.querySelector('.kt-options').value.trim(),
-        order: Number(tr.querySelector('.kt-order').value) || 0,
+        order: (i + 1) * 10,   // 順序＝列的位置（由 ▲▼ 調整）
         enabled: tr.querySelector('.kt-enabled').checked
       });
     });
@@ -3592,9 +3596,8 @@ var Admin = (function() {
         + '<td><input class="kt-position" type="text" value="' + kbEsc(r.position) + '" placeholder="地坪/牆面"/></td>'
         + '<td><input class="kt-item" type="text" value="' + kbEsc(r.item) + '" placeholder="地磚 或 地磚,石材（多選）"/></td>'
         + '<td><input class="kt-options" type="text" value="' + kbEsc(r.options) + '" placeholder="Type A,Type B,Type C,退選"/></td>'
-        + '<td><input class="kt-order" type="number" value="' + (r.order || 0) + '"/></td>'
         + '<td style="text-align:center;"><input class="kt-enabled" type="checkbox"' + (r.enabled ? ' checked' : '') + '/></td>'
-        + '<td><button class="btn-mini-del" onclick="Admin.kbtplDelete(' + i + ')">刪除</button></td>'
+        + '<td class="kt-actions"><button class="kt-move" onclick="Admin.kbtplMove(' + i + ',-1)" title="上移">▲</button><button class="kt-move" onclick="Admin.kbtplMove(' + i + ',1)" title="下移">▼</button><button class="btn-mini-del" onclick="Admin.kbtplDelete(' + i + ')">刪</button></td>'
         + '</tr>';
     });
     document.getElementById('kbtpl-body').innerHTML = html;
@@ -3602,16 +3605,24 @@ var Admin = (function() {
 
   function kbtplAdd() {
     kbtplState.rows = kbtplReadDom();
-    var nextOrder = kbtplState.rows.length
-      ? Math.max.apply(null, kbtplState.rows.map(function(r) { return r.order || 0; })) + 10
-      : 10;
-    kbtplState.rows.push({ section: '選色選樣', space: '', position: '', item: '', options: 'Type A,Type B,Type C,退選', order: nextOrder, enabled: true });
+    kbtplState.rows.push({ section: '選色選樣', space: '', position: '', item: '', options: 'Type A,Type B,Type C,退選', enabled: true });
     kbtplRender();
   }
 
   function kbtplDelete(i) {
     kbtplState.rows = kbtplReadDom();
     kbtplState.rows.splice(i, 1);
+    kbtplRender();
+  }
+
+  // 上下移動某一列（dir：-1 上移、1 下移）
+  function kbtplMove(i, dir) {
+    kbtplState.rows = kbtplReadDom();
+    var j = i + dir;
+    if (j < 0 || j >= kbtplState.rows.length) return;
+    var t = kbtplState.rows[i];
+    kbtplState.rows[i] = kbtplState.rows[j];
+    kbtplState.rows[j] = t;
     kbtplRender();
   }
 
@@ -3646,7 +3657,7 @@ var Admin = (function() {
            kbEnter, kbReset, kbOnPickChange, kbPickItem, kbPick, kbPickNote, kbPreview,
            kbCloseModal, kbClearSign, kbSave,
            kbOpenSignPad, kbSignPadClear, kbSignPadConfirm, kbSignPadCancel,
-           kbtplLoad, kbtplAdd, kbtplDelete, kbtplSave };
+           kbtplLoad, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
