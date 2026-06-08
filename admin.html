@@ -181,6 +181,14 @@ input,select{font:inherit;}
 .prog-photo-del:hover{background:#b71c1c;}
 .prog-photo-empty{grid-column:1/-1;text-align:center;color:var(--text-muted);padding:1.5rem 0;font-size:.9rem;}
 @media(max-width:640px){.prog-modal-content{width:100vw;height:100vh;border-radius:0;}}
+/* 帳號權限管理 */
+.acct-perm-label{font-size:.85rem;font-weight:700;color:var(--text-muted);margin:1rem 0 .5rem;}
+.acct-checkbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.5rem;}
+.acct-check{display:flex;align-items:center;gap:.4rem;padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;font-size:.88rem;background:#fff;}
+.acct-check:hover{border-color:var(--primary);}
+.acct-check input{width:16px;height:16px;cursor:pointer;}
+.acct-tag{display:inline-block;background:#eef3ff;color:#1a56db;border-radius:4px;padding:.1rem .45rem;font-size:.76rem;margin:.1rem;}
+.acct-tag-all{background:#fff0f1;color:var(--primary);}
 .result-count strong{color:var(--text);font-size:1rem;}
 .btn-export{background:var(--success);color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.85rem;display:flex;align-items:center;gap:.4rem;}
 .btn-export:hover{background:#176d30;}
@@ -460,7 +468,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <span id="current-project-name" class="hidden"></span>
   </div>
   <nav class="sb-nav">
-    <div class="sb-group">
+    <div class="sb-group" id="sb-group-query">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('query')">
         <span>查詢</span><span class="sb-group-arrow" id="sg-arrow-query">▼</span>
       </button>
@@ -470,7 +478,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
         <button class="sb-item" id="tab-unbooked" onclick="Admin.switchTab('unbooked')">未預約客戶</button>
       </div>
     </div>
-    <div class="sb-group">
+    <div class="sb-group" id="sb-group-calendar">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('calendar')">
         <span>行事曆</span><span class="sb-group-arrow" id="sg-arrow-calendar">▼</span>
       </button>
@@ -478,7 +486,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
         <button class="sb-item" id="tab-calendar" onclick="Admin.switchTab('calendar')">行事曆</button>
       </div>
     </div>
-    <div class="sb-group">
+    <div class="sb-group" id="sb-group-proxy">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('proxy')">
         <span>代客預約</span><span class="sb-group-arrow" id="sg-arrow-proxy">▼</span>
       </button>
@@ -486,7 +494,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
         <button class="sb-item" id="tab-proxy" onclick="Admin.switchTab('proxy')">代客預約</button>
       </div>
     </div>
-    <div class="sb-group">
+    <div class="sb-group" id="sb-group-customer">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('customer')">
         <span>客戶管理</span><span class="sb-group-arrow" id="sg-arrow-customer">▼</span>
       </button>
@@ -510,6 +518,14 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </button>
       <div class="sb-group-items" id="sg-settings-sub">
         <button class="sb-item" id="tab-settings" onclick="Admin.switchTab('settings')">預約設定</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-accounts">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('accounts-sub')">
+        <span>帳號權限</span><span class="sb-group-arrow" id="sg-arrow-accounts-sub">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-accounts-sub">
+        <button class="sb-item" id="tab-accounts" onclick="Admin.switchTab('accounts')">帳號權限管理</button>
       </div>
     </div>
   </nav>
@@ -912,6 +928,23 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+    <!-- 帳號權限管理 -->
+    <div id="accounts-panel" class="hidden">
+      <div class="cust-search-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+          <div class="cust-search-title" style="margin-bottom:0;">帳號權限管理</div>
+          <button class="btn-query" onclick="Admin.acctOpenForm()">+ 新增帳號</button>
+        </div>
+        <p style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 0;">設定每個帳號可使用的功能與可操作的建案。管理員（admin）擁有全部權限。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>帳號</th><th>角色</th><th>可用功能</th><th>可管建案</th><th>操作</th></tr></thead>
+          <tbody id="acct-table-body"><tr class="empty-row"><td colspan="5">載入中…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- 工程進度管理 -->
     <div id="progress-panel" class="hidden">
       <div class="cust-search-card">
@@ -1005,6 +1038,46 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   </div>
 </div>
 
+<!-- 帳號編輯 Modal -->
+<div id="acct-modal" class="prog-modal hidden">
+  <div class="prog-modal-overlay" onclick="Admin.acctCloseForm()"></div>
+  <div class="prog-modal-content" style="height:auto;max-height:90vh;">
+    <div class="prog-modal-header">
+      <span class="prog-modal-title" id="acct-modal-title">新增帳號</span>
+      <button class="prog-modal-close" onclick="Admin.acctCloseForm()">✕</button>
+    </div>
+    <div class="prog-modal-body">
+      <div class="cust-filter-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
+        <div class="cust-filter-field">
+          <label>帳號 <span style="color:var(--primary)">*</span></label>
+          <input type="text" id="acct-username" placeholder="登入帳號"/>
+        </div>
+        <div class="cust-filter-field">
+          <label>密碼 <span style="color:var(--primary)">*</span></label>
+          <input type="text" id="acct-password" placeholder="登入密碼"/>
+        </div>
+        <div class="cust-filter-field">
+          <label>角色</label>
+          <select id="acct-role" onchange="Admin.acctOnRoleChange()">
+            <option value="user">一般同仁</option>
+            <option value="admin">管理員（全部權限）</option>
+          </select>
+        </div>
+      </div>
+      <div id="acct-perm-section">
+        <div class="acct-perm-label">可用功能</div>
+        <div class="acct-checkbox-grid" id="acct-perm-grid"></div>
+        <div class="acct-perm-label">可管建案</div>
+        <div class="acct-checkbox-grid" id="acct-proj-grid"></div>
+      </div>
+      <div style="margin-top:1.2rem;display:flex;gap:.65rem;">
+        <button class="btn-save-settings" onclick="Admin.acctSave()">儲存</button>
+        <button class="btn-reset" onclick="Admin.acctCloseForm()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 工程進度照片管理 Modal -->
 <div id="prog-photo-modal" class="prog-modal hidden">
   <div class="prog-modal-overlay" onclick="Admin.progClosePhotos()"></div>
@@ -1029,7 +1102,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
 
 var Admin = (function() {
-  var state = { username: null, role: 'user', tab: 'booking', data: [], projects: [], settingsServiceTypes: [] };
+  var state = { username: null, role: 'user', perms: [], allowedProjects: [], tab: 'booking', data: [], projects: [], settingsServiceTypes: [] };
   var SESSION_KEY = 'xh_admin_session';
 
   function callServer(fn) {
@@ -1064,6 +1137,8 @@ var Admin = (function() {
         var s = JSON.parse(saved);
         state.username = s.username;
         state.role = s.role || 'user';
+        state.perms = s.perms || [];
+        state.allowedProjects = s.allowedProjects || [];
         enterMain();
         return;
       }
@@ -1082,7 +1157,12 @@ var Admin = (function() {
         if (res.success) {
           state.username = username;
           state.role = res.role || 'user';
-          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: username, role: state.role }));
+          state.perms = res.perms || [];
+          state.allowedProjects = res.projects || [];
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+            username: username, role: state.role,
+            perms: state.perms, allowedProjects: state.allowedProjects
+          }));
           enterMain();
         } else {
           showToast(res.message || '帳號或密碼錯誤', 'error');
@@ -1094,7 +1174,7 @@ var Admin = (function() {
 
   function logout() {
     sessionStorage.removeItem(SESSION_KEY);
-    state.username = null; state.role = 'user'; state.data = [];
+    state.username = null; state.role = 'user'; state.perms = []; state.allowedProjects = []; state.data = [];
     var sb = document.getElementById('sidebar');
     sb.classList.remove('visible'); sb.classList.remove('open');
     document.getElementById('mobile-topbar').classList.remove('visible');
@@ -1112,21 +1192,46 @@ var Admin = (function() {
     overlay.classList.toggle('visible', isOpen);
   }
 
+  // 群組代碼 → 側邊欄群組元素 id、預設分頁
+  var GROUP_MAP = {
+    query:    { box: 'sb-group-query',    tab: 'booking' },
+    calendar: { box: 'sb-group-calendar', tab: 'calendar' },
+    proxy:    { box: 'sb-group-proxy',    tab: 'proxy' },
+    customer: { box: 'sb-group-customer', tab: 'profile' },
+    progress: { box: 'sb-group-progress', tab: 'progress' },
+    settings: { box: 'sb-group-settings', tab: 'settings' }
+  };
+
   function applyRolePermissions() {
     var isAdmin = state.role === 'admin';
-    var settingsTab = document.getElementById('tab-settings');
-    var settingsGroup = document.getElementById('sb-group-settings');
-    var progressGroup = document.getElementById('sb-group-progress');
-    if (isAdmin) {
-      settingsTab.classList.remove('hidden');
-      if (settingsGroup) settingsGroup.classList.remove('hidden');
-      if (progressGroup) progressGroup.classList.remove('hidden');
-    } else {
-      settingsTab.classList.add('hidden');
-      if (settingsGroup) settingsGroup.classList.add('hidden');
-      if (progressGroup) progressGroup.classList.add('hidden');
-      if (state.tab === 'settings' || state.tab === 'progress') switchTab('booking');
+    var perms = isAdmin ? Object.keys(GROUP_MAP) : (state.perms || []);
+    var firstVisibleTab = null;
+    // 6 大功能群組依權限顯示
+    Object.keys(GROUP_MAP).forEach(function(g) {
+      var box = document.getElementById(GROUP_MAP[g].box);
+      if (!box) return;
+      var allowed = perms.indexOf(g) >= 0;
+      box.classList.toggle('hidden', !allowed);
+      if (allowed && !firstVisibleTab) firstVisibleTab = GROUP_MAP[g].tab;
+    });
+    // 帳號權限管理：僅 admin
+    var accGroup = document.getElementById('sb-group-accounts');
+    if (accGroup) accGroup.classList.toggle('hidden', !isAdmin);
+    // 若目前所在分頁無權限，切到第一個有權限的分頁
+    var curGroup = tabToGroup(state.tab);
+    if (curGroup && perms.indexOf(curGroup) < 0 && !(state.tab === 'accounts' && isAdmin)) {
+      if (firstVisibleTab) switchTab(firstVisibleTab);
     }
+  }
+
+  function tabToGroup(tab) {
+    if (['booking','upload','unbooked'].indexOf(tab) >= 0) return 'query';
+    if (tab === 'calendar') return 'calendar';
+    if (tab === 'proxy') return 'proxy';
+    if (['profile','billing','addcustomer'].indexOf(tab) >= 0) return 'customer';
+    if (tab === 'progress') return 'progress';
+    if (tab === 'settings') return 'settings';
+    return null;
   }
 
   function enterMain() {
@@ -1152,6 +1257,12 @@ var Admin = (function() {
 
   function loadProjects() {
     callServer('serverGetProjects').then(function(projects) {
+      // 依帳號建案權限過濾（admin 或權限清單為空字串時不過濾）
+      var isAdmin = state.role === 'admin';
+      var allowed = state.allowedProjects || [];
+      if (!isAdmin && allowed.length) {
+        projects = projects.filter(function(p) { return allowed.indexOf(p.code) >= 0; });
+      }
       state.projects = projects;
       var sel = document.getElementById('select-project');
       sel.innerHTML = '<option value="">— 請選擇建案 —</option>';
@@ -1190,7 +1301,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','progress'];
+    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','progress','accounts'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -1202,7 +1313,8 @@ var Admin = (function() {
     var isProxy       = tab === 'proxy';
     var isAddCustomer = tab === 'addcustomer';
     var isProgress    = tab === 'progress';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress;
+    var isAccounts    = tab === 'accounts';
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isAccounts;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -1213,6 +1325,7 @@ var Admin = (function() {
     document.getElementById('proxy-panel').classList.toggle('hidden', !isProxy);
     document.getElementById('addcustomer-panel').classList.toggle('hidden', !isAddCustomer);
     document.getElementById('progress-panel').classList.toggle('hidden', !isProgress);
+    document.getElementById('accounts-panel').classList.toggle('hidden', !isAccounts);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
     var showStats = (tab === 'booking' || tab === 'upload');
@@ -1242,6 +1355,8 @@ var Admin = (function() {
       var pc4 = document.getElementById('select-project').value;
       if (pc4) loadProgress(pc4);
       else document.getElementById('prog-table-body').innerHTML = '<tr class="empty-row"><td colspan="6">請先選擇建案</td></tr>';
+    } else if (isAccounts) {
+      loadAccounts();
     } else if (isTable) {
       resetTable();
     }
@@ -1687,6 +1802,151 @@ var Admin = (function() {
         showLoading(false);
         if (res && res.success) { showToast('已刪除', 'success'); progLoadPhotos(); }
         else showToast('刪除失敗', 'error');
+      })
+      .catch(function() { showLoading(false); showToast('刪除失敗', 'error'); });
+  }
+
+  // ── 帳號權限管理 ──────────────────────────────────────────
+  var GROUP_LABELS = {
+    query: '查詢', calendar: '行事曆', proxy: '代客預約',
+    customer: '客戶管理', progress: '工程進度', settings: '設定'
+  };
+  var acctState = { accounts: [], editing: null };
+
+  function loadAccounts() {
+    var body = document.getElementById('acct-table-body');
+    body.innerHTML = '<tr class="empty-row"><td colspan="5">載入中…</td></tr>';
+    callServer('serverAdminGetAccounts')
+      .then(function(accts) {
+        acctState.accounts = Array.isArray(accts) ? accts : [];
+        renderAcctTable();
+      })
+      .catch(function() { body.innerHTML = '<tr class="empty-row"><td colspan="5">載入失敗</td></tr>'; });
+  }
+
+  function projName(code) {
+    var p = state.projects.find(function(x) { return x.code === code; });
+    return p ? p.name : code;
+  }
+
+  function renderAcctTable() {
+    var body = document.getElementById('acct-table-body');
+    body.innerHTML = '';
+    if (!acctState.accounts.length) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">尚無帳號</td></tr>'; return;
+    }
+    acctState.accounts.forEach(function(a) {
+      var isAdmin = a.role === 'admin';
+      var permTags = isAdmin
+        ? '<span class="acct-tag acct-tag-all">全部功能</span>'
+        : (a.perms.length ? a.perms.map(function(g) { return '<span class="acct-tag">' + esc(GROUP_LABELS[g] || g) + '</span>'; }).join('') : '<span style="color:var(--text-muted)">—</span>');
+      var projTags = isAdmin
+        ? '<span class="acct-tag acct-tag-all">全部建案</span>'
+        : (a.projects.length ? a.projects.map(function(c) { return '<span class="acct-tag">' + esc(projName(c)) + '</span>'; }).join('') : '<span style="color:var(--text-muted)">—</span>');
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><strong>' + esc(a.username) + '</strong></td>' +
+        '<td>' + (isAdmin ? '<span style="color:var(--primary);font-weight:700">管理員</span>' : '一般') + '</td>' +
+        '<td>' + permTags + '</td>' +
+        '<td>' + projTags + '</td>' +
+        '<td style="white-space:nowrap;"><button class="btn-prog-save" onclick="Admin.acctOpenForm(\'' + esc(a.username) + '\')">編輯</button> ' +
+        (a.username.toUpperCase() === 'ADMIN' ? '' : '<button class="btn-prog-del" onclick="Admin.acctDelete(\'' + esc(a.username) + '\')">刪除</button>') +
+        '</td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function acctBuildCheckboxes() {
+    // 功能群組
+    var pg = document.getElementById('acct-perm-grid');
+    pg.innerHTML = '';
+    Object.keys(GROUP_LABELS).forEach(function(g) {
+      pg.innerHTML += '<label class="acct-check"><input type="checkbox" class="acct-perm-cb" value="' + g + '"/>' + GROUP_LABELS[g] + '</label>';
+    });
+    // 建案
+    var jg = document.getElementById('acct-proj-grid');
+    jg.innerHTML = '';
+    state.projects.forEach(function(p) {
+      jg.innerHTML += '<label class="acct-check"><input type="checkbox" class="acct-proj-cb" value="' + p.code + '"/>' + esc(p.name) + '</label>';
+    });
+  }
+
+  function acctOpenForm(username) {
+    acctBuildCheckboxes();
+    if (username) {
+      var a = acctState.accounts.find(function(x) { return x.username === username; });
+      acctState.editing = username;
+      document.getElementById('acct-modal-title').textContent = '編輯帳號 — ' + username;
+      document.getElementById('acct-username').value = a.username;
+      document.getElementById('acct-username').disabled = true;
+      document.getElementById('acct-password').value = a.password;
+      document.getElementById('acct-role').value = a.role;
+      (a.perms || []).forEach(function(g) {
+        var cb = document.querySelector('.acct-perm-cb[value="' + g + '"]');
+        if (cb) cb.checked = true;
+      });
+      (a.projects || []).forEach(function(c) {
+        var cb = document.querySelector('.acct-proj-cb[value="' + c + '"]');
+        if (cb) cb.checked = true;
+      });
+    } else {
+      acctState.editing = null;
+      document.getElementById('acct-modal-title').textContent = '新增帳號';
+      document.getElementById('acct-username').value = '';
+      document.getElementById('acct-username').disabled = false;
+      document.getElementById('acct-password').value = '';
+      document.getElementById('acct-role').value = 'user';
+    }
+    acctOnRoleChange();
+    document.getElementById('acct-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function acctCloseForm() {
+    document.getElementById('acct-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function acctOnRoleChange() {
+    var isAdmin = document.getElementById('acct-role').value === 'admin';
+    // admin 角色不需勾選（自動全部），隱藏勾選區
+    document.getElementById('acct-perm-section').style.display = isAdmin ? 'none' : 'block';
+  }
+
+  function acctSave() {
+    var username = document.getElementById('acct-username').value.trim();
+    var password = document.getElementById('acct-password').value.trim();
+    var role     = document.getElementById('acct-role').value;
+    if (!username) { showToast('請輸入帳號', 'error'); return; }
+    if (!password) { showToast('請輸入密碼', 'error'); return; }
+    var perms = [], projects = [];
+    if (role !== 'admin') {
+      document.querySelectorAll('.acct-perm-cb:checked').forEach(function(cb) { perms.push(cb.value); });
+      document.querySelectorAll('.acct-proj-cb:checked').forEach(function(cb) { projects.push(cb.value); });
+      if (!perms.length)    { showToast('請至少勾選一項功能', 'error'); return; }
+      if (!projects.length) { showToast('請至少勾選一個建案', 'error'); return; }
+    }
+    showLoading(true);
+    callServer('serverAdminSaveAccount', username, password, role, perms, projects)
+      .then(function(res) {
+        showLoading(false);
+        if (res && res.success) {
+          showToast(res.mode === 'update' ? '帳號已更新' : '帳號已新增', 'success');
+          acctCloseForm();
+          loadAccounts();
+        } else showToast('儲存失敗：' + ((res && res.message) || ''), 'error');
+      })
+      .catch(function() { showLoading(false); showToast('儲存失敗', 'error'); });
+  }
+
+  function acctDelete(username) {
+    if (!confirm('確定刪除帳號「' + username + '」？')) return;
+    showLoading(true);
+    callServer('serverAdminDeleteAccount', username)
+      .then(function(res) {
+        showLoading(false);
+        if (res && res.success) { showToast('已刪除', 'success'); loadAccounts(); }
+        else showToast('刪除失敗：' + ((res && res.message) || ''), 'error');
       })
       .catch(function() { showLoading(false); showToast('刪除失敗', 'error'); });
   }
@@ -2763,7 +3023,8 @@ var Admin = (function() {
            proxyReset, proxySubmit,
            addCustomerSubmit, addCustomerReset, acOnUnitTypeChange, acOnFloorChange,
            progAddRow, progSaveRow, progDeleteRow,
-           progOpenPhotos, progClosePhotos, progUploadPhotos, progDeletePhoto };
+           progOpenPhotos, progClosePhotos, progUploadPhotos, progDeletePhoto,
+           acctOpenForm, acctCloseForm, acctOnRoleChange, acctSave, acctDelete };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
