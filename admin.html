@@ -1129,6 +1129,10 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .kb-sign-box{flex:1;min-width:260px;}
   .kb-sign-label{font-weight:700;margin-bottom:.3rem;}
   .kb-sign-box canvas{border:1px solid #999;border-radius:6px;width:100%;height:140px;background:#fff;touch-action:none;display:block;}
+  .kb-sign-slot{position:relative;cursor:pointer;}
+  .kb-sign-slot:hover canvas{border-color:var(--primary);}
+  .kb-sign-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#bbb;font-size:1.05rem;pointer-events:none;white-space:nowrap;}
+  #kb-signpad-canvas{border:2px solid #999;border-radius:8px;width:100%;height:300px;background:#fff;touch-action:none;display:block;}
   .kb-doc-date{margin-top:1rem;font-size:.9rem;color:#555;}
   .kb-sign-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.8rem 0;}
   .btn-mini-del{background:#fff;border:1px solid var(--danger);color:var(--danger);border-radius:6px;padding:.3rem .7rem;cursor:pointer;font-size:.85rem;}
@@ -1150,20 +1154,41 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
         <div class="kb-sign-row">
           <div class="kb-sign-box">
             <div class="kb-sign-label">客戶簽名</div>
-            <canvas id="kb-sign-cust" width="380" height="140"></canvas>
+            <div class="kb-sign-slot" onclick="Admin.kbOpenSignPad('cust')">
+              <canvas id="kb-sign-cust" width="380" height="140"></canvas>
+              <span class="kb-sign-hint" id="kb-hint-cust">✍️ 點此簽名</span>
+            </div>
           </div>
           <div class="kb-sign-box">
             <div class="kb-sign-label">服務人員簽名（<span id="kb-doc-sign-staff-name"></span>）</div>
-            <canvas id="kb-sign-staff" width="380" height="140"></canvas>
+            <div class="kb-sign-slot" onclick="Admin.kbOpenSignPad('staff')">
+              <canvas id="kb-sign-staff" width="380" height="140"></canvas>
+              <span class="kb-sign-hint" id="kb-hint-staff">✍️ 點此簽名</span>
+            </div>
           </div>
         </div>
         <div class="kb-doc-date" id="kb-doc-date"></div>
       </div>
-      <div class="kb-sign-actions">
-        <button class="btn-reset" onclick="Admin.kbClearSign('cust')">清除客戶簽名</button>
-        <button class="btn-reset" onclick="Admin.kbClearSign('staff')">清除服務人員簽名</button>
-      </div>
       <button class="btn-save-settings" id="kb-save-btn" style="font-size:1.05rem;" onclick="Admin.kbSave()">確認簽名並存檔</button>
+    </div>
+  </div>
+</div>
+
+<!-- 簽名板 Modal（點簽名框跳出的大視窗） -->
+<div id="kb-signpad-modal" class="prog-modal hidden">
+  <div class="prog-modal-overlay" onclick="Admin.kbSignPadCancel()"></div>
+  <div class="prog-modal-content" style="height:auto;max-height:92vh;max-width:760px;">
+    <div class="prog-modal-header">
+      <span class="prog-modal-title" id="kb-signpad-title">簽名</span>
+      <button class="prog-modal-close" onclick="Admin.kbSignPadCancel()">✕</button>
+    </div>
+    <div class="prog-modal-body">
+      <p style="font-size:.9rem;color:var(--text-muted);margin:0 0 .6rem;">請在下方框內簽名，完成後按「確認簽名」。</p>
+      <canvas id="kb-signpad-canvas" width="720" height="320"></canvas>
+      <div style="display:flex;gap:.6rem;margin-top:.9rem;">
+        <button class="btn-reset" onclick="Admin.kbSignPadClear()">清除重簽</button>
+        <button class="btn-save-settings" style="flex:1;font-size:1.05rem;" onclick="Admin.kbSignPadConfirm()">確認簽名</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3336,8 +3361,8 @@ var Admin = (function() {
     document.getElementById('kb-doc-sign-staff-name').textContent = staff;
     document.getElementById('kb-doc-date').textContent = '簽署日期：' + kbToday();
     document.getElementById('kb-modal').classList.remove('hidden');
-    kbInitCanvas('kb-sign-cust');
-    kbInitCanvas('kb-sign-staff');
+    kbResetSignSlot('cust');
+    kbResetSignSlot('staff');
   }
 
   function kbToday() {
@@ -3349,11 +3374,30 @@ var Admin = (function() {
     document.getElementById('kb-modal').classList.add('hidden');
   }
 
-  function kbInitCanvas(id) {
-    var cv = document.getElementById(id);
+  // 重設預覽單上的簽名框（清空＋顯示「點此簽名」提示）
+  function kbResetSignSlot(which) {
+    var cv = document.getElementById(which === 'cust' ? 'kb-sign-cust' : 'kb-sign-staff');
+    cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
+    cv.dataset.dirty = '';
+    var hint = document.getElementById(which === 'cust' ? 'kb-hint-cust' : 'kb-hint-staff');
+    if (hint) hint.style.display = '';
+  }
+
+  function kbClearSign(which) { kbResetSignSlot(which); }
+
+  // 點預覽單的簽名框 → 跳出大簽名板
+  function kbOpenSignPad(which) {
+    kbState.signTarget = which;
+    document.getElementById('kb-signpad-title').textContent = which === 'cust' ? '客戶簽名' : '服務人員簽名';
+    document.getElementById('kb-signpad-modal').classList.remove('hidden');
+    kbInitPad();
+  }
+
+  function kbInitPad() {
+    var cv = document.getElementById('kb-signpad-canvas');
     var ctx = cv.getContext('2d');
     ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.strokeStyle = '#15203a';
+    ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#15203a';
     cv.dataset.dirty = '';
     if (cv.dataset.bound) return;
     cv.dataset.bound = '1';
@@ -3379,10 +3423,28 @@ var Admin = (function() {
     cv.addEventListener('touchend', end);
   }
 
-  function kbClearSign(which) {
-    var cv = document.getElementById(which === 'cust' ? 'kb-sign-cust' : 'kb-sign-staff');
+  function kbSignPadClear() {
+    var cv = document.getElementById('kb-signpad-canvas');
     cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
     cv.dataset.dirty = '';
+  }
+
+  function kbSignPadConfirm() {
+    var pad = document.getElementById('kb-signpad-canvas');
+    if (!pad.dataset.dirty) { showToast('請先簽名', 'error'); return; }
+    var which = kbState.signTarget;
+    var target = document.getElementById(which === 'cust' ? 'kb-sign-cust' : 'kb-sign-staff');
+    var tctx = target.getContext('2d');
+    tctx.clearRect(0, 0, target.width, target.height);
+    tctx.drawImage(pad, 0, 0, pad.width, pad.height, 0, 0, target.width, target.height);
+    target.dataset.dirty = '1';
+    var hint = document.getElementById(which === 'cust' ? 'kb-hint-cust' : 'kb-hint-staff');
+    if (hint) hint.style.display = 'none';
+    document.getElementById('kb-signpad-modal').classList.add('hidden');
+  }
+
+  function kbSignPadCancel() {
+    document.getElementById('kb-signpad-modal').classList.add('hidden');
   }
 
   function kbSave() {
@@ -3546,6 +3608,7 @@ var Admin = (function() {
            acctOpenForm, acctCloseForm, acctOnRoleChange, acctSave, acctDelete,
            kbEnter, kbReset, kbOnPickChange, kbPick, kbPickNote, kbPreview,
            kbCloseModal, kbClearSign, kbSave,
+           kbOpenSignPad, kbSignPadClear, kbSignPadConfirm, kbSignPadCancel,
            kbtplLoad, kbtplAdd, kbtplDelete, kbtplSave };
 })();
 
