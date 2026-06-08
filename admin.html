@@ -1014,15 +1014,15 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
           </div>
         </div>
         <p style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 0;line-height:1.7;">
-          此範本所有建案共用，排序數字越小越前面，取消「啟用」可暫時隱藏。<br>
-          ・<strong>選色選樣</strong>：填 空間／位置（地坪、牆面…）／項目（地磚、木地板…）。勾「<strong>需選材</strong>」＝現場可選 Type A/B/C/退選；不勾＝該項只列出供填備註。<br>
-          ・<strong>設備</strong>：只填 空間／項目（設備名稱），位置與需選材免填；選項固定為 安裝／退選／點交不安裝。
+          此範本所有建案共用，排序數字越小越前面，取消「啟用」可暫時隱藏。每個項目選材時都可點選選項並填備註。<br>
+          ・<strong>選色選樣</strong>：填 空間／位置（地坪、牆面…）／項目（地磚、木地板…）；選項固定為 Type A／Type B／Type C／退選。<br>
+          ・<strong>設備</strong>：只填 空間／項目（設備名稱），位置免填；選項固定為 安裝／退選／點交不安裝。
         </p>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th style="width:100px;">區段</th><th>空間</th><th>位置</th><th>項目</th><th style="width:60px;">需選材</th><th style="width:70px;">排序</th><th style="width:55px;">啟用</th><th style="width:60px;">操作</th></tr></thead>
-          <tbody id="kbtpl-body"><tr class="empty-row"><td colspan="8">載入中…</td></tr></tbody>
+          <thead><tr><th style="width:100px;">區段</th><th>空間</th><th>位置</th><th>項目</th><th style="width:70px;">排序</th><th style="width:55px;">啟用</th><th style="width:60px;">操作</th></tr></thead>
+          <tbody id="kbtpl-body"><tr class="empty-row"><td colspan="7">載入中…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -3266,7 +3266,7 @@ var Admin = (function() {
           var kAttr = encodeURIComponent(key);
           var isEquip = it.section === '設備';
           var label = isEquip ? it.item : (it.position ? it.position + '・' + it.item : it.item);
-          var opts = isEquip ? ['安裝', '退選', '點交不安裝'] : (it.needPick ? ['Type A', 'Type B', 'Type C', '退選'] : []);
+          var opts = isEquip ? ['安裝', '退選', '點交不安裝'] : ['Type A', 'Type B', 'Type C', '退選'];
           html += '<div class="kb-item"><div class="kb-item-name">' + kbEsc(label) + '</div><div class="kb-opts">';
           opts.forEach(function(op) {
             html += '<button type="button" class="kb-opt" data-key="' + kAttr + '" data-val="' + kbEsc(op) + '" onclick="Admin.kbPick(this)">' + kbEsc(op) + '</button>';
@@ -3315,8 +3315,7 @@ var Admin = (function() {
       if (it.section === '設備') {
         equipRows += '<tr><td>' + kbEsc(it.space) + '</td><td>' + kbEsc(it.item) + '</td><td>' + (choice ? kbEsc(choice) : '—') + '</td><td>' + kbEsc(note) + '</td></tr>';
       } else {
-        var sela = it.needPick ? (choice ? kbEsc(choice) : '—') : '—';
-        colorRows += '<tr><td>' + kbEsc(it.space) + '</td><td>' + kbEsc(it.position || '') + '</td><td>' + kbEsc(it.item) + '</td><td>' + sela + '</td><td>' + kbEsc(note) + '</td></tr>';
+        colorRows += '<tr><td>' + kbEsc(it.space) + '</td><td>' + kbEsc(it.position || '') + '</td><td>' + kbEsc(it.item) + '</td><td>' + (choice ? kbEsc(choice) : '—') + '</td><td>' + kbEsc(note) + '</td></tr>';
       }
     });
     var c = kbState.customer;
@@ -3471,7 +3470,7 @@ var Admin = (function() {
         space: tr.querySelector('.kt-space').value.trim(),
         position: tr.querySelector('.kt-position').value.trim(),
         item: tr.querySelector('.kt-item').value.trim(),
-        needPick: tr.querySelector('.kt-needpick').checked,
+        needPick: true,
         order: Number(tr.querySelector('.kt-order').value) || 0,
         enabled: tr.querySelector('.kt-enabled').checked
       });
@@ -3482,7 +3481,7 @@ var Admin = (function() {
   function kbtplRender() {
     var rows = kbtplState.rows || [];
     if (!rows.length) {
-      document.getElementById('kbtpl-body').innerHTML = '<tr class="empty-row"><td colspan="8">尚無項目，請按「新增項目」</td></tr>';
+      document.getElementById('kbtpl-body').innerHTML = '<tr class="empty-row"><td colspan="7">尚無項目，請按「新增項目」</td></tr>';
       return;
     }
     var html = '';
@@ -3492,7 +3491,6 @@ var Admin = (function() {
         + '<td><input class="kt-space" type="text" value="' + kbEsc(r.space) + '"/></td>'
         + '<td><input class="kt-position" type="text" value="' + kbEsc(r.position) + '" placeholder="地坪/牆面"/></td>'
         + '<td><input class="kt-item" type="text" value="' + kbEsc(r.item) + '" placeholder="地磚/設備名稱"/></td>'
-        + '<td style="text-align:center;"><input class="kt-needpick" type="checkbox"' + (r.needPick ? ' checked' : '') + '/></td>'
         + '<td><input class="kt-order" type="number" value="' + (r.order || 0) + '"/></td>'
         + '<td style="text-align:center;"><input class="kt-enabled" type="checkbox"' + (r.enabled ? ' checked' : '') + '/></td>'
         + '<td><button class="btn-mini-del" onclick="Admin.kbtplDelete(' + i + ')">刪除</button></td>'
