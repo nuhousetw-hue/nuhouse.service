@@ -529,6 +529,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </button>
       <div class="sb-group-items" id="sg-kebian-sub">
         <button class="sb-item" id="tab-kebian" onclick="Admin.switchTab('kebian')">選材作業</button>
+        <button class="sb-item" id="tab-kbrec" onclick="Admin.switchTab('kbrec')">選材紀錄</button>
         <button class="sb-item" id="tab-kbtpl" onclick="Admin.switchTab('kbtpl')">範本編輯</button>
       </div>
     </div>
@@ -1037,6 +1038,23 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+    <!-- 客變選材紀錄 -->
+    <div id="kbrec-panel" class="hidden">
+      <div class="cust-search-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+          <div class="cust-search-title" style="margin-bottom:0;">選材紀錄</div>
+          <button class="btn-query" onclick="Admin.kbrecLoad()">重新整理</button>
+        </div>
+        <p style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 0;">已完成的客變選材單。選上方建案可只看該建案；點「下載」取得 PDF、「預覽」線上開啟。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>時間</th><th>建案</th><th>戶號</th><th>客戶</th><th>服務人員</th><th>檔案</th></tr></thead>
+          <tbody id="kbrec-body"><tr class="empty-row"><td colspan="6">載入中…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- 代客預約 -->
     <div id="proxy-panel" class="hidden">
       <div class="proxy-card">
@@ -1413,7 +1431,7 @@ var Admin = (function() {
     if (tab === 'proxy') return 'proxy';
     if (['profile','billing','addcustomer'].indexOf(tab) >= 0) return 'customer';
     if (tab === 'progress') return 'progress';
-    if (tab === 'kebian' || tab === 'kbtpl') return 'kebian';
+    if (tab === 'kebian' || tab === 'kbtpl' || tab === 'kbrec') return 'kebian';
     if (tab === 'settings') return 'settings';
     return null;
   }
@@ -1470,6 +1488,8 @@ var Admin = (function() {
           if (sel.value) loadProgress(sel.value);
         } else if (state.tab === 'kebian') {
           kbEnter(sel.value);
+        } else if (state.tab === 'kbrec') {
+          kbrecLoad();
         } else {
           resetTable();
         }
@@ -1487,7 +1507,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','progress','kebian','kbtpl','accounts'];
+    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','progress','kebian','kbtpl','kbrec','accounts'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -1501,8 +1521,9 @@ var Admin = (function() {
     var isProgress    = tab === 'progress';
     var isKebian      = tab === 'kebian';
     var isKbtpl       = tab === 'kbtpl';
+    var isKbrec       = tab === 'kbrec';
     var isAccounts    = tab === 'accounts';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isAccounts;
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isKbrec && !isAccounts;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -1515,6 +1536,7 @@ var Admin = (function() {
     document.getElementById('progress-panel').classList.toggle('hidden', !isProgress);
     document.getElementById('kebian-panel').classList.toggle('hidden', !isKebian);
     document.getElementById('kbtpl-panel').classList.toggle('hidden', !isKbtpl);
+    document.getElementById('kbrec-panel').classList.toggle('hidden', !isKbrec);
     document.getElementById('accounts-panel').classList.toggle('hidden', !isAccounts);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
@@ -1550,6 +1572,8 @@ var Admin = (function() {
       kbEnter(pck);
     } else if (isKbtpl) {
       kbtplLoad();
+    } else if (isKbrec) {
+      kbrecLoad();
     } else if (isAccounts) {
       loadAccounts();
     } else if (isTable) {
@@ -3651,6 +3675,33 @@ var Admin = (function() {
     });
   }
 
+  // ── 選材紀錄（後台列表＋下載） ──
+  function kbrecLoad() {
+    var pc = document.getElementById('select-project').value || '';
+    document.getElementById('kbrec-body').innerHTML = '<tr class="empty-row"><td colspan="6">載入中…</td></tr>';
+    callServer('serverAdminGetKebianRecords', pc).then(function(rows) {
+      if (!rows || !rows.length) {
+        document.getElementById('kbrec-body').innerHTML = '<tr class="empty-row"><td colspan="6">尚無選材紀錄</td></tr>';
+        return;
+      }
+      var html = '';
+      rows.forEach(function(r) {
+        html += '<tr>'
+          + '<td style="white-space:nowrap;">' + kbEsc(r.date) + '</td>'
+          + '<td>' + kbEsc(r.projectName) + '</td>'
+          + '<td>' + kbEsc(r.unit) + '</td>'
+          + '<td>' + kbEsc(r.customerName) + '</td>'
+          + '<td>' + kbEsc(r.serviceName) + '</td>'
+          + '<td style="white-space:nowrap;">'
+          +   '<a class="btn-prog-save" href="' + r.downloadUrl + '" target="_blank" rel="noopener">下載</a> '
+          +   '<a class="btn-reset" href="' + r.previewUrl + '" target="_blank" rel="noopener">預覽</a>'
+          + '</td>'
+          + '</tr>';
+      });
+      document.getElementById('kbrec-body').innerHTML = html;
+    });
+  }
+
   return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, onDateChange, doSort,
            saveSettings, switchStgTab,
            loadSlotCal, slotCalNav, selectSlotDate, closeDayPanel,
@@ -3670,7 +3721,7 @@ var Admin = (function() {
            kbEnter, kbReset, kbOnPickChange, kbPickItem, kbPick, kbPickNote, kbPreview,
            kbCloseModal, kbClearSign, kbSave,
            kbOpenSignPad, kbSignPadClear, kbSignPadConfirm, kbSignPadCancel,
-           kbtplLoad, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave };
+           kbtplLoad, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave, kbrecLoad };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
