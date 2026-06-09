@@ -1170,6 +1170,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .kb-doc-table{width:100%;border-collapse:collapse;font-size:.92rem;table-layout:fixed;}
   .kb-doc-table th,.kb-doc-table td{border:1px solid #bbb;padding:.45rem .6rem;text-align:left;word-break:break-word;white-space:normal;vertical-align:top;}
   .kb-doc-table th{background:#1a2a4a;color:#fff;font-weight:700;}
+  .kb-doc-table td.kb-doc-space{vertical-align:middle;text-align:center;background:#f5f6fa;font-weight:700;}
   .kb-sign-row{display:flex;gap:1.2rem;margin-top:1.2rem;flex-wrap:wrap;}
   .kb-sign-box{flex:1;min-width:260px;}
   .kb-sign-label{font-weight:700;margin-bottom:.3rem;}
@@ -3493,24 +3494,44 @@ var Admin = (function() {
     kbEnsureSel(key).note = inp.value.trim();
   }
 
+  // 產生表格列；相同「空間」的連續列合併成一格（rowspan）
+  function kbMergeSpaceRows(items, isColor) {
+    var html = '', i = 0;
+    while (i < items.length) {
+      var sp = items[i].space, j = i;
+      while (j < items.length && items[j].space === sp) j++;
+      var span = j - i;
+      for (var k = i; k < j; k++) {
+        var it = items[k];
+        html += '<tr>';
+        if (k === i) html += '<td rowspan="' + span + '" class="kb-doc-space">' + kbEsc(sp) + '</td>';
+        if (isColor) {
+          html += '<td>' + kbEsc(it.position) + '</td><td>' + (it.item ? kbEsc(it.item) : '—') + '</td><td>' + (it.choice ? kbEsc(it.choice) : '—') + '</td><td>' + kbEsc(it.note) + '</td>';
+        } else {
+          html += '<td>' + (it.item ? kbEsc(it.item) : '—') + '</td><td>' + (it.choice ? kbEsc(it.choice) : '—') + '</td><td>' + kbEsc(it.note) + '</td>';
+        }
+        html += '</tr>';
+      }
+      i = j;
+    }
+    return html;
+  }
+
   function kbPreview() {
     if (!kbState.customer) { showToast('請先選擇戶號', 'error'); return; }
     var staff = document.getElementById('kb-staff-name').value.trim();
     if (!staff) { showToast('請輸入服務人員姓名', 'error'); return; }
     kbState.staff = staff;
     var tpl = kbState.template || [];
-    var colorRows = '', equipRows = '';
+    var colorItems = [], equipItems = [];
     tpl.forEach(function(it) {
       var sel = kbState.selections[kbKey(it)] || {};
-      var choice = sel.choice || '';
-      var note = sel.note || '';
       var itemShow = sel.item || (String(it.item || '').split(',')[0] || '').trim();
-      if (it.section === '設備') {
-        equipRows += '<tr><td>' + kbEsc(it.space) + '</td><td>' + kbEsc(itemShow) + '</td><td>' + (choice ? kbEsc(choice) : '—') + '</td><td>' + kbEsc(note) + '</td></tr>';
-      } else {
-        colorRows += '<tr><td>' + kbEsc(it.space) + '</td><td>' + kbEsc(it.position || '') + '</td><td>' + (itemShow ? kbEsc(itemShow) : '—') + '</td><td>' + (choice ? kbEsc(choice) : '—') + '</td><td>' + kbEsc(note) + '</td></tr>';
-      }
+      var row = { space: it.space || '', position: it.position || '', item: itemShow, choice: sel.choice || '', note: sel.note || '' };
+      if (it.section === '設備') equipItems.push(row); else colorItems.push(row);
     });
+    var colorRows = kbMergeSpaceRows(colorItems, true);
+    var equipRows = kbMergeSpaceRows(equipItems, false);
     var c = kbState.customer;
     var docHtml = ''
       + '<div class="kb-doc-title">新濠建設機構　客變選材確認單</div>'
