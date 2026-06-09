@@ -487,6 +487,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
         <button class="sb-item active" id="tab-booking" onclick="Admin.switchTab('booking')">預約紀錄</button>
         <button class="sb-item" id="tab-upload" onclick="Admin.switchTab('upload')">上傳紀錄</button>
         <button class="sb-item" id="tab-unbooked" onclick="Admin.switchTab('unbooked')">未預約客戶</button>
+        <button class="sb-item" id="tab-kbrec" onclick="Admin.switchTab('kbrec')">選材紀錄</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-calendar">
@@ -529,7 +530,6 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </button>
       <div class="sb-group-items" id="sg-kebian-sub">
         <button class="sb-item" id="tab-kebian" onclick="Admin.switchTab('kebian')">選材作業</button>
-        <button class="sb-item" id="tab-kbrec" onclick="Admin.switchTab('kbrec')">選材紀錄</button>
         <button class="sb-item" id="tab-kbtpl" onclick="Admin.switchTab('kbtpl')">範本編輯</button>
       </div>
     </div>
@@ -1426,12 +1426,12 @@ var Admin = (function() {
   }
 
   function tabToGroup(tab) {
-    if (['booking','upload','unbooked'].indexOf(tab) >= 0) return 'query';
+    if (['booking','upload','unbooked','kbrec'].indexOf(tab) >= 0) return 'query';
     if (tab === 'calendar') return 'calendar';
     if (tab === 'proxy') return 'proxy';
     if (['profile','billing','addcustomer'].indexOf(tab) >= 0) return 'customer';
     if (tab === 'progress') return 'progress';
-    if (tab === 'kebian' || tab === 'kbtpl' || tab === 'kbrec') return 'kebian';
+    if (tab === 'kebian' || tab === 'kbtpl') return 'kebian';
     if (tab === 'settings') return 'settings';
     return null;
   }
