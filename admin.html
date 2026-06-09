@@ -3705,7 +3705,7 @@ var Admin = (function() {
     return kbtplState.spaces[section] || (kbtplState.spaces[section] = []);
   }
 
-  function kbtplLoad() {
+  function kbtplLoad(keepSec, keepSp) {
     document.getElementById('kbtpl-body').innerHTML = '<tr class="empty-row"><td colspan="5">載入中…</td></tr>';
     callServer('serverAdminGetKebianTemplate').then(function(rows) {
       kbtplState.all = {};
@@ -3724,9 +3724,10 @@ var Admin = (function() {
         if (!kbtplState.spaces[sec]) kbtplState.spaces[sec] = [];
         if (sp && kbtplState.spaces[sec].indexOf(sp) < 0) kbtplState.spaces[sec].push(sp);
       });
-      kbtplState.section = '選色選樣';
-      var sps = kbtplSpacesFor('選色選樣');
-      kbtplState.space = sps[0] || '';
+      // 盡量留在原本的區段／空間（儲存後不跳頁籤）
+      kbtplState.section = (keepSec && ['選色選樣', '設備'].indexOf(keepSec) >= 0) ? keepSec : '選色選樣';
+      var sps = kbtplSpacesFor(kbtplState.section);
+      kbtplState.space = (keepSp && sps.indexOf(keepSp) >= 0) ? keepSp : (sps[0] || '');
       kbtplRenderTabs();
       kbtplRenderRows();
     });
@@ -3740,7 +3741,12 @@ var Admin = (function() {
     var list = kbtplSpacesFor(kbtplState.section);
     if (list.indexOf(name) < 0) list.push(name);
     kbtplState.space = name;
-    if (!kbtplState.all[kbtplCurKey()]) kbtplState.all[kbtplCurKey()] = [];
+    var key = kbtplCurKey();
+    // 自動帶一個空白項目列，讓新空間有內容可存（否則空空間儲存後會消失）
+    if (!kbtplState.all[key] || !kbtplState.all[key].length) {
+      var def = kbtplState.section === '設備' ? '安裝,退選,點交不安裝' : 'Type A,Type B,Type C,退選';
+      kbtplState.all[key] = [{ position: '', item: '', options: def, enabled: true }];
+    }
     kbtplRenderTabs();
     kbtplRenderRows();
   }
@@ -3916,7 +3922,8 @@ var Admin = (function() {
     callServer('serverAdminSaveKebianTemplate', rows).then(function(res) {
       if (res && res.success) {
         showToast('範本已儲存', 'success');
-        // 留在目前頁籤（不重新載入，避免跳回第一個）
+        // 重新讀回後端，確認真的存進去（並留在當前頁籤）
+        kbtplLoad(kbtplState.section, kbtplState.space);
       } else {
         showToast((res && res.message) || '儲存失敗', 'error');
       }
