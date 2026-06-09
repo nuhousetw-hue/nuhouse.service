@@ -3709,7 +3709,7 @@ var Admin = (function() {
     document.getElementById('kbtpl-body').innerHTML = '<tr class="empty-row"><td colspan="5">載入中…</td></tr>';
     callServer('serverAdminGetKebianTemplate').then(function(rows) {
       kbtplState.all = {};
-      kbtplState.spaces = { '選色選樣': (KB_SPACES['選色選樣'] || []).slice(), '設備': (KB_SPACES['設備'] || []).slice() };
+      kbtplState.spaces = { '選色選樣': [], '設備': [] };   // 空間頁籤只來自實際資料，不硬塞預設
       (rows || []).forEach(function(r) {
         var sec = r.section || '選色選樣';
         var sp = r.space || '';
