@@ -1418,6 +1418,19 @@ var Admin = (function() {
     // 客變範本編輯：僅 admin（一般客變帳號只做選材作業）
     var kbtplBtn = document.getElementById('tab-kbtpl');
     if (kbtplBtn) kbtplBtn.classList.toggle('hidden', !isAdmin);
+    // 選材紀錄：有「查詢」或「客變」任一權限即可見
+    var hasQuery  = isAdmin || perms.indexOf('query') >= 0;
+    var canKbrec  = hasQuery || perms.indexOf('kebian') >= 0;
+    var kbrecBtn  = document.getElementById('tab-kbrec');
+    if (kbrecBtn) kbrecBtn.classList.toggle('hidden', !canKbrec);
+    // 查詢群組的其他子項只在有「查詢」權限時顯示
+    ['booking', 'upload', 'unbooked'].forEach(function(t) {
+      var b = document.getElementById('tab-' + t);
+      if (b) b.classList.toggle('hidden', !hasQuery);
+    });
+    // 若只有客變、沒有查詢，仍讓「查詢」群組露出（只顯示選材紀錄）
+    var queryBox = document.getElementById('sb-group-query');
+    if (queryBox && canKbrec) queryBox.classList.remove('hidden');
     // 若目前所在分頁無權限，切到第一個有權限的分頁
     var curGroup = tabToGroup(state.tab);
     if (curGroup && perms.indexOf(curGroup) < 0 && !(state.tab === 'accounts' && isAdmin)) {
