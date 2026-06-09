@@ -3740,6 +3740,26 @@ var Admin = (function() {
     kbtplRenderRows();
   }
 
+  // 重新命名目前空間頁籤
+  function kbtplRenameSpace() {
+    var old = kbtplState.space;
+    if (!old) { showToast('目前沒有可改名的空間', 'error'); return; }
+    var name = (window.prompt('修改空間名稱：', old) || '').trim();
+    if (!name || name === old) return;
+    kbtplSync();
+    var list = kbtplSpacesFor(kbtplState.section);
+    if (list.indexOf(name) >= 0) { showToast('已有相同名稱的空間', 'error'); return; }
+    var idx = list.indexOf(old);
+    if (idx >= 0) list[idx] = name;
+    var oldKey = kbtplState.section + '|' + old;
+    var newKey = kbtplState.section + '|' + name;
+    kbtplState.all[newKey] = kbtplState.all[oldKey] || [];
+    delete kbtplState.all[oldKey];
+    kbtplState.space = name;
+    kbtplRenderTabs();
+    kbtplRenderRows();
+  }
+
   // 目前空間頁籤往左(-1)/往右(1)移動
   function kbtplMoveSpace(dir) {
     kbtplSync();
@@ -3783,6 +3803,7 @@ var Admin = (function() {
     if (kbtplState.space) {
       spHtml += '<button class="kbtab kbtab-move" onclick="Admin.kbtplMoveSpace(-1)" title="目前空間往左">◀</button>';
       spHtml += '<button class="kbtab kbtab-move" onclick="Admin.kbtplMoveSpace(1)" title="目前空間往右">▶</button>';
+      spHtml += '<button class="kbtab kbtab-edit" onclick="Admin.kbtplRenameSpace()" title="重新命名此空間">✏️ 改名</button>';
     }
     spHtml += '<button class="kbtab kbtab-add" onclick="Admin.kbtplAddSpace()">＋ 新增空間</button>';
     if (kbtplState.space) spHtml += '<button class="kbtab kbtab-del" onclick="Admin.kbtplDelSpace()">🗑 刪除此空間</button>';
@@ -3874,7 +3895,7 @@ var Admin = (function() {
     callServer('serverAdminSaveKebianTemplate', rows).then(function(res) {
       if (res && res.success) {
         showToast('範本已儲存', 'success');
-        kbtplLoad();
+        // 留在目前頁籤（不重新載入，避免跳回第一個）
       } else {
         showToast((res && res.message) || '儲存失敗', 'error');
       }
@@ -3927,7 +3948,7 @@ var Admin = (function() {
            kbEnter, kbReset, kbOnPickChange, kbSelFormSection, kbSelFormSpaceIdx, kbPickItem, kbPick, kbPickNote, kbPreview,
            kbCloseModal, kbClearSign, kbSave,
            kbOpenSignPad, kbSignPadClear, kbSignPadConfirm, kbSignPadCancel,
-           kbtplLoad, kbtplSelSection, kbtplSelSpaceIdx, kbtplAddSpace, kbtplDelSpace, kbtplMoveSpace, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave, kbrecLoad };
+           kbtplLoad, kbtplSelSection, kbtplSelSpaceIdx, kbtplAddSpace, kbtplDelSpace, kbtplRenameSpace, kbtplMoveSpace, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave, kbrecLoad };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
