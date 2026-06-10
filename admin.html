@@ -3473,22 +3473,32 @@ var Admin = (function() {
     return kbState.selections[key];
   }
 
-  // 點「項目」按鈕（多選項目時）
+  // 點「項目」按鈕（多選項目時）；再點一次已選的即取消
   function kbPickItem(btn) {
     var key = decodeURIComponent(btn.getAttribute('data-key'));
+    var already = btn.classList.contains('selected');
     var sibs = btn.parentNode.querySelectorAll('.kb-opt-item');
     Array.prototype.forEach.call(sibs, function(s) { s.classList.remove('selected'); });
-    btn.classList.add('selected');
-    kbEnsureSel(key).item = btn.getAttribute('data-val');
+    if (already) {
+      kbEnsureSel(key).item = '';
+    } else {
+      btn.classList.add('selected');
+      kbEnsureSel(key).item = btn.getAttribute('data-val');
+    }
   }
 
-  // 點「選項」按鈕
+  // 點「選項」按鈕；再點一次已選的即取消（恢復未選）
   function kbPick(btn) {
     var key = decodeURIComponent(btn.getAttribute('data-key'));
+    var already = btn.classList.contains('selected');
     var sibs = btn.parentNode.querySelectorAll('.kb-opt');
     Array.prototype.forEach.call(sibs, function(s) { s.classList.remove('selected'); });
-    btn.classList.add('selected');
-    kbEnsureSel(key).choice = btn.getAttribute('data-val');
+    if (already) {
+      kbEnsureSel(key).choice = '';
+    } else {
+      btn.classList.add('selected');
+      kbEnsureSel(key).choice = btn.getAttribute('data-val');
+    }
   }
 
   function kbPickNote(inp) {
