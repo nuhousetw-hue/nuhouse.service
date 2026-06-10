@@ -1161,14 +1161,14 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .kb-row{display:flex;align-items:center;gap:.8rem;padding:.55rem 0;text-align:left;border-top:1px dashed #f0f0f0;}
   .kb-row:first-child{border-top:none;}
   .kb-row-label{flex:0 0 60px;font-weight:700;color:#555;font-size:1.05rem;text-align:left;}
-  .kb-row-val{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:.55rem;align-items:center;word-break:break-word;font-size:1.15rem;color:#222;}
+  .kb-row-val{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:.55rem;align-items:center;word-break:break-word;white-space:pre-line;font-size:1.15rem;color:#222;}
   .kb-row-val .kb-note-input{flex:1;min-width:180px;}
   .kb-doc-subtitle{font-size:1.05rem;font-weight:800;margin:1rem 0 .4rem;color:#B01020;}
   .kb-doc{background:#fff;padding:1.4rem 1.6rem;color:#1a2a4a;}
   .kb-doc-title{font-size:1.3rem;font-weight:800;text-align:center;margin-bottom:.5rem;}
   .kb-doc-meta{font-size:1rem;margin-bottom:.9rem;line-height:1.7;}
   .kb-doc-table{width:100%;border-collapse:collapse;font-size:.92rem;table-layout:fixed;}
-  .kb-doc-table th,.kb-doc-table td{border:1px solid #bbb;padding:.45rem .6rem;text-align:left;word-break:break-word;white-space:normal;vertical-align:middle;}
+  .kb-doc-table th,.kb-doc-table td{border:1px solid #bbb;padding:.45rem .6rem;text-align:left;word-break:break-word;white-space:pre-line;vertical-align:middle;}
   .kb-doc-table th{background:#1a2a4a;color:#fff;font-weight:700;text-align:center;}
   .kb-doc-table td.kb-doc-space{vertical-align:middle;text-align:center;background:#f5f6fa;font-weight:700;font-size:.9rem;line-height:1.35;}
   .kb-doc-table td.nb-top{border-top:none;}        /* 同空間區塊內部：去除橫線，視覺合併成一整格 */
@@ -1185,7 +1185,8 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .kb-doc-date{margin-top:1rem;font-size:.9rem;color:#555;}
   .kb-sign-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.8rem 0;}
   .btn-mini-del{background:#fff;border:1px solid var(--danger);color:var(--danger);border-radius:6px;padding:.3rem .7rem;cursor:pointer;font-size:.85rem;}
-  #kbtpl-body input[type=text],#kbtpl-body input[type=number],#kbtpl-body input:not([type]),#kbtpl-body select{width:100%;box-sizing:border-box;padding:.35rem .4rem;border:1px solid var(--border);border-radius:5px;font-size:.88rem;}
+  #kbtpl-body input[type=text],#kbtpl-body input[type=number],#kbtpl-body input:not([type]),#kbtpl-body select,#kbtpl-body textarea.kt-item{width:100%;box-sizing:border-box;padding:.35rem .4rem;border:1px solid var(--border);border-radius:5px;font-size:.88rem;}
+  #kbtpl-body textarea.kt-item{font-family:inherit;line-height:1.4;resize:vertical;min-height:2.6em;}
   #kbtpl-body td{padding:.3rem .35rem;vertical-align:middle;}
   #kbtpl-body .kt-actions{white-space:nowrap;text-align:center;}
   #kbtpl-body .kt-actions button{width:auto;display:inline-block;margin:0 1px;}
@@ -3863,7 +3864,7 @@ var Admin = (function() {
     arr.forEach(function(r, i) {
       html += '<tr class="kbtpl-row">'
         + '<td><input class="kt-position" type="text" value="' + kbEsc(r.position) + '" placeholder="地坪/牆面"/></td>'
-        + '<td><input class="kt-item" type="text" value="' + kbEsc(r.item) + '" placeholder="可留空 或 地磚,石材"/></td>'
+        + '<td><textarea class="kt-item" rows="2" placeholder="可換行；逗號=多選">' + kbEsc(r.item) + '</textarea></td>'
         + '<td><input class="kt-options" type="text" value="' + kbEsc(r.options) + '" placeholder="Type A,Type B,Type C,退選"/></td>'
         + '<td style="text-align:center;"><input class="kt-enabled" type="checkbox"' + (r.enabled ? ' checked' : '') + '/></td>'
         + '<td class="kt-actions"><button class="kt-move" onclick="Admin.kbtplMove(' + i + ',-1)" title="上移">▲</button><button class="kt-move" onclick="Admin.kbtplMove(' + i + ',1)" title="下移">▼</button><button class="btn-mini-del" onclick="Admin.kbtplDelete(' + i + ')">刪</button></td>'
