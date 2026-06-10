@@ -1171,7 +1171,8 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .kb-doc-table th,.kb-doc-table td{border:1px solid #bbb;padding:.45rem .6rem;text-align:left;word-break:break-word;white-space:normal;vertical-align:middle;}
   .kb-doc-table th{background:#1a2a4a;color:#fff;font-weight:700;}
   .kb-doc-table td.kb-doc-space{vertical-align:middle;text-align:left;background:#f5f6fa;font-weight:700;font-size:.9rem;line-height:1.35;}
-  .kb-doc-table td.kb-doc-space-cont{border-top:none;}   /* 同空間後續列：隱藏上框線，視覺合併 */
+  .kb-doc-table td.nb-top{border-top:none;}        /* 同空間區塊內部：去除橫線，視覺合併成一整格 */
+  .kb-doc-table td.nb-bottom{border-bottom:none;}
   .kb-doc-table th:first-child{width:126px;}   /* 空間欄固定寬，兩表一致 */
   .kb-sign-row{display:flex;gap:1.2rem;margin-top:1.2rem;flex-wrap:wrap;}
   .kb-sign-box{flex:1;min-width:260px;}
@@ -3515,9 +3516,10 @@ var Admin = (function() {
       for (var k = i; k < j; k++) {
         var it = items[k];
         html += '<tr>';
-        html += (k === i)
-          ? '<td class="kb-doc-space">' + kbEsc(sp) + '</td>'
-          : '<td class="kb-doc-space kb-doc-space-cont"></td>';
+        var spCls = 'kb-doc-space';
+        if (k > i) spCls += ' nb-top';       // 非區塊第一列：去掉上框線
+        if (k < j - 1) spCls += ' nb-bottom'; // 非區塊最後列：去掉下框線
+        html += '<td class="' + spCls + '">' + (k === i ? kbEsc(sp) : '') + '</td>';
         if (isColor) {
           html += '<td>' + kbEsc(it.position) + '</td><td>' + (it.item ? kbEsc(it.item) : '—') + '</td><td>' + (it.choice ? kbEsc(it.choice) : '—') + '</td><td>' + kbEsc(it.note) + '</td>';
         } else {
