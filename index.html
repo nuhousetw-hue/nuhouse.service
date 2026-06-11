@@ -139,6 +139,15 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .billing-placeholder svg{color:#d0d0d0;}
 .billing-placeholder h3{font-size:1rem;font-weight:700;color:var(--text);}
 .billing-placeholder p{font-size:.88rem;line-height:1.7;}
+.bill-sec-title{font-size:.95rem;font-weight:700;color:var(--primary);margin:1rem 0 .5rem;}
+.bill-table-wrap{overflow-x:auto;}
+.bill-table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:520px;}
+.bill-table th,.bill-table td{border:1px solid #e2e2e2;padding:.45rem .55rem;text-align:right;white-space:nowrap;}
+.bill-table th{background:#f5f6fa;text-align:center;font-weight:700;}
+.bill-table td:first-child,.bill-table td:nth-child(2){text-align:left;}
+.bill-unpaid{color:var(--danger);font-weight:700;}
+.bill-total{margin-top:1rem;padding:.7rem 1rem;background:#f5f6fa;border-radius:8px;font-size:.95rem;text-align:right;}
+.bill-total b{color:var(--primary);}
 
 .card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.5rem;}
 .card-header{display:flex;align-items:center;gap:.75rem;padding:1.25rem 1.5rem;background:var(--primary);color:#fff;}
@@ -728,11 +737,7 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         <h3>帳務資訊</h3>
       </div>
-      <div class="billing-placeholder">
-        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        <h3>帳務資訊功能即將上線</h3>
-        <p>此功能目前正在建置中，上線後可查詢<br>繳款紀錄、應繳金額及付款狀態等資訊。<br>若有任何帳務問題，請透過 LINE@ 洽詢客服。</p>
-      </div>
+      <div id="billing-content" style="padding:1rem 1.1rem;"><p class="text-muted text-center">載入中…</p></div>
     </div>
   </div>
 </section>
@@ -1027,6 +1032,7 @@ var App = (function() {
     if (screen === 'docs')     { loadProjectDocs(); }
     if (screen === 'progress') { loadProgress(); }
     if (screen === 'profile')  { renderProfile(); }
+    if (screen === 'billing')  { loadBilling(); }
   }
 
   /* ── 預約 ── */
@@ -1338,6 +1344,40 @@ var App = (function() {
         el.innerHTML = ''; files.forEach(function(f) { el.appendChild(buildFileItem(f)); });
       })
       .catch(function() { el.innerHTML = '<p class="text-muted text-center">載入失敗，請稍後再試</p>'; });
+  }
+
+  function billMoney(n) { n = Number(n) || 0; return 'NT$' + n.toLocaleString('en-US'); }
+  function loadBilling() {
+    var el = document.getElementById('billing-content');
+    el.innerHTML = '<p class="text-muted text-center">載入中…</p>';
+    callServer('serverAdminGetBilling', state.user.projectCode, state.user.unit).then(function(d) {
+      var eng = (d && d.engineering) || [], oth = (d && d.others) || [];
+      if (!eng.length && !oth.length) {
+        el.innerHTML = '<div class="billing-placeholder"><h3>目前尚無帳務資料</h3><p>若有帳務問題，請透過 LINE@ 洽詢客服。</p></div>'; return;
+      }
+      var totDue = 0, totPaid = 0;
+      eng.concat(oth).forEach(function(r) { totDue += (r.dueHouse || 0) + (r.dueLand || 0); totPaid += (r.paidHouse || 0) + (r.paidLand || 0); });
+      var unpaid = totDue - totPaid;
+      var html = '';
+      if (eng.length) {
+        html += '<div class="bill-sec-title">工程期款</div><div class="bill-table-wrap"><table class="bill-table"><thead><tr><th>期數</th><th>名稱</th><th>應收</th><th>已繳</th><th>未繳</th><th>繳款期限</th><th>發票號碼</th></tr></thead><tbody>';
+        eng.forEach(function(r) {
+          var due = (r.dueHouse || 0) + (r.dueLand || 0), paid = (r.paidHouse || 0) + (r.paidLand || 0);
+          html += '<tr><td>' + esc(r.seq) + '</td><td>' + esc(r.name) + '</td><td>' + billMoney(due) + '</td><td>' + billMoney(paid) + '</td><td class="' + (due - paid > 0 ? 'bill-unpaid' : '') + '">' + billMoney(due - paid) + '</td><td>' + esc(r.dueDate || '—') + '</td><td>' + esc(r.invoiceNo || '—') + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+      }
+      if (oth.length) {
+        html += '<div class="bill-sec-title">其他款項</div><div class="bill-table-wrap"><table class="bill-table"><thead><tr><th>項目</th><th>應收</th><th>已繳</th><th>未繳</th><th>繳款期限</th><th>備註</th></tr></thead><tbody>';
+        oth.forEach(function(r) {
+          var due = (r.dueHouse || 0), paid = (r.paidHouse || 0);
+          html += '<tr><td>' + esc(r.name) + '</td><td>' + billMoney(due) + '</td><td>' + billMoney(paid) + '</td><td class="' + (due - paid > 0 ? 'bill-unpaid' : '') + '">' + billMoney(due - paid) + '</td><td>' + esc(r.dueDate || '—') + '</td><td>' + esc(r.note || '—') + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+      }
+      html += '<div class="bill-total">應收總額 <b>' + billMoney(totDue) + '</b>　已繳 <b>' + billMoney(totPaid) + '</b>　未繳 <b class="' + (unpaid > 0 ? 'bill-unpaid' : '') + '">' + billMoney(unpaid) + '</b></div>';
+      el.innerHTML = html;
+    }).catch(function() { el.innerHTML = '<p class="text-muted text-center">載入失敗，請稍後再試</p>'; });
   }
 
   function loadDownloads() {
