@@ -4081,7 +4081,8 @@ var Admin = (function() {
     var box = document.getElementById('crm-results');
     box.innerHTML = '<p class="crm-hint">搜尋中…</p>';
     callServer('serverAdminSearchCustomers', crmState.project, kw).then(function(list) {
-      if (!list || !list.length) { box.innerHTML = '<p class="crm-hint">查無符合的客戶</p>'; return; }
+      if (!Array.isArray(list)) { box.innerHTML = '<p class="crm-hint">⚠️ 後端尚未開放：請確認測試 GAS 已重貼最新 Code_測試.gs，並「重新部署 → 新增版本」。</p>'; return; }
+      if (!list.length) { box.innerHTML = '<p class="crm-hint">查無符合的客戶（試試打戶號，例如 A1）</p>'; return; }
       var html = '<div class="crm-list">';
       list.slice(0, 100).forEach(function(c) {
         html += '<button class="crm-list-item" onclick="Admin.crmSelect(\'' + kbEsc(c.unit) + '\')">'
