@@ -141,7 +141,7 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .billing-placeholder p{font-size:.88rem;line-height:1.7;}
 .bill-sec-title{font-size:.95rem;font-weight:700;color:var(--primary);margin:1rem 0 .5rem;}
 .bill-table-wrap{overflow-x:auto;}
-.bill-table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:520px;}
+.bill-table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:640px;}
 .bill-table th,.bill-table td{border:1px solid #e2e2e2;padding:.45rem .55rem;text-align:right;white-space:nowrap;}
 .bill-table th{background:#f5f6fa;text-align:center;font-weight:700;}
 .bill-table td:first-child,.bill-table td:nth-child(2){text-align:left;}
@@ -721,12 +721,8 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
         <span class="profile-value" id="profile-addr">—</span>
       </div>
       <div class="profile-row">
-        <span class="profile-label">市內電話</span>
-        <span class="profile-value" id="profile-phone">—</span>
-      </div>
-      <div class="profile-row">
-        <span class="profile-label">行動電話</span>
-        <span class="profile-value" id="profile-mobile">—</span>
+        <span class="profile-label">簽約日期</span>
+        <span class="profile-value" id="profile-sign">—</span>
       </div>
     </div>
     <p style="font-size:.88rem;color:var(--text-muted);text-align:center;line-height:1.9;margin-top:.5rem;">若有任何問題，請於 LINE@ 洽客服人員</p>
@@ -996,10 +992,15 @@ var App = (function() {
     document.getElementById('profile-name').textContent = u.name || '—';
     document.getElementById('profile-project').textContent = u.projectName || '—';
     document.getElementById('profile-unit').textContent = u.unit || '—';
-    document.getElementById('profile-addr-reg').textContent = u.addressReg || '—';
-    document.getElementById('profile-addr').textContent = u.address || '—';
-    document.getElementById('profile-phone').textContent = u.phone || '—';
-    document.getElementById('profile-mobile').textContent = u.mobile || '—';
+    document.getElementById('profile-addr-reg').textContent = '—';
+    document.getElementById('profile-addr').textContent = '—';
+    document.getElementById('profile-sign').textContent = '—';
+    callServer('serverAdminGetCustomerByUnit', u.projectCode, u.unit).then(function(c) {
+      if (!c) return;
+      document.getElementById('profile-addr-reg').textContent = c.regAddr || '—';
+      document.getElementById('profile-addr').textContent = c.mailAddr || '—';
+      document.getElementById('profile-sign').textContent = c.signDate || '—';
+    }).catch(function(){});
   }
 
   function enterApp() {
