@@ -950,10 +950,9 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <!-- 客戶管理 CRM -->
     <div id="crm-panel" class="hidden">
       <div class="cust-search-card">
-        <div class="cust-search-title">客戶管理</div>
-        <p style="font-size:.85rem;color:var(--text-muted);margin:.3rem 0 .7rem;">搜尋戶號／姓名／身分證（含已售與未售戶）；點客戶可看/編輯 基本資料、帳務、客變、預約、上傳。</p>
+        <div class="cust-search-title" style="margin-bottom:.6rem;">客戶管理</div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
-          <input id="crm-search" placeholder="輸入 戶號 / 姓名 / 身分證" style="flex:1;min-width:200px;padding:.6rem .9rem;border:1px solid var(--border);border-radius:8px;font-size:1rem;" onkeydown="if(event.key==='Enter'){Admin.crmSearch();}"/>
+          <input id="crm-search" placeholder="請鍵入戶號／姓名／身分證" style="flex:1;min-width:200px;padding:.6rem .9rem;border:1px solid var(--border);border-radius:8px;font-size:1rem;" onkeydown="if(event.key==='Enter'){Admin.crmSearch();}"/>
           <button class="btn-query" onclick="Admin.crmSearch()">🔍 搜尋</button>
         </div>
         <div id="crm-results" class="crm-results"></div>
@@ -4103,6 +4102,7 @@ var Admin = (function() {
       crmState.customer = c;
       crmState.tab = 'basic';
       crmState.billing = null;
+      document.getElementById('crm-results').innerHTML = '';   // 選定後收起搜尋結果
       document.getElementById('crm-detail').classList.remove('hidden');
       crmRenderHead();
       crmRenderTabs();
