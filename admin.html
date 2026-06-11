@@ -1329,6 +1329,32 @@ var IS_TEST = location.search.indexOf('env=test') >= 0 && !!GAS_URL_TEST;
 var GAS_URL = IS_TEST ? GAS_URL_TEST : GAS_URL_PROD;
 if (IS_TEST) document.addEventListener('DOMContentLoaded', function(){ var b=document.createElement('div'); b.textContent='⚠️ 測試環境（資料與正式分開）'; b.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#ff9800;color:#fff;text-align:center;font-weight:700;padding:5px;font-size:13px;'; document.body.appendChild(b); });
 
+// ════════ 品牌設定（平台＝安家數位；建商名依環境切換，正式不動新濠）════════
+var PLATFORM_NAME = '安家數位';
+var BRAND = IS_TEST
+  ? { name: '安家數位', primary: '#1a4d8f', primaryDk: '#143a6b', showPlatform: true }   // 測試/展示版（色暫定，待 LOGO 定調）
+  : { name: '新濠建設機構', primary: '#B01020', primaryDk: '#8C0D19', showPlatform: false }; // 正式新濠（不動）
+function applyBrand() {
+  try {
+    document.title = BRAND.name + ' | 後台管理';
+    var s = document.querySelector('.sb-brand-name'); if (s) s.textContent = BRAND.name;
+    var m = document.querySelector('.mb-brand');       if (m) m.textContent = BRAND.name + ' 後台';
+    var h = document.querySelector('.login-title h1'); if (h) h.textContent = BRAND.name;
+    document.documentElement.style.setProperty('--primary', BRAND.primary);
+    document.documentElement.style.setProperty('--primary-dk', BRAND.primaryDk);
+    if (BRAND.showPlatform) {
+      var lt = document.querySelector('.login-title');
+      if (lt && !lt.querySelector('.brand-platform')) {
+        var p = document.createElement('div'); p.className = 'brand-platform';
+        p.textContent = '系統由 ' + PLATFORM_NAME + ' 提供';
+        p.style.cssText = 'font-size:12px;color:#999;margin-top:8px;';
+        lt.appendChild(p);
+      }
+    }
+  } catch(e) {}
+}
+document.addEventListener('DOMContentLoaded', applyBrand);
+
 var Admin = (function() {
   var state = { username: null, role: 'user', perms: [], allowedProjects: [], tab: 'booking', data: [], projects: [], settingsServiceTypes: [] };
   var SESSION_KEY = 'xh_admin_session';
@@ -3557,7 +3583,7 @@ var Admin = (function() {
     var equipRows = kbMergeSpaceRows(equipItems, false);
     var c = kbState.customer;
     var docHtml = ''
-      + '<div class="kb-doc-title">新濠建設機構　客變選材確認單</div>'
+      + '<div class="kb-doc-title">' + kbEsc(BRAND.name) + '　客變選材確認單</div>'
       + '<div class="kb-doc-meta">建案：' + kbEsc(kbProjectName()) + '　　戶號：' + kbEsc(c.unit) + '　　客戶：' + kbEsc(c.name || '—')
       + '<br>服務人員：' + kbEsc(staff) + '　　日期：' + kbToday() + '</div>';
     if (colorRows) {

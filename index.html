@@ -560,13 +560,6 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
           <div class="select-wrap">
             <select id="select-project" required>
               <option value="">── 請選擇建案 ──</option>
-              <option value="P001">新濠一滙</option>
-              <option value="P002">新濠一閱</option>
-              <option value="P003">新濠漾II紐約公園</option>
-              <option value="P004">新濠漾III巴黎公園</option>
-              <option value="P005">新濠漾IV英倫公園</option>
-              <option value="P006">新濠岳</option>
-              <option value="P007">新濠信義</option>
             </select>
           </div>
         </div>
@@ -812,6 +805,32 @@ var GAS_URL_TEST = 'https://script.google.com/macros/s/AKfycbx0_wgymmBIWRrhadXof
 var IS_TEST = location.search.indexOf('env=test') >= 0 && !!GAS_URL_TEST;
 var GAS_URL = IS_TEST ? GAS_URL_TEST : GAS_URL_PROD;
 if (IS_TEST) document.addEventListener('DOMContentLoaded', function(){ var b=document.createElement('div'); b.textContent='⚠️ 測試環境'; b.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#ff9800;color:#fff;text-align:center;font-weight:700;padding:5px;font-size:13px;'; document.body.appendChild(b); });
+
+// ════════ 品牌設定（依環境切換，正式不動新濠）════════
+var BRAND = IS_TEST
+  ? { name: '安家數位', primary: '#1a4d8f', primaryLt: '#2a63b5', primaryDk: '#143a6b' }   // 測試/展示版（色暫定，待 LOGO 定調）
+  : { name: '新濠建設機構', primary: '#B01020', primaryLt: '#C81828', primaryDk: '#8C0D19' }; // 正式新濠（不動）
+function applyBrand() {
+  try {
+    document.title = BRAND.name + ' | 客戶服務平台';
+    Array.prototype.forEach.call(document.querySelectorAll('.login-logo, .nav-logo'), function(img) { img.alt = BRAND.name; });
+    document.documentElement.style.setProperty('--primary', BRAND.primary);
+    document.documentElement.style.setProperty('--primary-lt', BRAND.primaryLt);
+    document.documentElement.style.setProperty('--primary-dk', BRAND.primaryDk);
+  } catch(e) {}
+}
+// 動態載入建案選單（正式=新濠各案、測試=測試各案）
+function loadLoginProjects() {
+  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ fn: 'serverGetProjects', args: [] }) })
+    .then(function(r) { return r.json(); })
+    .then(function(projects) {
+      var sel = document.getElementById('select-project');
+      if (!sel || !Array.isArray(projects)) return;
+      sel.innerHTML = '<option value="">── 請選擇建案 ──</option>';
+      projects.forEach(function(p) { var o = document.createElement('option'); o.value = p.code; o.textContent = p.name; sel.appendChild(o); });
+    }).catch(function() {});
+}
+document.addEventListener('DOMContentLoaded', function() { applyBrand(); loadLoginProjects(); });
 
 var App = (function() {
   var state = { user: null, customer: null };
