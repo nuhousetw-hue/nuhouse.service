@@ -4146,6 +4146,9 @@ var Admin = (function() {
       + '<div class="crm-field"><label>樓層</label><input value="' + kbEsc(c.unit.split('-')[1] || '') + '" disabled/></div>'
       + '<div class="crm-field"><label>身分證字號</label><input id="crm-bs-id" value="' + kbEsc(c.idCard || '') + '" placeholder="例 A123456789" style="text-transform:uppercase;"/></div>'
       + '<div class="crm-field"><label>姓名</label><input id="crm-bs-name" value="' + kbEsc(c.name || '') + '" placeholder="客戶姓名"/></div>'
+      + '<div class="crm-field"><label>簽約日期</label><input id="crm-bs-sign" value="' + kbEsc(c.signDate || '') + '" placeholder="yyyy/mm/dd"/></div>'
+      + '<div class="crm-field" style="grid-column:1/-1;"><label>戶籍地址</label><input id="crm-bs-reg" value="' + kbEsc(c.regAddr || '') + '" placeholder="戶籍地址"/></div>'
+      + '<div class="crm-field" style="grid-column:1/-1;"><label>通訊地址</label><input id="crm-bs-mail" value="' + kbEsc(c.mailAddr || '') + '" placeholder="通訊地址"/></div>'
       + '</div>'
       + '<div style="margin-top:1rem;"><button class="btn-query" onclick="Admin.crmSaveBasic()">儲存基本資料</button></div></div>';
   }
@@ -4153,10 +4156,14 @@ var Admin = (function() {
     var id = document.getElementById('crm-bs-id').value.trim();
     var nm = document.getElementById('crm-bs-name').value.trim();
     if (!id || !nm) { showToast('身分證與姓名為必填', 'error'); return; }
-    callServer('serverAdminSaveCustomer', crmState.project, crmState.customer.unit, id, nm).then(function(res) {
+    var reg = document.getElementById('crm-bs-reg').value.trim();
+    var mail = document.getElementById('crm-bs-mail').value.trim();
+    var sign = document.getElementById('crm-bs-sign').value.trim();
+    callServer('serverAdminSaveCustomer', crmState.project, crmState.customer.unit, id, nm, reg, mail, sign).then(function(res) {
       if (res && res.success) {
         showToast('已儲存', 'success');
-        crmState.customer.idCard = id.toUpperCase(); crmState.customer.name = nm;
+        var c = crmState.customer;
+        c.idCard = id.toUpperCase(); c.name = nm; c.regAddr = reg; c.mailAddr = mail; c.signDate = sign;
         crmRenderHead(); crmRenderBasic(document.getElementById('crm-tab-body'));
       } else showToast((res && res.message) || '儲存失敗', 'error');
     });
