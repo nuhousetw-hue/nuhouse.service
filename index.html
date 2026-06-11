@@ -17,7 +17,7 @@
 </script>
 <style>
 :root{
-  --primary:#B01020;--primary-lt:#C81828;--primary-dk:#8C0D19;
+  --primary:#B01020;--primary-lt:#C81828;--primary-dk:#8C0D19;--hero-end:#6B0010;
   --charcoal:#3C3C3C;--success:#1e8e3e;--danger:#c0392b;
   --bg:#f5f5f5;--surface:#fff;--border:#e0e0e0;
   --text:#3C3C3C;--text-muted:#888;
@@ -61,7 +61,7 @@ a{color:var(--primary);text-decoration:none;}
 .btn-back:hover{text-decoration:underline;}
 .page-title{font-size:1.5rem;font-weight:700;color:var(--primary);margin-bottom:1.5rem;}
 
-.screen-login{min-height:100vh;background:linear-gradient(150deg,var(--primary-dk) 0%,var(--primary) 50%,#6B0010 100%);}
+.screen-login{min-height:100vh;background:linear-gradient(150deg,var(--primary-dk) 0%,var(--primary) 50%,var(--hero-end) 100%);}
 .login-hero{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem 1.25rem;}
 .login-card{background:var(--surface);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:100%;max-width:440px;padding:2.5rem 2rem;}
 .login-header{text-align:center;margin-bottom:2rem;}
@@ -808,15 +808,19 @@ if (IS_TEST) document.addEventListener('DOMContentLoaded', function(){ var b=doc
 
 // ════════ 品牌設定（依環境切換，正式不動新濠）════════
 var BRAND = IS_TEST
-  ? { name: '安家數位', primary: '#1a4d8f', primaryLt: '#2a63b5', primaryDk: '#143a6b' }   // 測試/展示版（色暫定，待 LOGO 定調）
-  : { name: '新濠建設機構', primary: '#B01020', primaryLt: '#C81828', primaryDk: '#8C0D19' }; // 正式新濠（不動）
+  ? { name: '安家數位', primary: '#1690C2', primaryLt: '#38ABD5', primaryDk: '#11718F', heroEnd: '#43B96A', logo: 'anjia-logo.png' }   // 安家數位（藍綠，依 LOGO）
+  : { name: '新濠建設機構', primary: '#B01020', primaryLt: '#C81828', primaryDk: '#8C0D19', heroEnd: '#6B0010', logo: '' };               // 正式新濠（不動）
 function applyBrand() {
   try {
     document.title = BRAND.name + ' | 客戶服務平台';
-    Array.prototype.forEach.call(document.querySelectorAll('.login-logo, .nav-logo'), function(img) { img.alt = BRAND.name; });
+    Array.prototype.forEach.call(document.querySelectorAll('.login-logo, .nav-logo'), function(img) {
+      img.alt = BRAND.name;
+      if (BRAND.logo) img.src = BRAND.logo;
+    });
     document.documentElement.style.setProperty('--primary', BRAND.primary);
     document.documentElement.style.setProperty('--primary-lt', BRAND.primaryLt);
     document.documentElement.style.setProperty('--primary-dk', BRAND.primaryDk);
+    document.documentElement.style.setProperty('--hero-end', BRAND.heroEnd);
   } catch(e) {}
 }
 // 動態載入建案選單（正式=新濠各案、測試=測試各案）
