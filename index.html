@@ -808,7 +808,7 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 // 正式後端
 var GAS_URL_PROD = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
 // 測試後端（建好測試 GAS 後填，留空則一律走正式）
-var GAS_URL_TEST = '';
+var GAS_URL_TEST = 'https://script.google.com/macros/s/AKfycbx0_wgymmBIWRrhadXof1IW6d2wms2mWXD0w9ilDUB25IKwNeHcMrxNS99uRJsiaif-/exec';
 var IS_TEST = location.search.indexOf('env=test') >= 0 && !!GAS_URL_TEST;
 var GAS_URL = IS_TEST ? GAS_URL_TEST : GAS_URL_PROD;
 if (IS_TEST) document.addEventListener('DOMContentLoaded', function(){ var b=document.createElement('div'); b.textContent='⚠️ 測試環境'; b.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#ff9800;color:#fff;text-align:center;font-weight:700;padding:5px;font-size:13px;'; document.body.appendChild(b); });
