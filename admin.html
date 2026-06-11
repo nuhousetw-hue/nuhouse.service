@@ -1243,7 +1243,13 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .crm-field label{display:block;font-size:.85rem;font-weight:600;color:#555;margin-bottom:.25rem;}
   .crm-field input{width:100%;box-sizing:border-box;padding:.55rem .7rem;border:1px solid var(--border);border-radius:7px;font-size:.95rem;}
   .crm-bill-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;margin-bottom:.5rem;font-size:1rem;}
-  .crm-bill-table input{width:100%;box-sizing:border-box;padding:.3rem .35rem;border:1px solid var(--border);border-radius:5px;font-size:.85rem;}
+  .crm-bill-table input{box-sizing:border-box;padding:.35rem .45rem;border:1px solid var(--border);border-radius:5px;font-size:.88rem;width:110px;}
+  .crm-bill-table input.ce-seq{width:66px;text-align:center;}
+  .crm-bill-table input.ce-name,.crm-bill-table input.co-name{width:160px;}
+  .crm-bill-table input.ce-due,.crm-bill-table input.ce-paid,.crm-bill-table input.co-amt,.crm-bill-table input.co-paid{width:120px;text-align:right;}
+  .crm-bill-table input[type=date]{width:150px;}
+  .crm-bill-table input.ce-inv,.crm-bill-table input.co-inv,.crm-bill-table input.ce-note,.crm-bill-table input.co-note{width:130px;}
+  .crm-bill-table td,.crm-bill-table th{white-space:nowrap;padding:.3rem .4rem;}
   .crm-bill-table th{white-space:nowrap;}
   .crm-bill-total{margin-top:1rem;padding:.7rem 1rem;background:#f5f6fa;border-radius:8px;font-size:1.02rem;}
   .crm-bill-total b{color:var(--primary);}
