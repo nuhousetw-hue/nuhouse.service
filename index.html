@@ -148,6 +148,11 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .bill-unpaid{color:var(--danger);font-weight:700;}
 .bill-total{margin-top:1rem;padding:.7rem 1rem;background:#f5f6fa;border-radius:8px;font-size:.95rem;text-align:right;}
 .bill-total b{color:var(--primary);}
+.bill-total-box{background:linear-gradient(120deg,var(--primary-dk),var(--primary));color:#fff;border-radius:10px;padding:.9rem 1.1rem;font-size:.95rem;line-height:1.9;margin-bottom:1rem;}
+.bill-total-box b{font-size:1.05rem;}
+.bill-grand{display:inline-block;font-weight:800;font-size:1.05rem;}
+.bill-sub{margin-top:.4rem;margin-bottom:.3rem;padding:.5rem .85rem;background:#fafafa;border:1px solid #eee;border-radius:6px;font-size:.88rem;text-align:right;}
+.bill-sub b{color:var(--primary);}
 
 .card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.5rem;}
 .card-header{display:flex;align-items:center;gap:.75rem;padding:1.25rem 1.5rem;background:var(--primary);color:#fff;}
@@ -1347,35 +1352,42 @@ var App = (function() {
   }
 
   function billMoney(n) { n = Number(n) || 0; return 'NT$' + n.toLocaleString('en-US'); }
+  function billRoc(s) { if (!s) return '—'; var m = String(s).match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); if (m) return (Number(m[1]) - 1911) + '/' + ('0' + m[2]).slice(-2) + '/' + ('0' + m[3]).slice(-2); return s; }
+  function _billSum(rows, key) { var s = 0; (rows || []).forEach(function(r) { s += Number(r[key]) || 0; }); return s; }
+  function _billUnpaid(rows) { var t = new Date(); t.setHours(0, 0, 0, 0); var u = 0; (rows || []).forEach(function(r) { var owe = (Number(r.due) || 0) - (Number(r.paid) || 0); if (owe > 0 && r.dueDate) { var d = new Date(r.dueDate); if (!isNaN(d.getTime()) && d <= t) u += owe; } }); return u; }
   function loadBilling() {
     var el = document.getElementById('billing-content');
     el.innerHTML = '<p class="text-muted text-center">載入中…</p>';
     callServer('serverAdminGetBilling', state.user.projectCode, state.user.unit).then(function(d) {
+      var t = (d && d.total) || { house: 0, parking: 0 };
       var eng = (d && d.engineering) || [], oth = (d && d.others) || [];
-      if (!eng.length && !oth.length) {
+      if (!eng.length && !oth.length && !((t.house || 0) + (t.parking || 0))) {
         el.innerHTML = '<div class="billing-placeholder"><h3>目前尚無帳務資料</h3><p>若有帳務問題，請透過 LINE@ 洽詢客服。</p></div>'; return;
       }
-      var totDue = 0, totPaid = 0;
-      eng.concat(oth).forEach(function(r) { totDue += (r.dueHouse || 0) + (r.dueLand || 0); totPaid += (r.paidHouse || 0) + (r.paidLand || 0); });
-      var unpaid = totDue - totPaid;
-      var html = '';
-      if (eng.length) {
-        html += '<div class="bill-sec-title">工程期款</div><div class="bill-table-wrap"><table class="bill-table"><thead><tr><th>期數</th><th>名稱</th><th>應收</th><th>已繳</th><th>未繳</th><th>繳款期限</th><th>發票號碼</th></tr></thead><tbody>';
-        eng.forEach(function(r) {
-          var due = (r.dueHouse || 0) + (r.dueLand || 0), paid = (r.paidHouse || 0) + (r.paidLand || 0);
-          html += '<tr><td>' + esc(r.seq) + '</td><td>' + esc(r.name) + '</td><td>' + billMoney(due) + '</td><td>' + billMoney(paid) + '</td><td class="' + (due - paid > 0 ? 'bill-unpaid' : '') + '">' + billMoney(due - paid) + '</td><td>' + esc(r.dueDate || '—') + '</td><td>' + esc(r.invoiceNo || '—') + '</td></tr>';
+      var today = new Date();
+      var engDue = _billSum(eng, 'due'), engPaid = _billSum(eng, 'paid'), engUn = _billUnpaid(eng);
+      var othDue = _billSum(oth, 'due'), othPaid = _billSum(oth, 'paid'), othUn = _billUnpaid(oth);
+      function rowsHtml(list, isEng) {
+        var h = '';
+        list.forEach(function(r) {
+          var owe = (Number(r.due) || 0) - (Number(r.paid) || 0);
+          var overdue = owe > 0 && r.dueDate && new Date(r.dueDate) <= today;
+          var unCell = overdue ? '<td class="bill-unpaid">' + billMoney(owe) + '</td>' : '<td>—</td>';
+          if (isEng) h += '<tr><td>' + esc(r.seq) + '</td><td>' + esc(r.name) + '</td><td>' + billMoney(r.due) + '</td><td>' + billMoney(r.paid) + '</td>' + unCell + '<td>' + billRoc(r.dueDate) + '</td><td>' + esc(r.invoiceNo || '—') + '</td></tr>';
+          else h += '<tr><td>' + esc(r.name) + '</td><td>' + billMoney(r.due) + '</td><td>' + billMoney(r.paid) + '</td>' + unCell + '<td>' + billRoc(r.dueDate) + '</td><td>' + esc(r.note || '—') + '</td></tr>';
         });
-        html += '</tbody></table></div>';
+        return h;
+      }
+      var html = '<div class="bill-total-box">合約總價　房屋款 <b>' + billMoney(t.house) + '</b>　車位款 <b>' + billMoney(t.parking) + '</b>　<span class="bill-grand">總金額 ' + billMoney((t.house || 0) + (t.parking || 0)) + '</span></div>';
+      if (eng.length) {
+        html += '<div class="bill-sec-title">工程期款</div><div class="bill-table-wrap"><table class="bill-table"><thead><tr><th>期數</th><th>名稱</th><th>應收</th><th>已繳</th><th>未繳</th><th>繳款期限</th><th>發票號碼</th></tr></thead><tbody>' + rowsHtml(eng, true) + '</tbody></table></div>';
+        html += '<div class="bill-sub">小計　應收 <b>' + billMoney(engDue) + '</b>　已繳 <b>' + billMoney(engPaid) + '</b>　未繳(已到期) <b class="' + (engUn > 0 ? 'bill-unpaid' : '') + '">' + billMoney(engUn) + '</b></div>';
       }
       if (oth.length) {
-        html += '<div class="bill-sec-title">其他款項</div><div class="bill-table-wrap"><table class="bill-table"><thead><tr><th>項目</th><th>應收</th><th>已繳</th><th>未繳</th><th>繳款期限</th><th>備註</th></tr></thead><tbody>';
-        oth.forEach(function(r) {
-          var due = (r.dueHouse || 0), paid = (r.paidHouse || 0);
-          html += '<tr><td>' + esc(r.name) + '</td><td>' + billMoney(due) + '</td><td>' + billMoney(paid) + '</td><td class="' + (due - paid > 0 ? 'bill-unpaid' : '') + '">' + billMoney(due - paid) + '</td><td>' + esc(r.dueDate || '—') + '</td><td>' + esc(r.note || '—') + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
+        html += '<div class="bill-sec-title">其他款項</div><div class="bill-table-wrap"><table class="bill-table"><thead><tr><th>項目</th><th>應收</th><th>已繳</th><th>未繳</th><th>繳款期限</th><th>備註</th></tr></thead><tbody>' + rowsHtml(oth, false) + '</tbody></table></div>';
+        html += '<div class="bill-sub">小計　應收 <b>' + billMoney(othDue) + '</b>　已繳 <b>' + billMoney(othPaid) + '</b>　未繳(已到期) <b class="' + (othUn > 0 ? 'bill-unpaid' : '') + '">' + billMoney(othUn) + '</b></div>';
       }
-      html += '<div class="bill-total">應收總額 <b>' + billMoney(totDue) + '</b>　已繳 <b>' + billMoney(totPaid) + '</b>　未繳 <b class="' + (unpaid > 0 ? 'bill-unpaid' : '') + '">' + billMoney(unpaid) + '</b></div>';
+      html += '<div class="bill-total">總計　應收 <b>' + billMoney(engDue + othDue) + '</b>　已繳 <b>' + billMoney(engPaid + othPaid) + '</b>　未繳(已到期) <b class="' + ((engUn + othUn) > 0 ? 'bill-unpaid' : '') + '">' + billMoney(engUn + othUn) + '</b></div>';
       el.innerHTML = html;
     }).catch(function() { el.innerHTML = '<p class="text-muted text-center">載入失敗，請稍後再試</p>'; });
   }
