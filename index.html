@@ -813,10 +813,25 @@ var BRAND = IS_TEST
 function applyBrand() {
   try {
     document.title = BRAND.name + ' | 客戶服務平台';
-    Array.prototype.forEach.call(document.querySelectorAll('.login-logo, .nav-logo'), function(img) {
-      img.alt = BRAND.name;
-      if (BRAND.logo) img.src = BRAND.logo;
-    });
+    // 登入頁 LOGO（白底卡片，直接換圖）
+    var loginLogo = document.querySelector('.login-logo');
+    if (loginLogo) { loginLogo.alt = BRAND.name; if (BRAND.logo) loginLogo.src = BRAND.logo; }
+    // 導覽列：自訂 LOGO 時改用品牌名白字（彩色白底 LOGO 不適合放在藍色列上）
+    var navLogo = document.querySelector('.nav-logo');
+    if (navLogo) {
+      navLogo.alt = BRAND.name;
+      if (BRAND.logo) {
+        navLogo.style.display = 'none';
+        var nb = navLogo.parentNode;
+        if (nb && !nb.querySelector('.nav-brand-name')) {
+          var t = document.createElement('span');
+          t.className = 'nav-brand-name';
+          t.textContent = BRAND.name;
+          t.style.cssText = 'color:#fff;font-size:1.2rem;font-weight:800;letter-spacing:.06em;';
+          nb.insertBefore(t, navLogo);
+        }
+      }
+    }
     document.documentElement.style.setProperty('--primary', BRAND.primary);
     document.documentElement.style.setProperty('--primary-lt', BRAND.primaryLt);
     document.documentElement.style.setProperty('--primary-dk', BRAND.primaryDk);
