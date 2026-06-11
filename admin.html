@@ -1320,7 +1320,14 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 </div>
 
 <script>
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
+// 正式後端
+var GAS_URL_PROD = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
+// 測試後端（建好測試 GAS 後，把測試部署網址貼這裡，留空則一律走正式）
+var GAS_URL_TEST = '';
+// 網址帶 ?env=test 且有填測試網址 → 走測試環境
+var IS_TEST = location.search.indexOf('env=test') >= 0 && !!GAS_URL_TEST;
+var GAS_URL = IS_TEST ? GAS_URL_TEST : GAS_URL_PROD;
+if (IS_TEST) document.addEventListener('DOMContentLoaded', function(){ var b=document.createElement('div'); b.textContent='⚠️ 測試環境（資料與正式分開）'; b.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#ff9800;color:#fff;text-align:center;font-weight:700;padding:5px;font-size:13px;'; document.body.appendChild(b); });
 
 var Admin = (function() {
   var state = { username: null, role: 'user', perms: [], allowedProjects: [], tab: 'booking', data: [], projects: [], settingsServiceTypes: [] };
