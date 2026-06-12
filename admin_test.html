@@ -1127,22 +1127,17 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <!-- 客變範本編輯 -->
     <div id="kbtpl-panel" class="hidden">
       <div class="cust-search-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
-          <div class="cust-search-title" style="margin-bottom:0;">客變範本編輯</div>
-          <div>
-            <button class="btn-reset" onclick="Admin.kbtplAdd()">+ 新增項目</button>
-            <button class="btn-query" onclick="Admin.kbtplSave()">儲存範本</button>
-          </div>
-        </div>
+        <div class="cust-search-title" style="margin-bottom:0;">客變範本編輯</div>
         <p style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 0;line-height:1.7;">
-          切換上方<strong>區段</strong>與<strong>空間</strong>頁籤分別編輯；只會編輯目前頁籤的項目。「新增項目」「儲存範本」會作用在當前選到的空間。<br>
+          切換上方<strong>區段</strong>與<strong>空間</strong>頁籤選擇要編輯的對象；所有動作集中在下方<strong>工具列</strong>，「新增項目」「儲存範本」會作用在當前選到的空間。<br>
           ・<strong>位置</strong>填 地坪／牆面…；<strong>項目</strong>可留空(只依位置選選項)、填一個或逗號填多個；<strong>選項</strong>逗號分隔(例 <code>Type A,Type B,Type C,退選</code>)。
         </p>
       </div>
-      <!-- 區段＋空間頁籤（凍結在上方） -->
+      <!-- 區段＋空間頁籤＋動作工具列（凍結在上方） -->
       <div class="kbtpl-sticky">
         <div class="kbtab-row" id="kbtpl-sectabs"></div>
         <div class="kbtab-row" id="kbtpl-sptabs"></div>
+        <div class="kbtpl-toolbar" id="kbtpl-toolbar"></div>
       </div>
       <div class="table-wrap">
         <table style="table-layout:fixed;width:100%;min-width:560px;">
@@ -1310,6 +1305,19 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .kbtab-add{border-style:dashed;color:var(--primary);}
   .kbtab-del{border-color:var(--danger);color:var(--danger);}
   .kb-form-tabs .kbtab{font-size:1.12rem;padding:.6rem 1.4rem;}
+  .kbtpl-notabs{color:var(--text-muted);font-size:.9rem;padding:.42rem .2rem;}
+  /* 範本編輯動作工具列 */
+  .kbtpl-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .9rem;margin-top:.55rem;padding-top:.55rem;border-top:1px dashed var(--border);}
+  .kbtb-group{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;}
+  .kbtb-lbl{font-size:.8rem;color:var(--text-muted);font-weight:700;margin-right:.1rem;}
+  .kbtb-right{margin-left:auto;}
+  .kbtb-btn{background:#fff;border:1px solid var(--border);border-radius:7px;padding:.4rem .8rem;cursor:pointer;font-size:.88rem;color:#444;white-space:nowrap;}
+  .kbtb-btn:hover{border-color:var(--primary);}
+  .kbtb-btn.kbtb-add{border-style:dashed;color:var(--primary);}
+  .kbtb-btn.kbtb-del{border-color:var(--danger);color:var(--danger);}
+  .kbtb-btn:disabled{opacity:.45;cursor:not-allowed;border-style:solid;color:#999;}
+  .kbtb-save{background:var(--primary);border:none;border-radius:7px;color:#fff;padding:.46rem 1.25rem;cursor:pointer;font-size:.92rem;font-weight:700;white-space:nowrap;}
+  .kbtb-save:hover{background:var(--primary-dk);}
   /* CRM */
   .crm-hint{color:var(--text-muted);font-size:.9rem;padding:.6rem 0;}
   .crm-results{margin-top:.8rem;}
@@ -4040,14 +4048,31 @@ var Admin = (function() {
     var spHtml = spaces.map(function(sp, idx) {
       return '<button class="kbtab' + (sp === kbtplState.space ? ' active' : '') + '" onclick="Admin.kbtplSelSpaceIdx(' + idx + ')">' + kbEsc(sp) + '</button>';
     }).join('');
-    if (kbtplState.space) {
-      spHtml += '<button class="kbtab kbtab-move" onclick="Admin.kbtplMoveSpace(-1)" title="目前空間往左">◀</button>';
-      spHtml += '<button class="kbtab kbtab-move" onclick="Admin.kbtplMoveSpace(1)" title="目前空間往右">▶</button>';
-      spHtml += '<button class="kbtab kbtab-edit" onclick="Admin.kbtplRenameSpace()" title="重新命名此空間">✏️ 改名</button>';
-    }
-    spHtml += '<button class="kbtab kbtab-add" onclick="Admin.kbtplAddSpace()">＋ 新增空間</button>';
-    if (kbtplState.space) spHtml += '<button class="kbtab kbtab-del" onclick="Admin.kbtplDelSpace()">🗑 刪除此空間</button>';
+    if (!spaces.length) spHtml = '<span class="kbtpl-notabs">尚無空間，請按下方「＋ 新增空間」</span>';
     document.getElementById('kbtpl-sptabs').innerHTML = spHtml;
+    kbtplRenderToolbar();
+  }
+
+  // 動作工具列：空間管理／項目／儲存，集中一處
+  function kbtplRenderToolbar() {
+    var hasSpace = !!kbtplState.space;
+    var h = '';
+    h += '<div class="kbtb-group"><span class="kbtb-lbl">空間</span>';
+    h += '<button class="kbtb-btn kbtb-add" onclick="Admin.kbtplAddSpace()">＋ 新增空間</button>';
+    if (hasSpace) {
+      h += '<button class="kbtb-btn" onclick="Admin.kbtplRenameSpace()">✏️ 改名</button>';
+      h += '<button class="kbtb-btn" onclick="Admin.kbtplMoveSpace(-1)" title="目前空間往左">◀</button>';
+      h += '<button class="kbtb-btn" onclick="Admin.kbtplMoveSpace(1)" title="目前空間往右">▶</button>';
+      h += '<button class="kbtb-btn kbtb-del" onclick="Admin.kbtplDelSpace()">🗑 刪除</button>';
+    }
+    h += '</div>';
+    h += '<div class="kbtb-group"><span class="kbtb-lbl">項目</span>';
+    h += '<button class="kbtb-btn kbtb-add" onclick="Admin.kbtplAdd()"' + (hasSpace ? '' : ' disabled title="請先選擇或新增空間"') + '>＋ 新增項目</button>';
+    h += '</div>';
+    h += '<div class="kbtb-group kbtb-right">';
+    h += '<button class="kbtb-save" onclick="Admin.kbtplSave()">💾 儲存範本</button>';
+    h += '</div>';
+    document.getElementById('kbtpl-toolbar').innerHTML = h;
   }
 
   function kbtplRenderRows() {
