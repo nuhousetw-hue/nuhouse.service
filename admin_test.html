@@ -190,6 +190,21 @@ body.sb-collapsed #screen-main{margin-left:0;}
 .sa-detail-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;}
 .sa-chart-wrap{position:relative;height:340px;margin-bottom:1rem;}
 #sa-detail .sa-table tbody tr,#sa-detail .sa-table tbody td{cursor:default;}
+/* 統計分析子頁籤與預約區 */
+.sa-subtabs{display:flex;gap:.5rem;}
+.sa-subtab{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:.5rem 1.1rem;cursor:pointer;font-size:.92rem;color:#444;font-weight:600;}
+.sa-subtab:hover{border-color:var(--primary);}
+.sa-subtab.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.sa-svc-head{display:flex;align-items:center;justify-content:space-between;font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:.7rem;border-bottom:1.5px solid var(--border);padding-bottom:.5rem;}
+.sa-svc-total{font-size:.85rem;color:var(--text-muted);font-weight:600;}
+.sa-svc-body{display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;}
+.sa-pie-wrap{position:relative;width:260px;height:240px;flex-shrink:0;}
+.sa-method-tbl{flex:1;min-width:240px;}
+.sa-hint{font-size:.8rem;color:var(--text-muted);margin:.5rem 0 0;}
+.sa-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:.45rem;vertical-align:middle;}
+.sa-cust-list{margin-top:.9rem;border-top:1px dashed var(--border);padding-top:.8rem;}
+.sa-cust-head{font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.55rem;}
+@media(max-width:640px){.sa-pie-wrap{width:100%;height:220px;}}
 
 /* Result bar */
 .result-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:.5rem;}
@@ -1024,54 +1039,83 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
-    <!-- 統計分析：選材選色熱門排行 -->
+    <!-- 統計分析 -->
     <div id="stats-panel" class="hidden">
       <div class="cust-search-card">
-        <div class="cust-search-title">選材選色熱門排行</div>
-        <p style="font-size:.85rem;color:var(--text-muted);margin:0 0 .8rem;">統計已售戶客變紀錄中，各空間／項目的選項選擇分布。可篩選建案、日期、空間；點項目看長條圖與排行。</p>
-        <div class="sa-filters">
-          <div class="sa-fld"><label>建案</label><select id="sa-project"><option value="">全部建案</option></select></div>
-          <div class="sa-fld"><label>日期從</label><input type="date" id="sa-from"></div>
-          <div class="sa-fld"><label>日期到</label><input type="date" id="sa-to"></div>
-          <div class="sa-fld"><label>空間</label><select id="sa-space"><option value="">全部空間</option></select></div>
-          <button class="btn-query" onclick="Admin.saQuery()">查詢</button>
-          <button class="btn-reset" onclick="Admin.saResetFilter()">清除</button>
+        <div class="cust-search-title">統計分析</div>
+        <div class="sa-subtabs">
+          <button class="sa-subtab active" id="sa-subtab-booking" onclick="Admin.saSub('booking')">預約數據分析</button>
+          <button class="sa-subtab" id="sa-subtab-material" onclick="Admin.saSub('material')">選材選色分析</button>
         </div>
       </div>
 
-      <div id="sa-summary" class="sa-summary hidden"></div>
-
-      <div id="sa-overview-wrap" class="cust-search-card hidden">
-        <div class="cust-search-title" style="font-size:.95rem;">各項目熱門選項一覽（點一列看明細）</div>
-        <div class="table-scroll">
-          <table class="sa-table">
-            <thead><tr><th>空間</th><th>位置</th><th>項目</th><th>樣本數</th><th>Top1</th><th>Top2</th><th>Top3</th><th>退選率</th></tr></thead>
-            <tbody id="sa-overview-body"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="sa-detail" class="cust-search-card hidden">
-        <div class="sa-detail-head">
-          <div class="cust-search-title" id="sa-detail-title" style="font-size:.95rem;">選項分布</div>
-          <div>
-            <button class="btn-reset" onclick="Admin.saBackToOverview()">← 回一覽</button>
-            <button class="btn-query" onclick="Admin.saExport()">匯出 CSV</button>
+      <!-- A. 預約數據分析 -->
+      <div id="sa-booking-sec">
+        <div class="cust-search-card">
+          <p style="font-size:.85rem;color:var(--text-muted);margin:0 0 .7rem;">各服務（客變／對保／驗屋）的「方式」分布（圓餅圖）。點某個方式可看是哪些客戶、各戶型佔比。統計已售戶。</p>
+          <div class="sa-filters">
+            <div class="sa-fld"><label>建案</label><select id="sa-bk-project"><option value="">全部建案</option></select></div>
+            <div class="sa-fld"><label>日期從</label><input type="date" id="sa-bk-from"></div>
+            <div class="sa-fld"><label>日期到</label><input type="date" id="sa-bk-to"></div>
+            <button class="btn-query" onclick="Admin.saBkQuery()">查詢</button>
+            <button class="btn-reset" onclick="Admin.saBkReset()">清除</button>
           </div>
         </div>
-        <div class="sa-chart-wrap"><canvas id="sa-chart"></canvas></div>
-        <div class="table-scroll">
-          <table class="sa-table">
-            <thead><tr><th>排名</th><th>選項</th><th>次數</th><th>佔比</th></tr></thead>
-            <tbody id="sa-detail-body"></tbody>
-          </table>
+        <div id="sa-bk-summary" class="sa-summary hidden"></div>
+        <div id="sa-bk-content"></div>
+        <div id="sa-bk-empty" class="cust-search-card hidden">
+          <div style="padding:2.5rem 1.5rem;text-align:center;color:var(--text-muted);">
+            <div style="font-size:2.2rem;margin-bottom:.5rem;">📅</div>
+            <p>此條件下沒有預約資料。</p>
+          </div>
         </div>
       </div>
 
-      <div id="sa-empty" class="cust-search-card hidden">
-        <div style="padding:2.5rem 1.5rem;text-align:center;color:var(--text-muted);">
-          <div style="font-size:2.2rem;margin-bottom:.5rem;">📊</div>
-          <p>此條件下沒有選材選色資料。<br>請確認已選建案有客變紀錄，且紀錄含選材內容。</p>
+      <!-- B. 選材選色分析 -->
+      <div id="sa-material-sec" class="hidden">
+        <div class="cust-search-card">
+          <p style="font-size:.85rem;color:var(--text-muted);margin:0 0 .7rem;">各類型（選色選樣／設備）／空間／項目的選項分布（直條圖）。點項目看排行與戶型分布。統計已售戶。</p>
+          <div class="sa-filters">
+            <div class="sa-fld"><label>建案</label><select id="sa-project"><option value="">全部建案</option></select></div>
+            <div class="sa-fld"><label>日期從</label><input type="date" id="sa-from"></div>
+            <div class="sa-fld"><label>日期到</label><input type="date" id="sa-to"></div>
+            <div class="sa-fld"><label>類型</label><select id="sa-section" onchange="Admin.saRenderOverview()"><option value="">全部類型</option><option value="選色選樣">選色選樣</option><option value="設備">設備</option></select></div>
+            <div class="sa-fld"><label>空間</label><select id="sa-space" onchange="Admin.saRenderOverview()"><option value="">全部空間</option></select></div>
+            <button class="btn-query" onclick="Admin.saQuery()">查詢</button>
+            <button class="btn-reset" onclick="Admin.saResetFilter()">清除</button>
+          </div>
+        </div>
+        <div id="sa-summary" class="sa-summary hidden"></div>
+        <div id="sa-overview-wrap" class="cust-search-card hidden">
+          <div class="cust-search-title" style="font-size:.95rem;">各項目熱門選項一覽（點一列看明細）</div>
+          <div class="table-scroll">
+            <table class="sa-table">
+              <thead><tr><th>類型</th><th>空間</th><th>位置</th><th>項目</th><th>樣本數</th><th>Top1</th><th>Top2</th><th>Top3</th><th>退選率</th></tr></thead>
+              <tbody id="sa-overview-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="sa-detail" class="cust-search-card hidden">
+          <div class="sa-detail-head">
+            <div class="cust-search-title" id="sa-detail-title" style="font-size:.95rem;">選項分布</div>
+            <div>
+              <button class="btn-reset" onclick="Admin.saBackToOverview()">← 回一覽</button>
+              <button class="btn-query" onclick="Admin.saExport()">匯出 CSV</button>
+            </div>
+          </div>
+          <div class="sa-chart-wrap"><canvas id="sa-chart"></canvas></div>
+          <div class="table-scroll">
+            <table class="sa-table">
+              <thead><tr><th>排名</th><th>選項</th><th>次數</th><th>佔比</th><th>戶型分布</th></tr></thead>
+              <tbody id="sa-detail-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="sa-empty" class="cust-search-card hidden">
+          <div style="padding:2.5rem 1.5rem;text-align:center;color:var(--text-muted);">
+            <div style="font-size:2.2rem;margin-bottom:.5rem;">📊</div>
+            <p>此條件下沒有選材選色資料。<br>請確認已選建案有客變紀錄，且紀錄含選材內容。</p>
+          </div>
         </div>
       </div>
     </div>
@@ -2547,6 +2591,7 @@ var Admin = (function() {
     if (!time) return;
     var isYanwu  = svc.indexOf('驗屋') >= 0;
     var isKebien = svc.indexOf('客變') >= 0;
+    var isDuibao = svc.indexOf('對保') >= 0;
     var methodSel = document.getElementById('proxy-sel-method');
     if (isYanwu) {
       document.getElementById('proxy-method-label').textContent = '驗屋方式';
@@ -2560,6 +2605,13 @@ var Admin = (function() {
         '<option value="僅選材選色">僅選材選色（不客變）</option>' +
         '<option value="自行客變">自行客變</option>' +
         '<option value="設計師陪同">設計師陪同</option>';
+      document.getElementById('proxy-method-field').style.display = '';
+    } else if (isDuibao) {
+      document.getElementById('proxy-method-label').textContent = '貸款方式';
+      methodSel.innerHTML =
+        '<option value="不貸款">不貸款</option>' +
+        '<option value="配合公司貸款">配合公司貸款</option>' +
+        '<option value="自行貸款">自行貸款</option>';
       document.getElementById('proxy-method-field').style.display = '';
     }
     proxyUpdateSummary();
@@ -4565,28 +4617,117 @@ var Admin = (function() {
     });
   }
 
-  // ════════ 統計分析：選材選色熱門排行 ════════
-  var saState = { data: null, items: [], current: null, chart: null };
-
+  // ════════ 統計分析（預約數據 ＋ 選材選色） ════════
+  var saSubCur = 'booking';
   function saEnter() {
-    var sel = document.getElementById('sa-project');
+    saFillProjectSel('sa-project');
+    saFillProjectSel('sa-bk-project');
+    saBkState.loaded = false; saState.loaded = false;
+    saSub(saSubCur || 'booking');
+  }
+  function saFillProjectSel(id) {
+    var sel = document.getElementById(id); if (!sel) return;
     var cur = sel.value;
     sel.innerHTML = '<option value="">全部建案</option>';
     (state.projects || []).forEach(function(p) {
       var o = document.createElement('option'); o.value = p.code; o.textContent = p.name; sel.appendChild(o);
     });
     if (cur) sel.value = cur;
-    saQuery();
+  }
+  function saSub(which) {
+    saSubCur = which;
+    document.getElementById('sa-subtab-booking').classList.toggle('active', which === 'booking');
+    document.getElementById('sa-subtab-material').classList.toggle('active', which === 'material');
+    document.getElementById('sa-booking-sec').classList.toggle('hidden', which !== 'booking');
+    document.getElementById('sa-material-sec').classList.toggle('hidden', which !== 'material');
+    if (which === 'booking') { if (!saBkState.loaded) saBkQuery(); }
+    else { if (!saState.loaded) saQuery(); }
   }
 
+  // ---- A. 預約數據分析 ----
+  var saBkState = { data: null, charts: [], loaded: false };
+  var SA_PIE_COLORS = ['#1690C2', '#36c08f', '#f0a830', '#e0607e', '#7a6ff0', '#36b0d0', '#aab4be'];
+  function saBkReset() {
+    document.getElementById('sa-bk-project').value = '';
+    document.getElementById('sa-bk-from').value = '';
+    document.getElementById('sa-bk-to').value = '';
+    saBkQuery();
+  }
+  function saBkQuery() {
+    var pc = document.getElementById('sa-bk-project').value;
+    var from = document.getElementById('sa-bk-from').value;
+    var to = document.getElementById('sa-bk-to').value;
+    var sum = document.getElementById('sa-bk-summary');
+    sum.classList.remove('hidden');
+    sum.innerHTML = '<div class="sa-kpi"><div class="sa-kpi-num">…</div><div class="sa-kpi-lbl">載入中</div></div>';
+    document.getElementById('sa-bk-empty').classList.add('hidden');
+    saBkDestroyCharts();
+    document.getElementById('sa-bk-content').innerHTML = '';
+    callServer('serverStatsBookings', pc, from, to).then(function(d) {
+      saBkState.data = d || { recordCount: 0, services: [] };
+      saBkState.loaded = true;
+      saBkRender();
+    }).catch(function() {
+      sum.innerHTML = '<div class="sa-kpi"><div class="sa-kpi-num">—</div><div class="sa-kpi-lbl">載入失敗</div></div>';
+    });
+  }
+  function saBkDestroyCharts() {
+    (saBkState.charts || []).forEach(function(c) { try { c.destroy(); } catch(e) {} });
+    saBkState.charts = [];
+  }
+  function saBkRender() {
+    var d = saBkState.data, services = d.services || [];
+    document.getElementById('sa-bk-summary').innerHTML =
+      '<div class="sa-kpi"><div class="sa-kpi-num">' + (d.recordCount || 0) + '</div><div class="sa-kpi-lbl">預約總筆數</div></div>'
+      + '<div class="sa-kpi"><div class="sa-kpi-num">' + services.length + '</div><div class="sa-kpi-lbl">服務種類</div></div>';
+    var wrap = document.getElementById('sa-bk-content');
+    if (!services.length) { wrap.innerHTML = ''; document.getElementById('sa-bk-empty').classList.remove('hidden'); return; }
+    document.getElementById('sa-bk-empty').classList.add('hidden');
+    wrap.innerHTML = services.map(function(sv, si) {
+      var methodRows = sv.methods.map(function(m, mi) {
+        return '<tr onclick="Admin.saBkShowCust(' + si + ',' + mi + ')"><td><span class="sa-dot" style="background:' + SA_PIE_COLORS[mi % SA_PIE_COLORS.length] + '"></span>' + kbEsc(m.method) + '</td><td style="text-align:right;">' + m.count + '</td><td style="text-align:right;">' + saPct(m.count, sv.total) + '</td></tr>';
+      }).join('');
+      return '<div class="cust-search-card">'
+        + '<div class="sa-svc-head">' + kbEsc(sv.service) + '<span class="sa-svc-total">共 ' + sv.total + ' 筆</span></div>'
+        + '<div class="sa-svc-body"><div class="sa-pie-wrap"><canvas id="sa-pie-' + si + '"></canvas></div>'
+        + '<div class="sa-method-tbl"><table class="sa-table"><thead><tr><th>方式</th><th>筆數</th><th>佔比</th></tr></thead><tbody>' + methodRows + '</tbody></table>'
+        + '<p class="sa-hint">點某個方式 → 看客戶清單與戶型分布</p></div></div>'
+        + '<div class="sa-cust-list hidden" id="sa-cust-' + si + '"></div></div>';
+    }).join('');
+    if (typeof Chart === 'function') {
+      services.forEach(function(sv, si) {
+        var ctx = document.getElementById('sa-pie-' + si).getContext('2d');
+        saBkState.charts.push(new Chart(ctx, {
+          type: 'doughnut',
+          data: { labels: sv.methods.map(function(m) { return m.method; }), datasets: [{ data: sv.methods.map(function(m) { return m.count; }), backgroundColor: sv.methods.map(function(m, mi) { return SA_PIE_COLORS[mi % SA_PIE_COLORS.length]; }) }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
+        }));
+      });
+    }
+  }
+  function saBkShowCust(si, mi) {
+    var sv = (saBkState.data.services || [])[si]; if (!sv) return;
+    var m = sv.methods[mi]; if (!m) return;
+    var box = document.getElementById('sa-cust-' + si);
+    var typeStr = Object.keys(m.byType || {}).sort(function(a, b) { return m.byType[b] - m.byType[a]; }).map(function(t) { return (t || '—') + '：' + m.byType[t] + ' 戶'; }).join('　');
+    var rows = m.customers.map(function(c, i) {
+      return '<tr><td>' + (i + 1) + '</td><td>' + kbEsc(c.name || '—') + '</td><td>' + kbEsc(c.unit || '—') + '</td><td>' + kbEsc(c.unitType || '—') + '</td><td>' + kbEsc(c.project || '—') + '</td><td>' + kbEsc(c.date || '—') + '</td><td>' + kbEsc(c.status || '—') + '</td></tr>';
+    }).join('');
+    box.innerHTML = '<div class="sa-cust-head">' + kbEsc(sv.service) + ' － ' + kbEsc(m.method) + '（' + m.count + ' 筆）　戶型分布：' + (typeStr || '—') + '</div>'
+      + '<div class="table-scroll"><table class="sa-table"><thead><tr><th>#</th><th>姓名</th><th>戶號</th><th>戶型</th><th>建案</th><th>預約日期</th><th>狀態</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    box.classList.remove('hidden');
+  }
+
+  // ---- B. 選材選色分析 ----
+  var saState = { data: null, items: [], current: null, chart: null, loaded: false };
   function saResetFilter() {
     document.getElementById('sa-project').value = '';
     document.getElementById('sa-from').value = '';
     document.getElementById('sa-to').value = '';
+    document.getElementById('sa-section').value = '';
     document.getElementById('sa-space').value = '';
     saQuery();
   }
-
   function saQuery() {
     var pc = document.getElementById('sa-project').value;
     var from = document.getElementById('sa-from').value;
@@ -4600,37 +4741,38 @@ var Admin = (function() {
     callServer('serverStatsKebianOptions', pc, from, to).then(function(d) {
       saState.data = d || { recordCount: 0, items: [] };
       saState.items = (saState.data.items || []);
-      saFillSpaces();
+      saState.loaded = true;
       saRenderSummary();
       saRenderOverview();
     }).catch(function() {
       sumEl.innerHTML = '<div class="sa-kpi"><div class="sa-kpi-num">—</div><div class="sa-kpi-lbl">載入失敗，請稍後再試</div></div>';
     });
   }
-
   function saFillSpaces() {
     var sel = document.getElementById('sa-space');
+    var section = document.getElementById('sa-section').value;
     var cur = sel.value;
     var spaces = [];
-    saState.items.forEach(function(it) { if (it.space && spaces.indexOf(it.space) < 0) spaces.push(it.space); });
+    saState.items.forEach(function(it) {
+      if (section && it.section !== section) return;
+      if (it.space && spaces.indexOf(it.space) < 0) spaces.push(it.space);
+    });
     sel.innerHTML = '<option value="">全部空間</option>';
     spaces.forEach(function(s) { var o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
     if (cur && spaces.indexOf(cur) >= 0) sel.value = cur;
-    sel.onchange = saRenderOverview;
   }
-
   function saRenderSummary() {
     var d = saState.data;
-    var sumEl = document.getElementById('sa-summary');
-    sumEl.innerHTML =
+    document.getElementById('sa-summary').innerHTML =
       '<div class="sa-kpi"><div class="sa-kpi-num">' + (d.recordCount || 0) + '</div><div class="sa-kpi-lbl">客變紀錄（含選材）</div></div>'
       + '<div class="sa-kpi"><div class="sa-kpi-num">' + saState.items.length + '</div><div class="sa-kpi-lbl">統計項目數</div></div>';
   }
-
   function saRenderOverview() {
     document.getElementById('sa-detail').classList.add('hidden');
+    saFillSpaces();
+    var section = document.getElementById('sa-section').value;
     var space = document.getElementById('sa-space').value;
-    var list = saState.items.filter(function(it) { return !space || it.space === space; });
+    var list = saState.items.filter(function(it) { return (!section || it.section === section) && (!space || it.space === space); });
     var wrap = document.getElementById('sa-overview-wrap');
     var empty = document.getElementById('sa-empty');
     if (!list.length) { wrap.classList.add('hidden'); empty.classList.remove('hidden'); return; }
@@ -4641,60 +4783,62 @@ var Admin = (function() {
       while (tops.length < 3) tops.push('—');
       var optOutPct = sample ? saPct(it.optOut, sample) : '—';
       return '<tr onclick="Admin.saDrill(' + saState.items.indexOf(it) + ')">'
-        + '<td>' + kbEsc(it.space || '—') + '</td><td>' + kbEsc(it.position || '—') + '</td><td>' + kbEsc(it.item || '—') + '</td>'
+        + '<td>' + kbEsc(it.section || '—') + '</td><td>' + kbEsc(it.space || '—') + '</td><td>' + kbEsc(it.position || '—') + '</td><td>' + kbEsc(it.item || '—') + '</td>'
         + '<td>' + sample + '</td><td>' + tops[0] + '</td><td>' + tops[1] + '</td><td>' + tops[2] + '</td>'
         + '<td>' + optOutPct + '</td></tr>';
     }).join('');
   }
-
+  function saTypeStr(byType) {
+    var ks = Object.keys(byType || {}).sort(function(a, b) { return byType[b] - byType[a]; });
+    if (!ks.length) return '—';
+    return ks.map(function(t) { return (t || '—') + ':' + byType[t]; }).join('、');
+  }
   function saDrill(idx) {
     var it = saState.items[idx];
     if (!it) return;
     saState.current = it;
     document.getElementById('sa-overview-wrap').classList.add('hidden');
     document.getElementById('sa-detail').classList.remove('hidden');
-    var label = [it.space, it.position, it.item].filter(Boolean).join(' / ') || '項目';
+    var label = [it.section, it.space, it.position, it.item].filter(Boolean).join(' / ') || '項目';
     document.getElementById('sa-detail-title').textContent = label + '　選項分布';
     var sample = it.total + it.optOut;
     var rows = it.options.map(function(o, i) {
-      return '<tr><td>' + (i + 1) + '</td><td>' + kbEsc(o.choice) + '</td><td style="text-align:right;">' + o.count + '</td><td style="text-align:right;">' + saPct(o.count, it.total) + '</td></tr>';
+      return '<tr><td>' + (i + 1) + '</td><td>' + kbEsc(o.choice) + '</td><td style="text-align:right;">' + o.count + '</td><td style="text-align:right;">' + saPct(o.count, it.total) + '</td><td>' + kbEsc(saTypeStr(o.byType)) + '</td></tr>';
     });
-    if (it.optOut) rows.push('<tr><td>—</td><td style="color:var(--text-muted);">退選／未選</td><td style="text-align:right;">' + it.optOut + '</td><td style="text-align:right;">' + saPct(it.optOut, sample) + '</td></tr>');
+    if (it.optOut) rows.push('<tr><td>—</td><td style="color:var(--text-muted);">退選／未選</td><td style="text-align:right;">' + it.optOut + '</td><td style="text-align:right;">' + saPct(it.optOut, sample) + '</td><td>—</td></tr>');
     document.getElementById('sa-detail-body').innerHTML = rows.join('');
     saDrawChart(it);
   }
-
   function saDrawChart(it) {
     if (typeof Chart !== 'function') return;
     var labels = it.options.map(function(o) { return o.choice; });
     var data = it.options.map(function(o) { return o.count; });
     if (it.optOut) { labels.push('退選／未選'); data.push(it.optOut); }
+    var horizontal = labels.some(function(l) { return String(l).length > 6; });
     var ctx = document.getElementById('sa-chart').getContext('2d');
     if (saState.chart) saState.chart.destroy();
     saState.chart = new Chart(ctx, {
       type: 'bar',
       data: { labels: labels, datasets: [{ label: '選擇次數', data: data, backgroundColor: '#1690C2' }] },
       options: {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        indexAxis: horizontal ? 'y' : 'x', responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { beginAtZero: true, ticks: { precision: 0 } } }
       }
     });
   }
-
   function saBackToOverview() {
     document.getElementById('sa-detail').classList.add('hidden');
     document.getElementById('sa-overview-wrap').classList.remove('hidden');
     if (saState.chart) { saState.chart.destroy(); saState.chart = null; }
   }
-
   function saExport() {
     var it = saState.current;
     if (!it) return;
     var sample = it.total + it.optOut;
-    var lines = [['空間', '位置', '項目', '選項', '次數', '佔比']];
-    it.options.forEach(function(o) { lines.push([it.space, it.position, it.item, o.choice, o.count, saPct(o.count, it.total)]); });
-    if (it.optOut) lines.push([it.space, it.position, it.item, '退選／未選', it.optOut, saPct(it.optOut, sample)]);
+    var lines = [['類型', '空間', '位置', '項目', '選項', '次數', '佔比', '戶型分布']];
+    it.options.forEach(function(o) { lines.push([it.section, it.space, it.position, it.item, o.choice, o.count, saPct(o.count, it.total), saTypeStr(o.byType)]); });
+    if (it.optOut) lines.push([it.section, it.space, it.position, it.item, '退選／未選', it.optOut, saPct(it.optOut, sample), '']);
     var csv = '﻿' + lines.map(function(r) { return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(','); }).join('\r\n');
     var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     var a = document.createElement('a');
@@ -4702,7 +4846,6 @@ var Admin = (function() {
     a.download = '選材排行_' + (it.space || '') + (it.item || '') + '.csv';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
-
   function saPct(n, total) { return total ? Math.round(n / total * 100) + '%' : '—'; }
 
   return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, onDateChange, doSort,
@@ -4726,7 +4869,8 @@ var Admin = (function() {
            kbOpenSignPad, kbSignPadClear, kbSignPadConfirm, kbSignPadCancel,
            kbtplLoad, kbtplSelSection, kbtplSelSpaceIdx, kbtplAddSpace, kbtplDelSpace, kbtplRenameSpace, kbtplMoveSpace, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave, kbrecLoad,
            crmSearch, crmSelect, crmSelTab, crmSaveBasic, crmTotalCalc, crmBillImport, crmImportFile, crmBillAddEng, crmBillDelEng, crmBillAddOth, crmBillDelOth, crmBillSave, crmBillRecalc,
-           saQuery, saResetFilter, saDrill, saBackToOverview, saExport };
+           saSub, saBkQuery, saBkReset, saBkShowCust,
+           saQuery, saResetFilter, saRenderOverview, saDrill, saBackToOverview, saExport };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
