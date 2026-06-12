@@ -4250,6 +4250,8 @@ var Admin = (function() {
     var engRows = b.engineering.map(crmEngRowHtml).join('');
     var othRows = b.others.map(crmOthRowHtml).join('');
     var engDue = _crmSum(b.engineering, _crmDue), engPaid = _crmSum(b.engineering, _crmPaid), engUn = crmUnpaid(b.engineering);
+    var engDH = _crmSum(b.engineering, function(r) { return Number(r.dueHouse) || 0; }), engDL = _crmSum(b.engineering, function(r) { return Number(r.dueLand) || 0; });
+    var engPH = _crmSum(b.engineering, function(r) { return Number(r.paidHouse) || 0; }), engPL = _crmSum(b.engineering, function(r) { return Number(r.paidLand) || 0; });
     var othDue = _crmSum(b.others, _crmDue), othPaid = _crmSum(b.others, _crmPaid), othUn = crmUnpaid(b.others);
     body.innerHTML = '<div class="crm-card">'
       + '<div class="crm-total-box">合約總價：房屋款 <input class="cb-house" type="number" inputmode="numeric" value="' + (Number(t.house) || 0) + '" oninput="Admin.crmTotalCalc()"/> ＋ 車位款 <input class="cb-park" type="number" inputmode="numeric" value="' + (Number(t.parking) || 0) + '" oninput="Admin.crmTotalCalc()"/> ＝ 總金額 <b id="cb-totalsum">' + crmMoney((Number(t.house) || 0) + (Number(t.parking) || 0)) + '</b></div>'
@@ -4259,7 +4261,7 @@ var Admin = (function() {
       + '<button class="btn-reset" onclick="Admin.crmBillImport()">↧ 帶入工程期</button> <button class="btn-reset" onclick="Admin.crmBillAddEng()">＋ 新增一列</button></span></div>'
       + '<div class="table-wrap"><table class="crm-bill-table" style="min-width:1500px;"><thead><tr><th>期數</th><th style="min-width:150px;">名稱</th><th>應收房屋款</th><th>應收土地款</th><th>繳款期限</th><th>繳款日期</th><th>已繳房屋款</th><th>已繳土地款</th><th>房屋發票號</th><th>房屋發票日</th><th>土地發票號</th><th>土地發票日</th><th>備註</th><th>刪</th></tr></thead><tbody>'
       + (engRows || '<tr class="empty-row"><td colspan="14">尚無工程期款</td></tr>') + '</tbody></table></div>'
-      + '<div class="crm-bill-sub">工程期小計　應收 <b>' + crmMoney(engDue) + '</b>　已繳 <b>' + crmMoney(engPaid) + '</b>　未繳(已到期) <b class="' + (engUn > 0 ? 'crm-unpaid' : '') + '">' + crmMoney(engUn) + '</b></div>'
+      + '<div class="crm-bill-sub">工程期小計　應收房屋款 <b>' + crmMoney(engDH) + '</b>　應收土地款 <b>' + crmMoney(engDL) + '</b>　已繳房屋款 <b>' + crmMoney(engPH) + '</b>　已繳土地款 <b>' + crmMoney(engPL) + '</b>　未繳(已到期) <b class="' + (engUn > 0 ? 'crm-unpaid' : '') + '">' + crmMoney(engUn) + '</b></div>'
       + '<div class="crm-bill-head" style="margin-top:1.3rem;"><strong>其他款項</strong><span><button class="btn-reset" onclick="Admin.crmBillAddOth()">＋ 新增一列</button></span></div>'
       + '<div class="table-wrap"><table class="crm-bill-table" style="min-width:820px;"><thead><tr><th style="min-width:150px;">項目</th><th>金額</th><th>繳款期限</th><th>繳款日期</th><th>已繳</th><th>發票號碼</th><th>發票日期</th><th>備註</th><th>刪</th></tr></thead><tbody>'
       + (othRows || '<tr class="empty-row"><td colspan="9">尚無其他款項</td></tr>') + '</tbody></table></div>'
