@@ -146,18 +146,16 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .bill-table th{background:#f5f6fa;text-align:center;font-weight:700;}
 .bill-table td:first-child,.bill-table td:nth-child(2){text-align:left;}
 .bill-unpaid{color:var(--danger);font-weight:700;}
-.bill-total{margin-top:1rem;padding:.7rem 1rem;background:#f5f6fa;border-radius:8px;font-size:.95rem;text-align:right;}
-.bill-total b{color:var(--primary);}
-.bill-total-box{background:linear-gradient(120deg,var(--primary-dk),var(--primary));color:#fff;border-radius:10px;padding:1rem 1.15rem;margin-bottom:1rem;}
-.btb-title{font-size:.85rem;letter-spacing:.08em;opacity:.9;margin-bottom:.55rem;}
-.btb-row{display:flex;justify-content:space-between;align-items:baseline;padding:.28rem 0;font-size:.95rem;}
-.btb-row span{opacity:.92;}
-.btb-row b{font-size:1.1rem;font-weight:700;}
-.btb-grand{border-top:1px solid rgba(255,255,255,.4);margin-top:.45rem;padding-top:.6rem;}
-.btb-grand span{font-weight:700;}
-.btb-grand b{font-size:1.35rem;}
-.bill-sub{margin-top:.4rem;margin-bottom:.3rem;padding:.5rem .85rem;background:#fafafa;border:1px solid #eee;border-radius:6px;font-size:.88rem;text-align:right;}
-.bill-sub b{color:var(--primary);}
+.bill-block{margin:.7rem 0 1.2rem;}
+.bb-title{font-weight:700;color:var(--primary);font-size:.95rem;margin-bottom:.25rem;}
+.bb-row{display:flex;justify-content:space-between;align-items:baseline;padding:.32rem .15rem;border-bottom:1px dashed #e8e8e8;font-size:.92rem;}
+.bb-row:last-child{border-bottom:none;}
+.bb-row span{color:var(--text-muted);}
+.bb-row b{font-weight:700;color:var(--text);}
+.bb-grand{border-top:2px solid var(--primary);border-bottom:none;margin-top:.15rem;padding-top:.5rem;}
+.bb-grand span{color:var(--text);font-weight:700;}
+.bb-grand b{color:var(--primary);font-size:1.15rem;}
+.bb-unpaid b{color:var(--danger);}
 
 .card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.5rem;}
 .card-header{display:flex;align-items:center;gap:.75rem;padding:1.25rem 1.5rem;background:var(--primary);color:#fff;}
@@ -1380,22 +1378,36 @@ var App = (function() {
         });
         return h;
       }
-      var html = '<div class="bill-total-box"><div class="btb-title">合約總價</div>'
-        + '<div class="btb-row"><span>房屋款</span><b>' + billMoney(t.house) + '</b></div>'
-        + '<div class="btb-row"><span>車位款</span><b>' + billMoney(t.parking) + '</b></div>'
-        + '<div class="btb-row btb-grand"><span>總金額</span><b>' + billMoney((t.house || 0) + (t.parking || 0)) + '</b></div>'
+      var html = '<div class="bill-block"><div class="bb-title">合約總價</div>'
+        + '<div class="bb-row"><span>房屋款</span><b>' + billMoney(t.house) + '</b></div>'
+        + '<div class="bb-row"><span>車位款</span><b>' + billMoney(t.parking) + '</b></div>'
+        + '<div class="bb-row bb-grand"><span>總金額</span><b>' + billMoney((t.house || 0) + (t.parking || 0)) + '</b></div>'
         + '</div>';
       if (eng.length) {
         html += '<div class="bill-sec-title">工程期款</div><div class="bill-table-wrap"><table class="bill-table" style="min-width:760px;"><thead><tr><th>期數</th><th>名稱</th><th>應收房屋款</th><th>應收土地款</th><th>已繳房屋款</th><th>已繳土地款</th><th>未繳</th><th>繳款期限</th><th>發票號碼</th></tr></thead><tbody>' + rowsHtml(eng, true) + '</tbody></table></div>';
         var engDH = _billSum(eng, function(r) { return Number(r.dueHouse) || 0; }), engDL = _billSum(eng, function(r) { return Number(r.dueLand) || 0; });
         var engPH = _billSum(eng, function(r) { return Number(r.paidHouse) || 0; }), engPL = _billSum(eng, function(r) { return Number(r.paidLand) || 0; });
-        html += '<div class="bill-sub">小計　應收房屋款 <b>' + billMoney(engDH) + '</b>　應收土地款 <b>' + billMoney(engDL) + '</b>　已繳房屋款 <b>' + billMoney(engPH) + '</b>　已繳土地款 <b>' + billMoney(engPL) + '</b>　未繳 <b class="' + (engUn > 0 ? 'bill-unpaid' : '') + '">' + billMoney(engUn) + '</b></div>';
+        html += '<div class="bill-block"><div class="bb-title">工程期款小計</div>'
+          + '<div class="bb-row"><span>應收房屋款</span><b>' + billMoney(engDH) + '</b></div>'
+          + '<div class="bb-row"><span>應收土地款</span><b>' + billMoney(engDL) + '</b></div>'
+          + '<div class="bb-row"><span>已繳房屋款</span><b>' + billMoney(engPH) + '</b></div>'
+          + '<div class="bb-row"><span>已繳土地款</span><b>' + billMoney(engPL) + '</b></div>'
+          + '<div class="bb-row' + (engUn > 0 ? ' bb-unpaid' : '') + '"><span>未繳(已到期)</span><b>' + billMoney(engUn) + '</b></div>'
+          + '</div>';
       }
       if (oth.length) {
         html += '<div class="bill-sec-title">其他款項</div><div class="bill-table-wrap"><table class="bill-table"><thead><tr><th>項目</th><th>應收</th><th>已繳</th><th>未繳</th><th>繳款期限</th><th>備註</th></tr></thead><tbody>' + rowsHtml(oth, false) + '</tbody></table></div>';
-        html += '<div class="bill-sub">小計　應收 <b>' + billMoney(othDue) + '</b>　已繳 <b>' + billMoney(othPaid) + '</b>　未繳(已到期) <b class="' + (othUn > 0 ? 'bill-unpaid' : '') + '">' + billMoney(othUn) + '</b></div>';
+        html += '<div class="bill-block"><div class="bb-title">其他款項小計</div>'
+          + '<div class="bb-row"><span>應收</span><b>' + billMoney(othDue) + '</b></div>'
+          + '<div class="bb-row"><span>已繳</span><b>' + billMoney(othPaid) + '</b></div>'
+          + '<div class="bb-row' + (othUn > 0 ? ' bb-unpaid' : '') + '"><span>未繳(已到期)</span><b>' + billMoney(othUn) + '</b></div>'
+          + '</div>';
       }
-      html += '<div class="bill-total">總計　應收 <b>' + billMoney(engDue + othDue) + '</b>　已繳 <b>' + billMoney(engPaid + othPaid) + '</b>　未繳(已到期) <b class="' + ((engUn + othUn) > 0 ? 'bill-unpaid' : '') + '">' + billMoney(engUn + othUn) + '</b></div>';
+      html += '<div class="bill-block"><div class="bb-title">總計</div>'
+        + '<div class="bb-row"><span>應收</span><b>' + billMoney(engDue + othDue) + '</b></div>'
+        + '<div class="bb-row"><span>已繳</span><b>' + billMoney(engPaid + othPaid) + '</b></div>'
+        + '<div class="bb-row bb-grand' + ((engUn + othUn) > 0 ? ' bb-unpaid' : '') + '"><span>未繳(已到期)</span><b>' + billMoney(engUn + othUn) + '</b></div>'
+        + '</div>';
       el.innerHTML = html;
     }).catch(function() { el.innerHTML = '<p class="text-muted text-center">載入失敗，請稍後再試</p>'; });
   }
