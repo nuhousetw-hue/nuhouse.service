@@ -201,8 +201,18 @@ body.sb-collapsed #screen-main{margin-left:0;}
 .sa-svc-head{display:flex;align-items:center;justify-content:space-between;font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:.6rem;border-bottom:1.5px solid var(--border);padding-bottom:.45rem;}
 .sa-svc-total{font-size:.85rem;color:var(--text-muted);font-weight:600;}
 .sa-pie-wrap{position:relative;width:100%;height:230px;margin-bottom:.6rem;}
-.sa-method-mini{font-size:.84rem;}
+.sa-svc-card{overflow:hidden;}
+.sa-method-mini{font-size:.84rem;min-width:0;width:100%;table-layout:fixed;}
+.sa-method-mini td:first-child,.sa-method-mini th:first-child{white-space:normal;word-break:break-all;}
 .sa-row-active{background:#e3f2fb!important;}
+/* 戶型分布橫條 */
+.sa-type-title{font-size:.85rem;font-weight:700;color:var(--text);margin:.2rem 0 .5rem;}
+.sa-type-bars{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.9rem;}
+.sa-type-row{display:flex;align-items:center;gap:.6rem;font-size:.85rem;}
+.sa-type-lbl{flex:0 0 56px;font-weight:700;color:var(--text);}
+.sa-type-track{flex:1;background:#eef1f5;border-radius:5px;height:16px;overflow:hidden;}
+.sa-type-fill{height:100%;background:var(--primary);border-radius:5px;min-width:2px;}
+.sa-type-val{flex:0 0 auto;color:var(--text-muted);white-space:nowrap;}
 .sa-hint{font-size:.8rem;color:var(--text-muted);margin:.5rem 0 0;}
 .sa-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:.45rem;vertical-align:middle;}
 .sa-cust-head{font-size:.92rem;font-weight:700;color:var(--text);margin-bottom:.55rem;}
@@ -4709,7 +4719,8 @@ var Admin = (function() {
             plugins: {
               legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
               datalabels: {
-                color: '#fff', font: { weight: 'bold', size: 12 }, textAlign: 'center',
+                color: '#1a2a4a', textStrokeColor: '#fff', textStrokeWidth: 3, textShadowColor: '#fff', textShadowBlur: 4,
+                font: { weight: 'bold', size: 12 }, textAlign: 'center',
                 formatter: function(v, ctx) {
                   var arr = ctx.chart.data.datasets[0].data, sum = arr.reduce(function(a, b) { return a + b; }, 0);
                   var pct = sum ? Math.round(v / sum * 100) : 0;
@@ -4736,12 +4747,12 @@ var Admin = (function() {
     var sv = (saBkState.data.services || [])[si]; if (!sv) return;
     var m = sv.methods[mi]; if (!m) return;
     saBkState.open = [si, mi];
-    var typeStr = Object.keys(m.byType || {}).sort(function(a, b) { return m.byType[b] - m.byType[a]; }).map(function(t) { return (t || '—') + '：' + m.byType[t] + ' 戶'; }).join('　');
     var rows = m.customers.map(function(c, i) {
       return '<tr><td>' + (i + 1) + '</td><td>' + kbEsc(c.name || '—') + '</td><td>' + kbEsc(c.unit || '—') + '</td><td>' + kbEsc(c.unitType || '—') + '</td><td>' + kbEsc(c.project || '—') + '</td><td>' + kbEsc(c.date || '—') + '</td><td>' + kbEsc(c.status || '—') + '</td></tr>';
     }).join('');
-    box.innerHTML = '<div class="sa-cust-head">' + kbEsc(sv.service) + ' － ' + kbEsc(m.method) + '（' + m.count + ' 筆）　戶型分布：' + (typeStr || '—')
-      + ' <button class="btn-reset" style="margin-left:.5rem;padding:.2rem .7rem;" onclick="Admin.saBkToggleCust(' + si + ',' + mi + ')">收回</button></div>'
+    box.innerHTML = '<div class="sa-cust-head">' + kbEsc(sv.service) + ' － ' + kbEsc(m.method) + '（' + m.count + ' 筆）'
+      + '<button class="btn-reset" style="margin-left:.5rem;padding:.2rem .7rem;" onclick="Admin.saBkToggleCust(' + si + ',' + mi + ')">收回</button></div>'
+      + saTypeBars(m.byType)
       + '<div class="table-scroll"><table class="sa-table"><thead><tr><th>#</th><th>姓名</th><th>戶號</th><th>戶型</th><th>建案</th><th>預約日期</th><th>狀態</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     box.classList.remove('hidden');
     saBkMark(si, mi);
@@ -4751,6 +4762,21 @@ var Admin = (function() {
     var prev = document.querySelectorAll('#sa-bk-content tr.sa-row-active');
     Array.prototype.forEach.call(prev, function(t) { t.classList.remove('sa-row-active'); });
     if (si != null) { var el = document.getElementById('sa-mrow-' + si + '-' + mi); if (el) el.classList.add('sa-row-active'); }
+  }
+  // 戶型分布橫條（純 CSS，簡單易讀）
+  function saTypeBars(byType) {
+    var keys = Object.keys(byType || {}).sort(function(a, b) { return byType[b] - byType[a]; });
+    if (!keys.length) return '<div class="sa-type-bars"><span class="text-muted">無戶型資料</span></div>';
+    var total = keys.reduce(function(s, k) { return s + byType[k]; }, 0);
+    var max = byType[keys[0]] || 1;
+    var bars = keys.map(function(t) {
+      var w = Math.round(byType[t] / max * 100);
+      var pct = total ? Math.round(byType[t] / total * 100) : 0;
+      return '<div class="sa-type-row"><span class="sa-type-lbl">' + kbEsc(t || '—') + '</span>'
+        + '<div class="sa-type-track"><div class="sa-type-fill" style="width:' + w + '%"></div></div>'
+        + '<span class="sa-type-val">' + byType[t] + ' 戶（' + pct + '%）</span></div>';
+    }).join('');
+    return '<div class="sa-type-title">戶型分布</div><div class="sa-type-bars">' + bars + '</div>';
   }
 
   // ---- B. 選材選色分析 ----
@@ -4847,9 +4873,11 @@ var Admin = (function() {
   function saDrawChart(it) {
     if (typeof Chart !== 'function') return;
     saBkRegisterDL();
-    var labels = it.options.map(function(o) { return o.choice; });
-    var data = it.options.map(function(o) { return o.count; });
-    if (it.optOut) { labels.push('退選／未選'); data.push(it.optOut); }
+    var pairs = it.options.map(function(o) { return { label: o.choice, count: o.count }; });
+    if (it.optOut) pairs.push({ label: '退選／未選', count: it.optOut });
+    pairs.sort(function(a, b) { return b.count - a.count; });   // 依數量大→小（左到右）
+    var labels = pairs.map(function(p) { return p.label; });
+    var data = pairs.map(function(p) { return p.count; });
     var horizontal = labels.some(function(l) { return String(l).length > 6; });
     var ctx = document.getElementById('sa-chart').getContext('2d');
     if (saState.chart) saState.chart.destroy();
