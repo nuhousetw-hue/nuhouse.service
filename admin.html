@@ -113,7 +113,11 @@ input,select{font:inherit;}
 .btn-login:hover{background:var(--primary-dk);}
 
 /* Main */
-#screen-main{margin-left:var(--sidebar-w);padding-top:1.25rem;padding-bottom:2rem;}
+#screen-main{margin-left:var(--sidebar-w);padding-top:1.25rem;padding-bottom:2rem;transition:margin-left .25s ease;}
+#desk-burger{display:none;position:fixed;top:.5rem;left:.5rem;z-index:560;background:#fff;border:1px solid var(--border);color:var(--primary);cursor:pointer;width:38px;height:38px;border-radius:8px;font-size:1.25rem;line-height:1;box-shadow:0 1px 6px rgba(0,0,0,.15);}
+@media(min-width:769px) and (pointer:fine){#desk-burger{display:flex;align-items:center;justify-content:center;}}
+body.sb-collapsed #sidebar{transform:translateX(-100%);transition:transform .25s ease;}
+body.sb-collapsed #screen-main{margin-left:0;}
 #current-project-badge{position:fixed;top:.7rem;right:1.25rem;z-index:550;background:var(--primary);color:#fff;border-radius:20px;padding:.28rem 1rem;font-size:.85rem;font-weight:700;display:none;box-shadow:0 2px 8px rgba(176,16,32,.25);letter-spacing:.03em;}
 #current-project-badge.visible{display:block;}
 .main-inner{max-width:1200px;margin:0 auto;padding:0 1.25rem;}
@@ -466,6 +470,9 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 </div>
 <div id="sidebar-overlay" onclick="Admin.toggleSidebar()"></div>
 
+<!-- 桌面側欄收合鈕 -->
+<button id="desk-burger" onclick="Admin.toggleSidebar()" aria-label="收合選單">☰</button>
+
 <!-- Sidebar -->
 <aside id="sidebar">
   <div class="sb-brand">
@@ -480,33 +487,6 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <span id="current-project-name" class="hidden"></span>
   </div>
   <nav class="sb-nav">
-    <div class="sb-group" id="sb-group-query">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('query')">
-        <span>查詢</span><span class="sb-group-arrow" id="sg-arrow-query">▼</span>
-      </button>
-      <div class="sb-group-items" id="sg-query">
-        <button class="sb-item active" id="tab-booking" onclick="Admin.switchTab('booking')">預約紀錄</button>
-        <button class="sb-item" id="tab-upload" onclick="Admin.switchTab('upload')">上傳紀錄</button>
-        <button class="sb-item" id="tab-unbooked" onclick="Admin.switchTab('unbooked')">未預約客戶</button>
-        <button class="sb-item" id="tab-kbrec" onclick="Admin.switchTab('kbrec')">選材紀錄</button>
-      </div>
-    </div>
-    <div class="sb-group" id="sb-group-calendar">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('calendar')">
-        <span>行事曆</span><span class="sb-group-arrow" id="sg-arrow-calendar">▼</span>
-      </button>
-      <div class="sb-group-items" id="sg-calendar">
-        <button class="sb-item" id="tab-calendar" onclick="Admin.switchTab('calendar')">行事曆</button>
-      </div>
-    </div>
-    <div class="sb-group" id="sb-group-proxy">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('proxy')">
-        <span>代客預約</span><span class="sb-group-arrow" id="sg-arrow-proxy">▼</span>
-      </button>
-      <div class="sb-group-items" id="sg-proxy">
-        <button class="sb-item" id="tab-proxy" onclick="Admin.switchTab('proxy')">代客預約</button>
-      </div>
-    </div>
     <div class="sb-group" id="sb-group-customer">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('customer')">
         <span>客戶管理</span><span class="sb-group-arrow" id="sg-arrow-customer">▼</span>
@@ -521,6 +501,33 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </button>
       <div class="sb-group-items" id="sg-progress-sub">
         <button class="sb-item" id="tab-progress" onclick="Admin.switchTab('progress')">進度管理</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-calendar">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('calendar')">
+        <span>行事曆</span><span class="sb-group-arrow" id="sg-arrow-calendar">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-calendar">
+        <button class="sb-item" id="tab-calendar" onclick="Admin.switchTab('calendar')">行事曆</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-query">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('query')">
+        <span>查詢</span><span class="sb-group-arrow" id="sg-arrow-query">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-query">
+        <button class="sb-item active" id="tab-booking" onclick="Admin.switchTab('booking')">預約紀錄</button>
+        <button class="sb-item" id="tab-upload" onclick="Admin.switchTab('upload')">上傳紀錄</button>
+        <button class="sb-item" id="tab-unbooked" onclick="Admin.switchTab('unbooked')">未預約客戶</button>
+        <button class="sb-item" id="tab-kbrec" onclick="Admin.switchTab('kbrec')">選材紀錄</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-proxy">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('proxy')">
+        <span>代客預約</span><span class="sb-group-arrow" id="sg-arrow-proxy">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-proxy">
+        <button class="sb-item" id="tab-proxy" onclick="Admin.switchTab('proxy')">代客預約</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-kebian">
@@ -546,6 +553,14 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </button>
       <div class="sb-group-items" id="sg-accounts-sub">
         <button class="sb-item" id="tab-accounts" onclick="Admin.switchTab('accounts')">帳號權限管理</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-stats">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('stats-sub')">
+        <span>統計分析</span><span class="sb-group-arrow" id="sg-arrow-stats-sub">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-stats-sub">
+        <button class="sb-item" id="tab-stats" onclick="Admin.switchTab('stats')">統計分析</button>
       </div>
     </div>
   </nav>
@@ -965,6 +980,18 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
           <div class="kbtab-row" id="crm-tabs"></div>
         </div>
         <div id="crm-tab-body"></div>
+      </div>
+    </div>
+
+    <!-- 統計分析（建置中） -->
+    <div id="stats-panel" class="hidden">
+      <div class="cust-search-card">
+        <div class="cust-search-title">統計分析</div>
+        <div style="padding:3rem 1.5rem;text-align:center;color:var(--text-muted);">
+          <div style="font-size:2.4rem;margin-bottom:.6rem;">📊</div>
+          <h3 style="font-size:1.05rem;color:var(--text);margin-bottom:.5rem;">統計分析功能建置中</h3>
+          <p style="line-height:1.9;">未來將統計 <strong>客變數據、選材選色數據</strong><br>（各空間／項目／選項的選擇分布、熱門選項排行等）。</p>
+        </div>
       </div>
     </div>
 
@@ -1499,6 +1526,11 @@ var Admin = (function() {
   }
 
   function toggleSidebar() {
+    // 桌面（滑鼠）：收合/展開側欄；觸控/手機：滑出選單
+    if (window.matchMedia('(min-width:769px) and (pointer:fine)').matches) {
+      document.body.classList.toggle('sb-collapsed');
+      return;
+    }
     var sb = document.getElementById('sidebar');
     var overlay = document.getElementById('sidebar-overlay');
     var isOpen = sb.classList.toggle('open');
@@ -1513,7 +1545,8 @@ var Admin = (function() {
     customer: { box: 'sb-group-customer', tab: 'crm' },
     progress: { box: 'sb-group-progress', tab: 'progress' },
     kebian:   { box: 'sb-group-kebian',   tab: 'kebian' },
-    settings: { box: 'sb-group-settings', tab: 'settings' }
+    settings: { box: 'sb-group-settings', tab: 'settings' },
+    stats:    { box: 'sb-group-stats',    tab: 'stats' }
   };
 
   function applyRolePermissions() {
@@ -1562,6 +1595,7 @@ var Admin = (function() {
     if (tab === 'progress') return 'progress';
     if (tab === 'kebian' || tab === 'kbtpl') return 'kebian';
     if (tab === 'settings') return 'settings';
+    if (tab === 'stats') return 'stats';
     return null;
   }
 
@@ -1638,7 +1672,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','crm','progress','kebian','kbtpl','kbrec','accounts'];
+    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','crm','progress','kebian','kbtpl','kbrec','stats','accounts'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -1654,8 +1688,9 @@ var Admin = (function() {
     var isKbtpl       = tab === 'kbtpl';
     var isKbrec       = tab === 'kbrec';
     var isCrm         = tab === 'crm';
+    var isStats       = tab === 'stats';
     var isAccounts    = tab === 'accounts';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isKbrec && !isCrm && !isAccounts;
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isKbrec && !isCrm && !isStats && !isAccounts;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -1670,6 +1705,7 @@ var Admin = (function() {
     document.getElementById('kbtpl-panel').classList.toggle('hidden', !isKbtpl);
     document.getElementById('kbrec-panel').classList.toggle('hidden', !isKbrec);
     document.getElementById('crm-panel').classList.toggle('hidden', !isCrm);
+    document.getElementById('stats-panel').classList.toggle('hidden', !isStats);
     document.getElementById('accounts-panel').classList.toggle('hidden', !isAccounts);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
