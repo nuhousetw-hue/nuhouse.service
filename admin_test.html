@@ -7,6 +7,7 @@
 <title>新濠建設機構 | 後台管理</title>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --primary:#B01020;--primary-dk:#8C0D19;
@@ -112,7 +113,12 @@ input,select{font:inherit;}
 .btn-login:hover{background:var(--primary-dk);}
 
 /* Main */
-#screen-main{margin-left:var(--sidebar-w);padding-top:1.25rem;padding-bottom:2rem;}
+#screen-main{margin-left:var(--sidebar-w);padding-top:1.25rem;padding-bottom:2rem;transition:margin-left .25s ease;}
+#desk-burger{display:none;position:fixed;top:.6rem;left:calc(var(--sidebar-w) - 50px);z-index:560;background:rgba(255,255,255,.85);border:1px solid var(--border);color:var(--primary);cursor:pointer;width:34px;height:34px;border-radius:8px;font-size:1.15rem;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:left .25s ease;}
+@media(min-width:769px) and (pointer:fine){#desk-burger{display:flex;align-items:center;justify-content:center;}}
+body.sb-collapsed #desk-burger{left:.5rem;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.18);}
+body.sb-collapsed #sidebar{transform:translateX(-100%);transition:transform .25s ease;}
+body.sb-collapsed #screen-main{margin-left:0;}
 #current-project-badge{position:fixed;top:.7rem;right:1.25rem;z-index:550;background:var(--primary);color:#fff;border-radius:20px;padding:.28rem 1rem;font-size:.85rem;font-weight:700;display:none;box-shadow:0 2px 8px rgba(176,16,32,.25);letter-spacing:.03em;}
 #current-project-badge.visible{display:block;}
 .main-inner{max-width:1200px;margin:0 auto;padding:0 1.25rem;}
@@ -465,6 +471,9 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 </div>
 <div id="sidebar-overlay" onclick="Admin.toggleSidebar()"></div>
 
+<!-- 桌面側欄收合鈕 -->
+<button id="desk-burger" onclick="Admin.toggleSidebar()" aria-label="收合選單">☰</button>
+
 <!-- Sidebar -->
 <aside id="sidebar">
   <div class="sb-brand">
@@ -479,6 +488,30 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <span id="current-project-name" class="hidden"></span>
   </div>
   <nav class="sb-nav">
+    <div class="sb-group" id="sb-group-customer">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('customer')">
+        <span>客戶管理</span><span class="sb-group-arrow" id="sg-arrow-customer">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-customer">
+        <button class="sb-item" id="tab-crm" onclick="Admin.switchTab('crm')">客戶管理</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-progress">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('progress-sub')">
+        <span>工程進度</span><span class="sb-group-arrow" id="sg-arrow-progress-sub">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-progress-sub">
+        <button class="sb-item" id="tab-progress" onclick="Admin.switchTab('progress')">進度管理</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-calendar">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('calendar')">
+        <span>行事曆</span><span class="sb-group-arrow" id="sg-arrow-calendar">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-calendar">
+        <button class="sb-item" id="tab-calendar" onclick="Admin.switchTab('calendar')">行事曆</button>
+      </div>
+    </div>
     <div class="sb-group" id="sb-group-query">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('query')">
         <span>查詢</span><span class="sb-group-arrow" id="sg-arrow-query">▼</span>
@@ -490,38 +523,12 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
         <button class="sb-item" id="tab-kbrec" onclick="Admin.switchTab('kbrec')">選材紀錄</button>
       </div>
     </div>
-    <div class="sb-group" id="sb-group-calendar">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('calendar')">
-        <span>行事曆</span><span class="sb-group-arrow" id="sg-arrow-calendar">▼</span>
-      </button>
-      <div class="sb-group-items" id="sg-calendar">
-        <button class="sb-item" id="tab-calendar" onclick="Admin.switchTab('calendar')">行事曆</button>
-      </div>
-    </div>
     <div class="sb-group" id="sb-group-proxy">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('proxy')">
         <span>代客預約</span><span class="sb-group-arrow" id="sg-arrow-proxy">▼</span>
       </button>
       <div class="sb-group-items" id="sg-proxy">
         <button class="sb-item" id="tab-proxy" onclick="Admin.switchTab('proxy')">代客預約</button>
-      </div>
-    </div>
-    <div class="sb-group" id="sb-group-customer">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('customer')">
-        <span>客戶管理</span><span class="sb-group-arrow" id="sg-arrow-customer">▼</span>
-      </button>
-      <div class="sb-group-items" id="sg-customer">
-        <button class="sb-item" id="tab-profile" onclick="Admin.switchTab('profile')">基本資料</button>
-        <button class="sb-item" id="tab-billing" onclick="Admin.switchTab('billing')">帳務資訊</button>
-        <button class="sb-item" id="tab-addcustomer" onclick="Admin.switchTab('addcustomer')">新增客戶</button>
-      </div>
-    </div>
-    <div class="sb-group" id="sb-group-progress">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('progress-sub')">
-        <span>工程進度</span><span class="sb-group-arrow" id="sg-arrow-progress-sub">▼</span>
-      </button>
-      <div class="sb-group-items" id="sg-progress-sub">
-        <button class="sb-item" id="tab-progress" onclick="Admin.switchTab('progress')">進度管理</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-kebian">
@@ -547,6 +554,14 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </button>
       <div class="sb-group-items" id="sg-accounts-sub">
         <button class="sb-item" id="tab-accounts" onclick="Admin.switchTab('accounts')">帳號權限管理</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-stats">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('stats-sub')">
+        <span>統計分析</span><span class="sb-group-arrow" id="sg-arrow-stats-sub">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-stats-sub">
+        <button class="sb-item" id="tab-stats" onclick="Admin.switchTab('stats')">統計分析</button>
       </div>
     </div>
   </nav>
@@ -949,6 +964,38 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+    <!-- 客戶管理 CRM -->
+    <div id="crm-panel" class="hidden">
+      <div class="cust-search-card">
+        <div class="cust-search-title" style="margin-bottom:.6rem;">客戶管理</div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+          <input id="crm-search" placeholder="請鍵入戶號／姓名／身分證" style="flex:1;min-width:200px;padding:.6rem .9rem;border:1px solid var(--border);border-radius:8px;font-size:1rem;" onkeydown="if(event.key==='Enter'){Admin.crmSearch();}"/>
+          <button class="btn-query" onclick="Admin.crmSearch()">🔍 搜尋</button>
+        </div>
+        <div id="crm-results" class="crm-results"></div>
+      </div>
+
+      <div id="crm-detail" class="hidden">
+        <div class="crm-cust-head" id="crm-cust-head"></div>
+        <div class="kbtpl-sticky">
+          <div class="kbtab-row" id="crm-tabs"></div>
+        </div>
+        <div id="crm-tab-body"></div>
+      </div>
+    </div>
+
+    <!-- 統計分析（建置中） -->
+    <div id="stats-panel" class="hidden">
+      <div class="cust-search-card">
+        <div class="cust-search-title">統計分析</div>
+        <div style="padding:3rem 1.5rem;text-align:center;color:var(--text-muted);">
+          <div style="font-size:2.4rem;margin-bottom:.6rem;">📊</div>
+          <h3 style="font-size:1.05rem;color:var(--text);margin-bottom:.5rem;">統計分析功能建置中</h3>
+          <p style="line-height:1.9;">未來將統計 <strong>客變數據、選材選色數據</strong><br>（各空間／項目／選項的選擇分布、熱門選項排行等）。</p>
+        </div>
+      </div>
+    </div>
+
     <!-- 帳號權限管理 -->
     <div id="accounts-panel" class="hidden">
       <div class="cust-search-card">
@@ -1163,7 +1210,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .kb-row-label{flex:0 0 60px;font-weight:700;color:#555;font-size:1.05rem;text-align:left;}
   .kb-row-val{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:.55rem;align-items:center;word-break:break-word;white-space:pre-line;font-size:1.15rem;color:#222;}
   .kb-row-val .kb-note-input{flex:1;min-width:180px;}
-  .kb-doc-subtitle{font-size:1.05rem;font-weight:800;margin:1rem 0 .4rem;color:#B01020;}
+  .kb-doc-subtitle{font-size:1.05rem;font-weight:800;margin:1rem 0 .4rem;color:var(--primary);}
   .kb-doc{background:#fff;padding:1.4rem 1.6rem;color:#1a2a4a;}
   .kb-doc-title{font-size:1.3rem;font-weight:800;text-align:center;margin-bottom:.5rem;}
   .kb-doc-meta{font-size:1rem;margin-bottom:.9rem;line-height:1.7;}
@@ -1203,6 +1250,46 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   .kbtab-add{border-style:dashed;color:var(--primary);}
   .kbtab-del{border-color:var(--danger);color:var(--danger);}
   .kb-form-tabs .kbtab{font-size:1.12rem;padding:.6rem 1.4rem;}
+  /* CRM */
+  .crm-hint{color:var(--text-muted);font-size:.9rem;padding:.6rem 0;}
+  .crm-results{margin-top:.8rem;}
+  .crm-list{display:flex;flex-direction:column;gap:.4rem;max-height:340px;overflow-y:auto;}
+  .crm-list-item{display:flex;align-items:center;gap:.8rem;background:#fff;border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;cursor:pointer;text-align:left;}
+  .crm-list-item:hover{border-color:var(--primary);background:#fafcff;}
+  .crm-li-unit{font-weight:700;min-width:90px;}
+  .crm-li-name{flex:1;color:#444;}
+  .crm-li-tag{font-size:.78rem;font-weight:700;padding:.15rem .6rem;border-radius:20px;}
+  .crm-li-tag.sold{background:#e3f3e8;color:#1e8e3e;}
+  .crm-li-tag.unsold{background:#f0f0f0;color:#888;}
+  .crm-cust-head{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;background:var(--primary);color:#fff;border-radius:10px;padding:.7rem 1.1rem;margin:.8rem 0 .2rem;}
+  .crm-head-unit{font-size:1.25rem;font-weight:800;}
+  .crm-head-name{font-size:1.1rem;}
+  .crm-head-id{opacity:.85;}
+  .crm-cust-head .crm-li-tag{background:rgba(255,255,255,.9);}
+  .crm-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-top:.6rem;}
+  .crm-banner-warn{background:#fff7e6;border:1px solid #f0c36d;color:#8a6d1a;border-radius:8px;padding:.6rem .9rem;margin-bottom:.9rem;font-size:.9rem;}
+  .crm-form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem;}
+  .crm-field label{display:block;font-size:.85rem;font-weight:600;color:#555;margin-bottom:.25rem;}
+  .crm-field input,.crm-field select{width:100%;box-sizing:border-box;padding:.55rem .7rem;border:1px solid var(--border);border-radius:7px;font-size:.95rem;background:#fff;}
+  .crm-bill-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;margin-bottom:.5rem;font-size:1rem;}
+  .crm-bill-table input{box-sizing:border-box;padding:.35rem .45rem;border:1px solid var(--border);border-radius:5px;font-size:.88rem;width:110px;}
+  .crm-bill-table input.ce-seq{width:66px;text-align:center;}
+  .crm-bill-table input.ce-name,.crm-bill-table input.co-name{width:160px;}
+  .crm-bill-table input.ce-due,.crm-bill-table input.ce-paid,.crm-bill-table input.co-amt,.crm-bill-table input.co-paid{width:120px;text-align:right;}
+  .crm-bill-table input[type=date]{width:150px;}
+  .crm-bill-table input.ce-inv,.crm-bill-table input.co-inv,.crm-bill-table input.ce-note,.crm-bill-table input.co-note{width:130px;}
+  .crm-bill-table td,.crm-bill-table th{white-space:nowrap;padding:.3rem .4rem;}
+  .crm-bill-table th{white-space:nowrap;}
+  .crm-bill-total{margin-top:1rem;padding:.7rem 1rem;background:#f5f6fa;border-radius:8px;font-size:1.02rem;}
+  .crm-bill-total b{color:var(--primary);}
+  .crm-bill-total b.crm-unpaid{color:var(--danger);}
+  .crm-total-box{background:#eef4fb;border:1px solid #cfe0f2;border-radius:8px;padding:.7rem 1rem;margin-bottom:1rem;font-size:1rem;line-height:2;}
+  .crm-total-box input{width:130px;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;text-align:right;}
+  .crm-total-box b{color:var(--primary);font-size:1.1rem;}
+  .crm-bill-sub{margin-top:.5rem;padding:.5rem .85rem;background:#fafafa;border:1px solid #eee;border-radius:6px;font-size:.92rem;text-align:right;}
+  .crm-bill-sub b{color:var(--primary);}
+  .crm-bill-sub b.crm-unpaid{color:var(--danger);}
+  .crm-bill-table input[type=date]{min-width:130px;}
   .kb-row-val .kb-note-input{font-size:1.08rem;padding:.6rem .95rem;}
 </style>
 
@@ -1320,7 +1407,40 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 </div>
 
 <script>
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
+// 正式後端
+var GAS_URL_PROD = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
+// 測試後端（建好測試 GAS 後，把測試部署網址貼這裡，留空則一律走正式）
+var GAS_URL_TEST = 'https://script.google.com/macros/s/AKfycbx0_wgymmBIWRrhadXof1IW6d2wms2mWXD0w9ilDUB25IKwNeHcMrxNS99uRJsiaif-/exec';
+// 此為獨立測試檔（admin_test.html），永遠走測試環境（測試品牌＋測試 GAS），與正式 admin.html 完全分離
+var IS_TEST = true;
+var GAS_URL = IS_TEST ? GAS_URL_TEST : GAS_URL_PROD;
+if (IS_TEST) document.addEventListener('DOMContentLoaded', function(){ var b=document.createElement('div'); b.textContent='⚠️ 測試環境（資料與正式分開）'; b.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#ff9800;color:#fff;text-align:center;font-weight:700;padding:5px;font-size:13px;'; document.body.appendChild(b); });
+
+// ════════ 品牌設定（平台＝安家數位；建商名依環境切換，正式不動新濠）════════
+var PLATFORM_NAME = '安家數位';
+var BRAND = IS_TEST
+  ? { name: '安家數位', primary: '#1690C2', primaryDk: '#11718F', showPlatform: true }   // 安家數位（藍綠，依 LOGO）
+  : { name: '新濠建設機構', primary: '#B01020', primaryDk: '#8C0D19', showPlatform: false }; // 正式新濠（不動）
+function applyBrand() {
+  try {
+    document.title = BRAND.name + ' | 後台管理';
+    var s = document.querySelector('.sb-brand-name'); if (s) s.textContent = BRAND.name;
+    var m = document.querySelector('.mb-brand');       if (m) m.textContent = BRAND.name + ' 後台';
+    var h = document.querySelector('.login-title h1'); if (h) h.textContent = BRAND.name;
+    document.documentElement.style.setProperty('--primary', BRAND.primary);
+    document.documentElement.style.setProperty('--primary-dk', BRAND.primaryDk);
+    if (BRAND.showPlatform) {
+      var lt = document.querySelector('.login-title');
+      if (lt && !lt.querySelector('.brand-platform')) {
+        var p = document.createElement('div'); p.className = 'brand-platform';
+        p.textContent = '系統由 ' + PLATFORM_NAME + ' 提供';
+        p.style.cssText = 'font-size:12px;color:#999;margin-top:8px;';
+        lt.appendChild(p);
+      }
+    }
+  } catch(e) {}
+}
+document.addEventListener('DOMContentLoaded', applyBrand);
 
 var Admin = (function() {
   var state = { username: null, role: 'user', perms: [], allowedProjects: [], tab: 'booking', data: [], projects: [], settingsServiceTypes: [] };
@@ -1407,6 +1527,11 @@ var Admin = (function() {
   }
 
   function toggleSidebar() {
+    // 桌面（滑鼠）：收合/展開側欄；觸控/手機：滑出選單
+    if (window.matchMedia('(min-width:769px) and (pointer:fine)').matches) {
+      document.body.classList.toggle('sb-collapsed');
+      return;
+    }
     var sb = document.getElementById('sidebar');
     var overlay = document.getElementById('sidebar-overlay');
     var isOpen = sb.classList.toggle('open');
@@ -1418,10 +1543,11 @@ var Admin = (function() {
     query:    { box: 'sb-group-query',    tab: 'booking' },
     calendar: { box: 'sb-group-calendar', tab: 'calendar' },
     proxy:    { box: 'sb-group-proxy',    tab: 'proxy' },
-    customer: { box: 'sb-group-customer', tab: 'profile' },
+    customer: { box: 'sb-group-customer', tab: 'crm' },
     progress: { box: 'sb-group-progress', tab: 'progress' },
     kebian:   { box: 'sb-group-kebian',   tab: 'kebian' },
-    settings: { box: 'sb-group-settings', tab: 'settings' }
+    settings: { box: 'sb-group-settings', tab: 'settings' },
+    stats:    { box: 'sb-group-stats',    tab: 'stats' }
   };
 
   function applyRolePermissions() {
@@ -1466,10 +1592,11 @@ var Admin = (function() {
     if (['booking','upload','unbooked','kbrec'].indexOf(tab) >= 0) return 'query';
     if (tab === 'calendar') return 'calendar';
     if (tab === 'proxy') return 'proxy';
-    if (['profile','billing','addcustomer'].indexOf(tab) >= 0) return 'customer';
+    if (['profile','billing','addcustomer','crm'].indexOf(tab) >= 0) return 'customer';
     if (tab === 'progress') return 'progress';
     if (tab === 'kebian' || tab === 'kbtpl') return 'kebian';
     if (tab === 'settings') return 'settings';
+    if (tab === 'stats') return 'stats';
     return null;
   }
 
@@ -1527,6 +1654,8 @@ var Admin = (function() {
           kbEnter(sel.value);
         } else if (state.tab === 'kbrec') {
           kbrecLoad();
+        } else if (state.tab === 'crm') {
+          crmEnter();
         } else {
           resetTable();
         }
@@ -1544,7 +1673,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','progress','kebian','kbtpl','kbrec','accounts'];
+    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','crm','progress','kebian','kbtpl','kbrec','stats','accounts'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -1559,8 +1688,10 @@ var Admin = (function() {
     var isKebian      = tab === 'kebian';
     var isKbtpl       = tab === 'kbtpl';
     var isKbrec       = tab === 'kbrec';
+    var isCrm         = tab === 'crm';
+    var isStats       = tab === 'stats';
     var isAccounts    = tab === 'accounts';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isKbrec && !isAccounts;
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isKbrec && !isCrm && !isStats && !isAccounts;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -1574,6 +1705,8 @@ var Admin = (function() {
     document.getElementById('kebian-panel').classList.toggle('hidden', !isKebian);
     document.getElementById('kbtpl-panel').classList.toggle('hidden', !isKbtpl);
     document.getElementById('kbrec-panel').classList.toggle('hidden', !isKbrec);
+    document.getElementById('crm-panel').classList.toggle('hidden', !isCrm);
+    document.getElementById('stats-panel').classList.toggle('hidden', !isStats);
     document.getElementById('accounts-panel').classList.toggle('hidden', !isAccounts);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
@@ -1611,6 +1744,8 @@ var Admin = (function() {
       kbtplLoad();
     } else if (isKbrec) {
       kbrecLoad();
+    } else if (isCrm) {
+      crmEnter();
     } else if (isAccounts) {
       loadAccounts();
     } else if (isTable) {
@@ -3550,7 +3685,7 @@ var Admin = (function() {
     var equipRows = kbMergeSpaceRows(equipItems, false);
     var c = kbState.customer;
     var docHtml = ''
-      + '<div class="kb-doc-title">新濠建設機構　客變選材確認單</div>'
+      + '<div class="kb-doc-title">' + kbEsc(BRAND.name) + '　客變選材確認單</div>'
       + '<div class="kb-doc-meta">建案：' + kbEsc(kbProjectName()) + '　　戶號：' + kbEsc(c.unit) + '　　客戶：' + kbEsc(c.name || '—')
       + '<br>服務人員：' + kbEsc(staff) + '　　日期：' + kbToday() + '</div>';
     if (colorRows) {
@@ -3973,6 +4108,346 @@ var Admin = (function() {
     });
   }
 
+  // ════════════════════════════════════════════════
+  //  CRM 客戶管理
+  // ════════════════════════════════════════════════
+  var crmState = { project: '', customer: null, tab: 'basic', billing: null };
+  var CRM_TABS = [
+    { key: 'basic', label: '基本資料' }, { key: 'billing', label: '帳務資料' },
+    { key: 'kebian', label: '客變紀錄' }, { key: 'booking', label: '預約紀錄' }, { key: 'upload', label: '上傳紀錄' }
+  ];
+
+  function crmEnter() {
+    crmState.project = document.getElementById('select-project').value || '';
+    crmState.customer = null;
+    document.getElementById('crm-search').value = '';
+    document.getElementById('crm-detail').classList.add('hidden');
+    document.getElementById('crm-results').innerHTML = crmState.project ? '' : '<p class="crm-hint">請先在上方選擇建案。</p>';
+  }
+
+  function crmSearch() {
+    if (!crmState.project) { showToast('請先選擇建案', 'error'); return; }
+    var kw = document.getElementById('crm-search').value.trim();
+    var box = document.getElementById('crm-results');
+    box.innerHTML = '<p class="crm-hint">搜尋中…</p>';
+    callServer('serverAdminSearchCustomers', crmState.project, kw).then(function(list) {
+      if (!Array.isArray(list)) { box.innerHTML = '<p class="crm-hint">⚠️ 後端尚未開放：請確認測試 GAS 已重貼最新 Code_測試.gs，並「重新部署 → 新增版本」。</p>'; return; }
+      if (!list.length) { box.innerHTML = '<p class="crm-hint">查無符合的客戶（試試打戶號，例如 A1）</p>'; return; }
+      var html = '<div class="crm-list">';
+      list.slice(0, 100).forEach(function(c) {
+        html += '<button class="crm-list-item" onclick="Admin.crmSelect(\'' + kbEsc(c.unit) + '\')">'
+          + '<span class="crm-li-unit">' + kbEsc(c.unit) + '</span>'
+          + '<span class="crm-li-name">' + (c.name ? kbEsc(c.name) : '—') + '</span>'
+          + '<span class="crm-li-tag ' + (c.sold ? 'sold' : 'unsold') + '">' + (c.sold ? '已售' : '未售') + '</span></button>';
+      });
+      html += '</div>';
+      if (list.length > 100) html += '<p class="crm-hint">符合 ' + list.length + ' 筆，僅顯示前 100，請輸入更精確關鍵字</p>';
+      box.innerHTML = html;
+    }).catch(function(e) { box.innerHTML = '<p class="crm-hint">搜尋失敗：' + kbEsc(e.message || '') + '</p>'; });
+  }
+
+  function crmSelect(unit) {
+    callServer('serverAdminGetCustomerByUnit', crmState.project, unit).then(function(c) {
+      if (!c) c = { unit: unit, name: '', idCard: '', folderId: '' };
+      c.unit = unit;
+      crmState.customer = c;
+      crmState.tab = 'basic';
+      crmState.billing = null;
+      document.getElementById('crm-results').innerHTML = '';   // 選定後收起搜尋結果
+      document.getElementById('crm-detail').classList.remove('hidden');
+      crmRenderHead();
+      crmRenderTabs();
+      crmRenderTabBody();
+      document.getElementById('crm-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  function crmRenderHead() {
+    var c = crmState.customer, sold = !!(c.idCard && c.name);
+    document.getElementById('crm-cust-head').innerHTML =
+      '<span class="crm-head-unit">' + kbEsc(c.unit) + '</span>'
+      + '<span class="crm-head-name">' + (c.name ? kbEsc(c.name) : '（未售）') + '</span>'
+      + (c.idCard ? '<span class="crm-head-id">' + kbEsc(c.idCard) + '</span>' : '')
+      + (c.contractNo ? '<span class="crm-head-id">合約 ' + kbEsc(c.contractNo) + '</span>' : '')
+      + (c.identity ? '<span class="crm-head-id">' + kbEsc(c.identity) + '</span>' : '')
+      + '<span class="crm-li-tag ' + (sold ? 'sold' : 'unsold') + '">' + (sold ? '已售' : '未售') + '</span>';
+  }
+
+  function crmRenderTabs() {
+    document.getElementById('crm-tabs').innerHTML = CRM_TABS.map(function(t) {
+      return '<button class="kbtab' + (t.key === crmState.tab ? ' active' : '') + '" onclick="Admin.crmSelTab(\'' + t.key + '\')">' + t.label + '</button>';
+    }).join('');
+  }
+  function crmSelTab(key) { crmState.tab = key; crmRenderTabs(); crmRenderTabBody(); }
+
+  function crmRenderTabBody() {
+    var body = document.getElementById('crm-tab-body');
+    if (crmState.tab === 'basic') return crmRenderBasic(body);
+    if (crmState.tab === 'billing') return crmRenderBilling(body);
+    if (crmState.tab === 'kebian') return crmRenderKebian(body);
+    if (crmState.tab === 'booking') return crmRenderBooking(body);
+    if (crmState.tab === 'upload') return crmRenderUpload(body);
+  }
+
+  // ── 基本資料 ──
+  function crmRenderBasic(body) {
+    var c = crmState.customer, sold = !!(c.idCard && c.name);
+    body.innerHTML = '<div class="crm-card">'
+      + (sold ? '' : '<div class="crm-banner-warn">此戶為未售戶。填入身分證與姓名後儲存，即轉為已售（系統自動建立客戶資料夾）。</div>')
+      + '<div class="crm-form-grid">'
+      + '<div class="crm-field"><label>戶號</label><input value="' + kbEsc(c.unit) + '" disabled/></div>'
+      + '<div class="crm-field"><label>樓層</label><input value="' + kbEsc(c.unit.split('-')[1] || '') + '" disabled/></div>'
+      + '<div class="crm-field"><label>合約編號</label><input id="crm-bs-contract" value="' + kbEsc(c.contractNo || '') + '" placeholder="合約編號"/></div>'
+      + '<div class="crm-field"><label>身分證字號</label><input id="crm-bs-id" value="' + kbEsc(c.idCard || '') + '" placeholder="例 A123456789" style="text-transform:uppercase;"/></div>'
+      + '<div class="crm-field"><label>姓名</label><input id="crm-bs-name" value="' + kbEsc(c.name || '') + '" placeholder="客戶姓名"/></div>'
+      + '<div class="crm-field"><label>客戶身份</label><select id="crm-bs-identity"><option value="">—</option>' + ['地主', '客戶', '公司', '其他'].map(function(o) { return '<option' + (c.identity === o ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select></div>'
+      + '<div class="crm-field"><label>簽約日期</label><input id="crm-bs-sign" value="' + kbEsc(c.signDate || '') + '" placeholder="yyyy/mm/dd"/></div>'
+      + '<div class="crm-field" style="grid-column:1/-1;"><label>戶籍地址</label><input id="crm-bs-reg" value="' + kbEsc(c.regAddr || '') + '" placeholder="戶籍地址"/></div>'
+      + '<div class="crm-field" style="grid-column:1/-1;"><label>通訊地址</label><input id="crm-bs-mail" value="' + kbEsc(c.mailAddr || '') + '" placeholder="通訊地址"/></div>'
+      + '</div>'
+      + '<div style="margin-top:1rem;"><button class="btn-query" onclick="Admin.crmSaveBasic()">儲存基本資料</button></div></div>';
+  }
+  function crmSaveBasic() {
+    var id = document.getElementById('crm-bs-id').value.trim();
+    var nm = document.getElementById('crm-bs-name').value.trim();
+    if (!id || !nm) { showToast('身分證與姓名為必填', 'error'); return; }
+    var reg = document.getElementById('crm-bs-reg').value.trim();
+    var mail = document.getElementById('crm-bs-mail').value.trim();
+    var sign = document.getElementById('crm-bs-sign').value.trim();
+    var identity = document.getElementById('crm-bs-identity').value;
+    var contract = document.getElementById('crm-bs-contract').value.trim();
+    callServer('serverAdminSaveCustomer', crmState.project, crmState.customer.unit, id, nm, reg, mail, sign, identity, contract).then(function(res) {
+      if (res && res.success) {
+        showToast('已儲存', 'success');
+        var c = crmState.customer;
+        c.idCard = id.toUpperCase(); c.name = nm; c.regAddr = reg; c.mailAddr = mail; c.signDate = sign; c.identity = identity; c.contractNo = contract;
+        crmRenderHead(); crmRenderBasic(document.getElementById('crm-tab-body'));
+      } else showToast((res && res.message) || '儲存失敗', 'error');
+    });
+  }
+
+  // ── 帳務資料 ──
+  function crmRenderBilling(body) {
+    body.innerHTML = '<div class="crm-card crm-hint">載入帳務中…</div>';
+    callServer('serverAdminGetBilling', crmState.project, crmState.customer.unit).then(function(d) {
+      crmState.billing = { total: (d && d.total) || { house: 0, parking: 0 }, engineering: (d && d.engineering) || [], others: (d && d.others) || [] };
+      crmBillRender();
+    });
+  }
+  function crmMoney(n) { n = Number(n) || 0; return 'NT$' + n.toLocaleString('en-US'); }
+  function _crmDue(r) { return (Number(r.dueHouse) || 0) + (Number(r.dueLand) || 0) + (Number(r.due) || 0); }
+  function _crmPaid(r) { return (Number(r.paidHouse) || 0) + (Number(r.paidLand) || 0) + (Number(r.paid) || 0); }
+  function _crmSum(rows, fn) { var s = 0; (rows || []).forEach(function(r) { s += fn(r); }); return s; }
+  // 未繳：只算「繳款期限已到、卻未繳清」的金額
+  function crmUnpaid(rows) {
+    var today = new Date(); today.setHours(0, 0, 0, 0); var u = 0;
+    (rows || []).forEach(function(r) {
+      var owe = _crmDue(r) - _crmPaid(r);
+      if (owe > 0 && r.dueDate) { var dd = new Date(r.dueDate); if (!isNaN(dd.getTime()) && dd <= today) u += owe; }
+    });
+    return u;
+  }
+  function crmTotalCalc() {
+    var h = document.querySelector('.cb-house'), p = document.querySelector('.cb-park');
+    var sum = (h ? (Number(h.value) || 0) : 0) + (p ? (Number(p.value) || 0) : 0);
+    var el = document.getElementById('cb-totalsum'); if (el) el.textContent = crmMoney(sum);
+  }
+  function crmEngRowHtml(r, i) {
+    return '<tr class="crm-eng-row">'
+      + '<td><input class="ce-seq" value="' + kbEsc(r.seq || '') + '" style="width:64px;"/></td>'
+      + '<td><input class="ce-name" value="' + kbEsc(r.name || '') + '"/></td>'
+      + '<td><input class="ce-dh" type="number" inputmode="numeric" value="' + (Number(r.dueHouse) || 0) + '"/></td>'
+      + '<td><input class="ce-dl" type="number" inputmode="numeric" value="' + (Number(r.dueLand) || 0) + '"/></td>'
+      + '<td><input class="ce-duedate" type="date" value="' + kbEsc(r.dueDate || '') + '"/></td>'
+      + '<td><input class="ce-paiddate" type="date" value="' + kbEsc(r.paidDate || '') + '"/></td>'
+      + '<td><input class="ce-ph" type="number" inputmode="numeric" value="' + (Number(r.paidHouse) || 0) + '"/></td>'
+      + '<td><input class="ce-pl" type="number" inputmode="numeric" value="' + (Number(r.paidLand) || 0) + '"/></td>'
+      + '<td><input class="ce-inv" value="' + kbEsc(r.invoiceNo || '') + '"/></td>'
+      + '<td><input class="ce-invdate" type="date" value="' + kbEsc(r.invoiceDate || '') + '"/></td>'
+      + '<td><input class="ce-inv2" value="' + kbEsc(r.invoiceNo2 || '') + '"/></td>'
+      + '<td><input class="ce-invdate2" type="date" value="' + kbEsc(r.invoiceDate2 || '') + '"/></td>'
+      + '<td><input class="ce-note" value="' + kbEsc(r.note || '') + '"/></td>'
+      + '<td><button class="btn-mini-del" onclick="Admin.crmBillDelEng(' + i + ')">刪</button></td></tr>';
+  }
+  function crmOthRowHtml(r, i) {
+    return '<tr class="crm-oth-row">'
+      + '<td><input class="co-name" value="' + kbEsc(r.name || '') + '" placeholder="客變加帳/代收款…"/></td>'
+      + '<td><input class="co-amt" type="number" inputmode="numeric" value="' + (Number(r.due) || 0) + '"/></td>'
+      + '<td><input class="co-duedate" type="date" value="' + kbEsc(r.dueDate || '') + '"/></td>'
+      + '<td><input class="co-paiddate" type="date" value="' + kbEsc(r.paidDate || '') + '"/></td>'
+      + '<td><input class="co-paid" type="number" inputmode="numeric" value="' + (Number(r.paid) || 0) + '"/></td>'
+      + '<td><input class="co-inv" value="' + kbEsc(r.invoiceNo || '') + '"/></td>'
+      + '<td><input class="co-invdate" type="date" value="' + kbEsc(r.invoiceDate || '') + '"/></td>'
+      + '<td><input class="co-note" value="' + kbEsc(r.note || '') + '"/></td>'
+      + '<td><button class="btn-mini-del" onclick="Admin.crmBillDelOth(' + i + ')">刪</button></td></tr>';
+  }
+  function crmBillRender() {
+    var b = crmState.billing, body = document.getElementById('crm-tab-body');
+    var t = b.total || { house: 0, parking: 0 };
+    var engRows = b.engineering.map(crmEngRowHtml).join('');
+    var othRows = b.others.map(crmOthRowHtml).join('');
+    var engDue = _crmSum(b.engineering, _crmDue), engPaid = _crmSum(b.engineering, _crmPaid), engUn = crmUnpaid(b.engineering);
+    var engDH = _crmSum(b.engineering, function(r) { return Number(r.dueHouse) || 0; }), engDL = _crmSum(b.engineering, function(r) { return Number(r.dueLand) || 0; });
+    var engPH = _crmSum(b.engineering, function(r) { return Number(r.paidHouse) || 0; }), engPL = _crmSum(b.engineering, function(r) { return Number(r.paidLand) || 0; });
+    var othDue = _crmSum(b.others, _crmDue), othPaid = _crmSum(b.others, _crmPaid), othUn = crmUnpaid(b.others);
+    body.innerHTML = '<div class="crm-card">'
+      + '<div class="crm-total-box">合約總價：房屋款 <input class="cb-house" type="number" inputmode="numeric" value="' + (Number(t.house) || 0) + '" oninput="Admin.crmTotalCalc()"/> ＋ 車位款 <input class="cb-park" type="number" inputmode="numeric" value="' + (Number(t.parking) || 0) + '" oninput="Admin.crmTotalCalc()"/> ＝ 總金額 <b id="cb-totalsum">' + crmMoney((Number(t.house) || 0) + (Number(t.parking) || 0)) + '</b></div>'
+      + '<div class="crm-bill-head"><strong>工程期款（繳款期）</strong><span>'
+      + '<button class="btn-reset" onclick="document.getElementById(\'crm-import-file\').click()">📥 匯入Excel/CSV</button> '
+      + '<input type="file" id="crm-import-file" accept=".xls,.xlsx,.csv" style="display:none;" onchange="Admin.crmImportFile(this)"/>'
+      + '<button class="btn-reset" onclick="Admin.crmBillImport()">↧ 帶入工程期</button> <button class="btn-reset" onclick="Admin.crmBillAddEng()">＋ 新增一列</button></span></div>'
+      + '<div class="table-wrap"><table class="crm-bill-table" style="min-width:1500px;"><thead><tr><th>期數</th><th style="min-width:150px;">名稱</th><th>應收房屋款</th><th>應收土地款</th><th>繳款期限</th><th>繳款日期</th><th>已繳房屋款</th><th>已繳土地款</th><th>房屋發票號</th><th>房屋發票日</th><th>土地發票號</th><th>土地發票日</th><th>備註</th><th>刪</th></tr></thead><tbody>'
+      + (engRows || '<tr class="empty-row"><td colspan="14">尚無工程期款</td></tr>') + '</tbody></table></div>'
+      + '<div class="crm-bill-sub">工程期小計　應收房屋款 <b>' + crmMoney(engDH) + '</b>　應收土地款 <b>' + crmMoney(engDL) + '</b>　已繳房屋款 <b>' + crmMoney(engPH) + '</b>　已繳土地款 <b>' + crmMoney(engPL) + '</b>　未繳(已到期) <b class="' + (engUn > 0 ? 'crm-unpaid' : '') + '">' + crmMoney(engUn) + '</b></div>'
+      + '<div class="crm-bill-head" style="margin-top:1.3rem;"><strong>其他款項</strong><span><button class="btn-reset" onclick="Admin.crmBillAddOth()">＋ 新增一列</button></span></div>'
+      + '<div class="table-wrap"><table class="crm-bill-table" style="min-width:820px;"><thead><tr><th style="min-width:150px;">項目</th><th>金額</th><th>繳款期限</th><th>繳款日期</th><th>已繳</th><th>發票號碼</th><th>發票日期</th><th>備註</th><th>刪</th></tr></thead><tbody>'
+      + (othRows || '<tr class="empty-row"><td colspan="9">尚無其他款項</td></tr>') + '</tbody></table></div>'
+      + '<div class="crm-bill-sub">其他款小計　應收 <b>' + crmMoney(othDue) + '</b>　已繳 <b>' + crmMoney(othPaid) + '</b>　未繳(已到期) <b class="' + (othUn > 0 ? 'crm-unpaid' : '') + '">' + crmMoney(othUn) + '</b></div>'
+      + '<div class="crm-bill-total">總計　應收 <b>' + crmMoney(engDue + othDue) + '</b>　已繳 <b>' + crmMoney(engPaid + othPaid) + '</b>　未繳(已到期) <b class="' + ((engUn + othUn) > 0 ? 'crm-unpaid' : '') + '">' + crmMoney(engUn + othUn) + '</b></div>'
+      + '<div style="margin-top:1rem;"><button class="btn-query" onclick="Admin.crmBillSave()">儲存帳務</button> <button class="btn-reset" style="margin-left:.5rem;" onclick="Admin.crmBillRecalc()">重算</button></div></div>';
+  }
+  function _crmV(tr, cls) { var e = tr.querySelector('.' + cls); return e ? e.value.trim() : ''; }
+  function _crmN(tr, cls) { var e = tr.querySelector('.' + cls); return e ? (Number(e.value) || 0) : 0; }
+  function crmBillSync() {
+    var h = document.querySelector('.cb-house'), p = document.querySelector('.cb-park');
+    var total = { house: h ? (Number(h.value) || 0) : 0, parking: p ? (Number(p.value) || 0) : 0 };
+    var eng = [];
+    Array.prototype.forEach.call(document.querySelectorAll('.crm-eng-row'), function(tr) {
+      eng.push({ seq: _crmV(tr, 'ce-seq'), name: _crmV(tr, 'ce-name'), dueHouse: _crmN(tr, 'ce-dh'), dueLand: _crmN(tr, 'ce-dl'), dueDate: _crmV(tr, 'ce-duedate'), paidDate: _crmV(tr, 'ce-paiddate'), paidHouse: _crmN(tr, 'ce-ph'), paidLand: _crmN(tr, 'ce-pl'), invoiceNo: _crmV(tr, 'ce-inv'), invoiceDate: _crmV(tr, 'ce-invdate'), invoiceNo2: _crmV(tr, 'ce-inv2'), invoiceDate2: _crmV(tr, 'ce-invdate2'), note: _crmV(tr, 'ce-note') });
+    });
+    var oth = [];
+    Array.prototype.forEach.call(document.querySelectorAll('.crm-oth-row'), function(tr) {
+      oth.push({ name: _crmV(tr, 'co-name'), due: _crmN(tr, 'co-amt'), dueDate: _crmV(tr, 'co-duedate'), paidDate: _crmV(tr, 'co-paiddate'), paid: _crmN(tr, 'co-paid'), invoiceNo: _crmV(tr, 'co-inv'), invoiceDate: _crmV(tr, 'co-invdate'), note: _crmV(tr, 'co-note') });
+    });
+    crmState.billing = { total: total, engineering: eng, others: oth };
+  }
+  function crmBillRecalc() { crmBillSync(); crmBillRender(); }
+  function crmBillAddEng() { crmBillSync(); crmState.billing.engineering.push({ seq: '', name: '', dueHouse: 0, dueLand: 0, dueDate: '', paidDate: '', paidHouse: 0, paidLand: 0, invoiceNo: '', invoiceDate: '', note: '' }); crmBillRender(); }
+  function crmBillDelEng(i) { crmBillSync(); crmState.billing.engineering.splice(i, 1); crmBillRender(); }
+  function crmBillAddOth() { crmBillSync(); crmState.billing.others.push({ name: '', due: 0, dueDate: '', paidDate: '', paid: 0, invoiceNo: '', invoiceDate: '', note: '' }); crmBillRender(); }
+  function crmBillDelOth(i) { crmBillSync(); crmState.billing.others.splice(i, 1); crmBillRender(); }
+  function crmBillImport() {
+    crmBillSync();
+    callServer('serverAdminGetProgressPhases', crmState.project).then(function(phases) {
+      if (!phases || !phases.length) { showToast('工程進度尚無期別可帶入', 'error'); return; }
+      var exist = {};
+      crmState.billing.engineering.forEach(function(r) { exist[r.seq] = true; });
+      var added = 0;
+      phases.forEach(function(p) {
+        if (!exist[p.seq]) { crmState.billing.engineering.push({ seq: p.seq, name: p.name, dueHouse: 0, dueLand: 0, dueDate: '', paidDate: '', paidHouse: 0, paidLand: 0, invoiceNo: '', invoiceDate: '', note: '' }); added++; }
+      });
+      crmBillRender();
+      showToast(added ? ('已帶入 ' + added + ' 期') : '工程期都已存在', 'success');
+    });
+  }
+  function crmBillSave() {
+    crmBillSync();
+    callServer('serverAdminSaveBilling', crmState.project, crmState.customer.unit, crmState.billing.total, crmState.billing.engineering, crmState.billing.others).then(function(res) {
+      if (res && res.success) showToast('帳務已儲存', 'success');
+      else showToast((res && res.message) || '儲存失敗', 'error');
+    });
+  }
+
+  // ── 匯入 Excel/CSV（繳款狀況表）──
+  function _rocToWest(s) {
+    var m = String(s || '').trim().match(/(\d{2,3})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+    if (!m) return '';
+    var y = Number(m[1]); if (y < 1000) y += 1911;
+    return y + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  }
+  function _impNum(s) { return Number(String(s == null ? '' : s).replace(/[^\d.\-]/g, '')) || 0; }
+  function crmImportFile(input) {
+    var f = input.files && input.files[0]; if (!f) return;
+    if (typeof XLSX === 'undefined') { showToast('匯入元件載入中，請稍候再試', 'error'); input.value = ''; return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var wb = XLSX.read(e.target.result, { type: 'binary' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+        crmParseBilling(rows);
+      } catch (err) { showToast('解析失敗：' + (err.message || err), 'error'); }
+      input.value = '';
+    };
+    reader.readAsBinaryString(f);
+  }
+  function crmParseBilling(rows) {
+    crmBillSync();
+    // 找表頭列（含「序列」「名稱」）
+    var hi = -1;
+    for (var i = 0; i < rows.length; i++) {
+      var line = (rows[i] || []).join('');
+      if (line.indexOf('序列') >= 0 || (line.indexOf('名稱') >= 0 && line.indexOf('應收') >= 0)) { hi = i; break; }
+    }
+    // 表頭資訊：房屋售價/車位售價/簽約日
+    var headText = rows.slice(0, hi < 0 ? rows.length : hi).map(function(r) { return (r || []).join(' '); }).join(' ');
+    var mh = headText.match(/房屋售價[:：]?\s*([\d,]+)/);
+    var mp = headText.match(/車位售價[:：]?\s*([\d,]+)/);
+    var msign = headText.match(/簽約日[:：]?\s*([\d\/\-.]+)/);
+    if (mh || mp) crmState.billing.total = { house: mh ? _impNum(mh[1]) : 0, parking: mp ? _impNum(mp[1]) : 0 };
+    var signDate = msign ? _rocToWest(msign[1]) : '';
+    // 明細列
+    var added = 0;
+    if (hi >= 0) {
+      for (var j = hi + 1; j < rows.length; j++) {
+        var r = rows[j] || [];
+        var name = String(r[1] || '').trim();
+        if (!name || name.indexOf('合計') >= 0 || name.indexOf('合计') >= 0) continue;
+        crmState.billing.engineering.push({
+          seq: String(r[0] || '').trim(), name: name,
+          dueHouse: _impNum(r[2]), dueLand: _impNum(r[3]),
+          dueDate: _rocToWest(r[4]), paidDate: _rocToWest(r[5]),
+          paidHouse: _impNum(r[6]), paidLand: _impNum(r[7]),
+          invoiceNo: String(r[8] || '').trim(), invoiceDate: _rocToWest(r[9]),
+          invoiceNo2: String(r[10] || '').trim(), invoiceDate2: _rocToWest(r[11]),
+          note: ''
+        });
+        added++;
+      }
+    }
+    crmBillRender();
+    // 簽約日寫回基本資料（自動存）
+    if (signDate && crmState.customer && crmState.customer.idCard) {
+      crmState.customer.signDate = signDate;
+      crmRenderHead();
+      callServer('serverAdminSaveCustomer', crmState.project, crmState.customer.unit, crmState.customer.idCard, crmState.customer.name, undefined, undefined, signDate);
+    }
+    showToast('已匯入 ' + added + ' 期' + (signDate ? '、簽約日 ' + signDate : '') + '，請確認後按「儲存帳務」', 'success');
+  }
+
+  // ── 只讀：客變 / 預約 / 上傳 ──
+  function crmRenderKebian(body) {
+    body.innerHTML = '<div class="crm-card crm-hint">載入中…</div>';
+    callServer('serverAdminGetKebianByUnit', crmState.project, crmState.customer.unit).then(function(list) {
+      if (!list || !list.length) { body.innerHTML = '<div class="crm-card crm-hint">尚無客變紀錄</div>'; return; }
+      var rows = list.map(function(r) {
+        return '<tr><td style="white-space:nowrap;">' + kbEsc(r.date) + '</td><td>' + kbEsc(r.serviceName) + '</td><td style="white-space:nowrap;"><a class="btn-prog-save" href="' + r.downloadUrl + '" target="_blank" rel="noopener">下載</a> <a class="btn-reset" href="' + r.previewUrl + '" target="_blank" rel="noopener">預覽</a></td></tr>';
+      }).join('');
+      body.innerHTML = '<div class="crm-card"><div class="table-wrap"><table><thead><tr><th>時間</th><th>服務人員</th><th>檔案</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    });
+  }
+  function crmRenderBooking(body) {
+    body.innerHTML = '<div class="crm-card crm-hint">載入中…</div>';
+    callServer('serverAdminGetCustomerBookings', crmState.project, crmState.customer.unit).then(function(list) {
+      if (!list || !list.length) { body.innerHTML = '<div class="crm-card crm-hint">尚無預約紀錄</div>'; return; }
+      var rows = list.map(function(r) {
+        return '<tr><td>' + kbEsc(r.serviceType) + '</td><td style="white-space:nowrap;">' + kbEsc(r.date) + ' ' + kbEsc(r.time) + '</td><td>' + kbEsc(r.status) + '</td><td>' + kbEsc(r.method || '—') + '</td><td style="white-space:nowrap;">' + kbEsc(r.createdAt) + '</td></tr>';
+      }).join('');
+      body.innerHTML = '<div class="crm-card"><div class="table-wrap"><table><thead><tr><th>服務</th><th>預約時段</th><th>狀態</th><th>方式</th><th>建立時間</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    });
+  }
+  function crmRenderUpload(body) {
+    if (!crmState.customer.idCard) { body.innerHTML = '<div class="crm-card crm-hint">未售戶無上傳紀錄</div>'; return; }
+    body.innerHTML = '<div class="crm-card crm-hint">載入中…</div>';
+    callServer('serverGetUploadHistory', crmState.customer.idCard, crmState.project).then(function(list) {
+      if (!list || !list.length) { body.innerHTML = '<div class="crm-card crm-hint">尚無上傳紀錄</div>'; return; }
+      var rows = list.map(function(r) {
+        return '<tr><td style="white-space:nowrap;">' + kbEsc(r.date) + '</td><td>' + kbEsc(r.fileName) + '</td></tr>';
+      }).join('');
+      body.innerHTML = '<div class="crm-card"><div class="table-wrap"><table><thead><tr><th>上傳時間</th><th>檔名</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    });
+  }
+
   return { init, login, logout, switchTab, query, resetFilters, exportCsv, toggleMs, onDateChange, doSort,
            saveSettings, switchStgTab,
            loadSlotCal, slotCalNav, selectSlotDate, closeDayPanel,
@@ -3992,7 +4467,8 @@ var Admin = (function() {
            kbEnter, kbReset, kbOnPickChange, kbSelFormSection, kbSelFormSpaceIdx, kbPickItem, kbPick, kbPickNote, kbPreview,
            kbCloseModal, kbClearSign, kbSave,
            kbOpenSignPad, kbSignPadClear, kbSignPadConfirm, kbSignPadCancel,
-           kbtplLoad, kbtplSelSection, kbtplSelSpaceIdx, kbtplAddSpace, kbtplDelSpace, kbtplRenameSpace, kbtplMoveSpace, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave, kbrecLoad };
+           kbtplLoad, kbtplSelSection, kbtplSelSpaceIdx, kbtplAddSpace, kbtplDelSpace, kbtplRenameSpace, kbtplMoveSpace, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave, kbrecLoad,
+           crmSearch, crmSelect, crmSelTab, crmSaveBasic, crmTotalCalc, crmBillImport, crmImportFile, crmBillAddEng, crmBillDelEng, crmBillAddOth, crmBillDelOth, crmBillSave, crmBillRecalc };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);

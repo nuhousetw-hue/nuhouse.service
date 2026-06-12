@@ -17,7 +17,7 @@
 </script>
 <style>
 :root{
-  --primary:#B01020;--primary-lt:#C81828;--primary-dk:#8C0D19;
+  --primary:#B01020;--primary-lt:#C81828;--primary-dk:#8C0D19;--hero-end:#6B0010;
   --charcoal:#3C3C3C;--success:#1e8e3e;--danger:#c0392b;
   --bg:#f5f5f5;--surface:#fff;--border:#e0e0e0;
   --text:#3C3C3C;--text-muted:#888;
@@ -61,7 +61,7 @@ a{color:var(--primary);text-decoration:none;}
 .btn-back:hover{text-decoration:underline;}
 .page-title{font-size:1.5rem;font-weight:700;color:var(--primary);margin-bottom:1.5rem;}
 
-.screen-login{min-height:100vh;background:linear-gradient(150deg,var(--primary-dk) 0%,var(--primary) 50%,#6B0010 100%);}
+.screen-login{min-height:100vh;background:linear-gradient(150deg,var(--primary-dk) 0%,var(--primary) 50%,var(--hero-end) 100%);}
 .login-hero{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem 1.25rem;}
 .login-card{background:var(--surface);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:100%;max-width:440px;padding:2.5rem 2rem;}
 .login-header{text-align:center;margin-bottom:2rem;}
@@ -139,6 +139,20 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .billing-placeholder svg{color:#d0d0d0;}
 .billing-placeholder h3{font-size:1rem;font-weight:700;color:var(--text);}
 .billing-placeholder p{font-size:.88rem;line-height:1.7;}
+.bill-sec-title{font-size:.95rem;font-weight:700;color:var(--primary);margin:1rem 0 .5rem;}
+.bill-table-wrap{overflow-x:auto;}
+.bill-table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:640px;}
+.bill-table th,.bill-table td{border:1px solid #e2e2e2;padding:.45rem .55rem;text-align:right;white-space:nowrap;}
+.bill-table th{background:#f5f6fa;text-align:center;font-weight:700;}
+.bill-table td:first-child,.bill-table td:nth-child(2){text-align:left;}
+.bill-unpaid{color:var(--danger);font-weight:700;}
+.bill-total{margin-top:1rem;padding:.7rem 1rem;background:#f5f6fa;border-radius:8px;font-size:.95rem;text-align:right;}
+.bill-total b{color:var(--primary);}
+.bill-total-box{background:linear-gradient(120deg,var(--primary-dk),var(--primary));color:#fff;border-radius:10px;padding:.9rem 1.1rem;font-size:.95rem;line-height:1.9;margin-bottom:1rem;}
+.bill-total-box b{font-size:1.05rem;}
+.bill-grand{display:inline-block;font-weight:800;font-size:1.05rem;}
+.bill-sub{margin-top:.4rem;margin-bottom:.3rem;padding:.5rem .85rem;background:#fafafa;border:1px solid #eee;border-radius:6px;font-size:.88rem;text-align:right;}
+.bill-sub b{color:var(--primary);}
 
 .card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.5rem;}
 .card-header{display:flex;align-items:center;gap:.75rem;padding:1.25rem 1.5rem;background:var(--primary);color:#fff;}
@@ -560,13 +574,6 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
           <div class="select-wrap">
             <select id="select-project" required>
               <option value="">── 請選擇建案 ──</option>
-              <option value="P001">新濠一滙</option>
-              <option value="P002">新濠一閱</option>
-              <option value="P003">新濠漾II紐約公園</option>
-              <option value="P004">新濠漾III巴黎公園</option>
-              <option value="P005">新濠漾IV英倫公園</option>
-              <option value="P006">新濠岳</option>
-              <option value="P007">新濠信義</option>
             </select>
           </div>
         </div>
@@ -714,12 +721,8 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
         <span class="profile-value" id="profile-addr">—</span>
       </div>
       <div class="profile-row">
-        <span class="profile-label">市內電話</span>
-        <span class="profile-value" id="profile-phone">—</span>
-      </div>
-      <div class="profile-row">
-        <span class="profile-label">行動電話</span>
-        <span class="profile-value" id="profile-mobile">—</span>
+        <span class="profile-label">簽約日期</span>
+        <span class="profile-value" id="profile-sign">—</span>
       </div>
     </div>
     <p style="font-size:.88rem;color:var(--text-muted);text-align:center;line-height:1.9;margin-top:.5rem;">若有任何問題，請於 LINE@ 洽客服人員</p>
@@ -735,11 +738,7 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         <h3>帳務資訊</h3>
       </div>
-      <div class="billing-placeholder">
-        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        <h3>帳務資訊功能即將上線</h3>
-        <p>此功能目前正在建置中，上線後可查詢<br>繳款紀錄、應繳金額及付款狀態等資訊。<br>若有任何帳務問題，請透過 LINE@ 洽詢客服。</p>
-      </div>
+      <div id="billing-content" style="padding:1rem 1.1rem;"><p class="text-muted text-center">載入中…</p></div>
     </div>
   </div>
 </section>
@@ -805,7 +804,58 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 
 <script>
 /* ★ 請將下方網址換成您部署後的 GAS /exec 網址 ★ */
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
+// 正式後端
+var GAS_URL_PROD = 'https://script.google.com/macros/s/AKfycbzRS-jAwIqe6KhxeuhCcQQXDP-zNZD1lhbf3h7MO_oWhluGfJotN58skku574BtgkuO/exec';
+// 測試後端（建好測試 GAS 後填，留空則一律走正式）
+var GAS_URL_TEST = 'https://script.google.com/macros/s/AKfycbx0_wgymmBIWRrhadXof1IW6d2wms2mWXD0w9ilDUB25IKwNeHcMrxNS99uRJsiaif-/exec';
+var IS_TEST = true; /* 此為獨立測試檔（index_test.html），永遠走測試環境，與正式 index.html 完全分離 */
+var GAS_URL = IS_TEST ? GAS_URL_TEST : GAS_URL_PROD;
+if (IS_TEST) document.addEventListener('DOMContentLoaded', function(){ var b=document.createElement('div'); b.textContent='⚠️ 測試環境'; b.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#ff9800;color:#fff;text-align:center;font-weight:700;padding:5px;font-size:13px;'; document.body.appendChild(b); });
+
+// ════════ 品牌設定（依環境切換，正式不動新濠）════════
+var BRAND = IS_TEST
+  ? { name: '安家數位', primary: '#1690C2', primaryLt: '#38ABD5', primaryDk: '#11718F', heroEnd: '#43B96A', logo: 'anjia-logo.png' }   // 安家數位（藍綠，依 LOGO）
+  : { name: '新濠建設機構', primary: '#B01020', primaryLt: '#C81828', primaryDk: '#8C0D19', heroEnd: '#6B0010', logo: '' };               // 正式新濠（不動）
+function applyBrand() {
+  try {
+    document.title = BRAND.name + ' | 客戶服務平台';
+    // 登入頁 LOGO（白底卡片，直接換圖）
+    var loginLogo = document.querySelector('.login-logo');
+    if (loginLogo) { loginLogo.alt = BRAND.name; if (BRAND.logo) loginLogo.src = BRAND.logo; }
+    // 導覽列：自訂 LOGO 時改用品牌名白字（彩色白底 LOGO 不適合放在藍色列上）
+    var navLogo = document.querySelector('.nav-logo');
+    if (navLogo) {
+      navLogo.alt = BRAND.name;
+      if (BRAND.logo) {
+        navLogo.style.display = 'none';
+        var nb = navLogo.parentNode;
+        if (nb && !nb.querySelector('.nav-brand-name')) {
+          var t = document.createElement('span');
+          t.className = 'nav-brand-name';
+          t.textContent = BRAND.name;
+          t.style.cssText = 'color:#fff;font-size:1.2rem;font-weight:800;letter-spacing:.06em;';
+          nb.insertBefore(t, navLogo);
+        }
+      }
+    }
+    document.documentElement.style.setProperty('--primary', BRAND.primary);
+    document.documentElement.style.setProperty('--primary-lt', BRAND.primaryLt);
+    document.documentElement.style.setProperty('--primary-dk', BRAND.primaryDk);
+    document.documentElement.style.setProperty('--hero-end', BRAND.heroEnd);
+  } catch(e) {}
+}
+// 動態載入建案選單（正式=新濠各案、測試=測試各案）
+function loadLoginProjects() {
+  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ fn: 'serverGetProjects', args: [] }) })
+    .then(function(r) { return r.json(); })
+    .then(function(projects) {
+      var sel = document.getElementById('select-project');
+      if (!sel || !Array.isArray(projects)) return;
+      sel.innerHTML = '<option value="">── 請選擇建案 ──</option>';
+      projects.forEach(function(p) { var o = document.createElement('option'); o.value = p.code; o.textContent = p.name; sel.appendChild(o); });
+    }).catch(function() {});
+}
+document.addEventListener('DOMContentLoaded', function() { applyBrand(); loadLoginProjects(); });
 
 var App = (function() {
   var state = { user: null, customer: null };
@@ -942,10 +992,15 @@ var App = (function() {
     document.getElementById('profile-name').textContent = u.name || '—';
     document.getElementById('profile-project').textContent = u.projectName || '—';
     document.getElementById('profile-unit').textContent = u.unit || '—';
-    document.getElementById('profile-addr-reg').textContent = u.addressReg || '—';
-    document.getElementById('profile-addr').textContent = u.address || '—';
-    document.getElementById('profile-phone').textContent = u.phone || '—';
-    document.getElementById('profile-mobile').textContent = u.mobile || '—';
+    document.getElementById('profile-addr-reg').textContent = '—';
+    document.getElementById('profile-addr').textContent = '—';
+    document.getElementById('profile-sign').textContent = '—';
+    callServer('serverAdminGetCustomerByUnit', u.projectCode, u.unit).then(function(c) {
+      if (!c) return;
+      document.getElementById('profile-addr-reg').textContent = c.regAddr || '—';
+      document.getElementById('profile-addr').textContent = c.mailAddr || '—';
+      document.getElementById('profile-sign').textContent = c.signDate || '—';
+    }).catch(function(){});
   }
 
   function enterApp() {
@@ -983,6 +1038,7 @@ var App = (function() {
     if (screen === 'docs')     { loadProjectDocs(); }
     if (screen === 'progress') { loadProgress(); }
     if (screen === 'profile')  { renderProfile(); }
+    if (screen === 'billing')  { loadBilling(); }
   }
 
   /* ── 預約 ── */
@@ -1294,6 +1350,51 @@ var App = (function() {
         el.innerHTML = ''; files.forEach(function(f) { el.appendChild(buildFileItem(f)); });
       })
       .catch(function() { el.innerHTML = '<p class="text-muted text-center">載入失敗，請稍後再試</p>'; });
+  }
+
+  function billMoney(n) { n = Number(n) || 0; return 'NT$' + n.toLocaleString('en-US'); }
+  function billRoc(s) { if (!s) return '—'; var m = String(s).match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); if (m) return (Number(m[1]) - 1911) + '/' + ('0' + m[2]).slice(-2) + '/' + ('0' + m[3]).slice(-2); return s; }
+  function _billDue(r) { return (Number(r.dueHouse) || 0) + (Number(r.dueLand) || 0) + (Number(r.due) || 0); }
+  function _billPaid(r) { return (Number(r.paidHouse) || 0) + (Number(r.paidLand) || 0) + (Number(r.paid) || 0); }
+  function _billSum(rows, fn) { var s = 0; (rows || []).forEach(function(r) { s += fn(r); }); return s; }
+  function _billUnpaid(rows) { var t = new Date(); t.setHours(0, 0, 0, 0); var u = 0; (rows || []).forEach(function(r) { var owe = _billDue(r) - _billPaid(r); if (owe > 0 && r.dueDate) { var d = new Date(r.dueDate); if (!isNaN(d.getTime()) && d <= t) u += owe; } }); return u; }
+  function loadBilling() {
+    var el = document.getElementById('billing-content');
+    el.innerHTML = '<p class="text-muted text-center">載入中…</p>';
+    callServer('serverAdminGetBilling', state.user.projectCode, state.user.unit).then(function(d) {
+      var t = (d && d.total) || { house: 0, parking: 0 };
+      var eng = (d && d.engineering) || [], oth = (d && d.others) || [];
+      if (!eng.length && !oth.length && !((t.house || 0) + (t.parking || 0))) {
+        el.innerHTML = '<div class="billing-placeholder"><h3>目前尚無帳務資料</h3><p>若有帳務問題，請透過 LINE@ 洽詢客服。</p></div>'; return;
+      }
+      var today = new Date();
+      var engDue = _billSum(eng, _billDue), engPaid = _billSum(eng, _billPaid), engUn = _billUnpaid(eng);
+      var othDue = _billSum(oth, _billDue), othPaid = _billSum(oth, _billPaid), othUn = _billUnpaid(oth);
+      function rowsHtml(list, isEng) {
+        var h = '';
+        list.forEach(function(r) {
+          var dueV = _billDue(r), paidV = _billPaid(r), owe = dueV - paidV;
+          var overdue = owe > 0 && r.dueDate && new Date(r.dueDate) <= today;
+          var unCell = overdue ? '<td class="bill-unpaid">' + billMoney(owe) + '</td>' : '<td>—</td>';
+          if (isEng) h += '<tr><td>' + esc(r.seq) + '</td><td>' + esc(r.name) + '</td><td>' + billMoney(Number(r.dueHouse) || 0) + '</td><td>' + billMoney(Number(r.dueLand) || 0) + '</td><td>' + billMoney(Number(r.paidHouse) || 0) + '</td><td>' + billMoney(Number(r.paidLand) || 0) + '</td>' + unCell + '<td>' + billRoc(r.dueDate) + '</td><td>' + esc(r.invoiceNo || '—') + '</td></tr>';
+          else h += '<tr><td>' + esc(r.name) + '</td><td>' + billMoney(dueV) + '</td><td>' + billMoney(paidV) + '</td>' + unCell + '<td>' + billRoc(r.dueDate) + '</td><td>' + esc(r.note || '—') + '</td></tr>';
+        });
+        return h;
+      }
+      var html = '<div class="bill-total-box">合約總價　房屋款 <b>' + billMoney(t.house) + '</b>　車位款 <b>' + billMoney(t.parking) + '</b>　<span class="bill-grand">總金額 ' + billMoney((t.house || 0) + (t.parking || 0)) + '</span></div>';
+      if (eng.length) {
+        html += '<div class="bill-sec-title">工程期款</div><div class="bill-table-wrap"><table class="bill-table" style="min-width:760px;"><thead><tr><th>期數</th><th>名稱</th><th>應收房屋款</th><th>應收土地款</th><th>已繳房屋款</th><th>已繳土地款</th><th>未繳</th><th>繳款期限</th><th>發票號碼</th></tr></thead><tbody>' + rowsHtml(eng, true) + '</tbody></table></div>';
+        var engDH = _billSum(eng, function(r) { return Number(r.dueHouse) || 0; }), engDL = _billSum(eng, function(r) { return Number(r.dueLand) || 0; });
+        var engPH = _billSum(eng, function(r) { return Number(r.paidHouse) || 0; }), engPL = _billSum(eng, function(r) { return Number(r.paidLand) || 0; });
+        html += '<div class="bill-sub">小計　應收房屋款 <b>' + billMoney(engDH) + '</b>　應收土地款 <b>' + billMoney(engDL) + '</b>　已繳房屋款 <b>' + billMoney(engPH) + '</b>　已繳土地款 <b>' + billMoney(engPL) + '</b>　未繳 <b class="' + (engUn > 0 ? 'bill-unpaid' : '') + '">' + billMoney(engUn) + '</b></div>';
+      }
+      if (oth.length) {
+        html += '<div class="bill-sec-title">其他款項</div><div class="bill-table-wrap"><table class="bill-table"><thead><tr><th>項目</th><th>應收</th><th>已繳</th><th>未繳</th><th>繳款期限</th><th>備註</th></tr></thead><tbody>' + rowsHtml(oth, false) + '</tbody></table></div>';
+        html += '<div class="bill-sub">小計　應收 <b>' + billMoney(othDue) + '</b>　已繳 <b>' + billMoney(othPaid) + '</b>　未繳(已到期) <b class="' + (othUn > 0 ? 'bill-unpaid' : '') + '">' + billMoney(othUn) + '</b></div>';
+      }
+      html += '<div class="bill-total">總計　應收 <b>' + billMoney(engDue + othDue) + '</b>　已繳 <b>' + billMoney(engPaid + othPaid) + '</b>　未繳(已到期) <b class="' + ((engUn + othUn) > 0 ? 'bill-unpaid' : '') + '">' + billMoney(engUn + othUn) + '</b></div>';
+      el.innerHTML = html;
+    }).catch(function() { el.innerHTML = '<p class="text-muted text-center">載入失敗，請稍後再試</p>'; });
   }
 
   function loadDownloads() {
