@@ -9,6 +9,7 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
 :root{
   --primary:#B01020;--primary-dk:#8C0D19;
@@ -183,7 +184,7 @@ body.sb-collapsed #screen-main{margin-left:0;}
 .table-scroll{overflow-x:auto;}
 .sa-table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:560px;}
 .sa-table th,.sa-table td{border:1px solid #e2e2e2;padding:.45rem .6rem;text-align:left;white-space:nowrap;}
-.sa-table th{background:#f5f6fa;font-weight:700;}
+.sa-table th{background:#2f3e57;color:#fff;font-weight:700;}
 .sa-table td:nth-child(4),.sa-table td:last-child{text-align:right;}
 .sa-table tbody tr{cursor:pointer;}
 .sa-table tbody tr:hover{background:#f0f7fb;}
@@ -195,16 +196,16 @@ body.sb-collapsed #screen-main{margin-left:0;}
 .sa-subtab{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:.5rem 1.1rem;cursor:pointer;font-size:.92rem;color:#444;font-weight:600;}
 .sa-subtab:hover{border-color:var(--primary);}
 .sa-subtab.active{background:var(--primary);border-color:var(--primary);color:#fff;}
-.sa-svc-head{display:flex;align-items:center;justify-content:space-between;font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:.7rem;border-bottom:1.5px solid var(--border);padding-bottom:.5rem;}
+.sa-svc-row{display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:.85rem;}
+.sa-svc-card{flex:1;min-width:300px;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1rem 1.1rem;}
+.sa-svc-head{display:flex;align-items:center;justify-content:space-between;font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:.6rem;border-bottom:1.5px solid var(--border);padding-bottom:.45rem;}
 .sa-svc-total{font-size:.85rem;color:var(--text-muted);font-weight:600;}
-.sa-svc-body{display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;}
-.sa-pie-wrap{position:relative;width:260px;height:240px;flex-shrink:0;}
-.sa-method-tbl{flex:1;min-width:240px;}
+.sa-pie-wrap{position:relative;width:100%;height:230px;margin-bottom:.6rem;}
+.sa-method-mini{font-size:.84rem;}
+.sa-row-active{background:#e3f2fb!important;}
 .sa-hint{font-size:.8rem;color:var(--text-muted);margin:.5rem 0 0;}
 .sa-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:.45rem;vertical-align:middle;}
-.sa-cust-list{margin-top:.9rem;border-top:1px dashed var(--border);padding-top:.8rem;}
-.sa-cust-head{font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.55rem;}
-@media(max-width:640px){.sa-pie-wrap{width:100%;height:220px;}}
+.sa-cust-head{font-size:.92rem;font-weight:700;color:var(--text);margin-bottom:.55rem;}
 
 /* Result bar */
 .result-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:.5rem;}
@@ -1052,7 +1053,6 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       <!-- A. 預約數據分析 -->
       <div id="sa-booking-sec">
         <div class="cust-search-card">
-          <p style="font-size:.85rem;color:var(--text-muted);margin:0 0 .7rem;">各服務（客變／對保／驗屋）的「方式」分布（圓餅圖）。點某個方式可看是哪些客戶、各戶型佔比。統計已售戶。</p>
           <div class="sa-filters">
             <div class="sa-fld"><label>建案</label><select id="sa-bk-project"><option value="">全部建案</option></select></div>
             <div class="sa-fld"><label>日期從</label><input type="date" id="sa-bk-from"></div>
@@ -1062,7 +1062,8 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
           </div>
         </div>
         <div id="sa-bk-summary" class="sa-summary hidden"></div>
-        <div id="sa-bk-content"></div>
+        <div id="sa-bk-content" class="sa-svc-row"></div>
+        <div id="sa-bk-cust" class="cust-search-card hidden"></div>
         <div id="sa-bk-empty" class="cust-search-card hidden">
           <div style="padding:2.5rem 1.5rem;text-align:center;color:var(--text-muted);">
             <div style="font-size:2.2rem;margin-bottom:.5rem;">📅</div>
@@ -4681,41 +4682,75 @@ var Admin = (function() {
       '<div class="sa-kpi"><div class="sa-kpi-num">' + (d.recordCount || 0) + '</div><div class="sa-kpi-lbl">預約總筆數</div></div>'
       + '<div class="sa-kpi"><div class="sa-kpi-num">' + services.length + '</div><div class="sa-kpi-lbl">服務種類</div></div>';
     var wrap = document.getElementById('sa-bk-content');
+    var custBox = document.getElementById('sa-bk-cust');
+    custBox.innerHTML = ''; custBox.classList.add('hidden');
+    saBkState.open = null;
     if (!services.length) { wrap.innerHTML = ''; document.getElementById('sa-bk-empty').classList.remove('hidden'); return; }
     document.getElementById('sa-bk-empty').classList.add('hidden');
     wrap.innerHTML = services.map(function(sv, si) {
       var methodRows = sv.methods.map(function(m, mi) {
-        return '<tr onclick="Admin.saBkShowCust(' + si + ',' + mi + ')"><td><span class="sa-dot" style="background:' + SA_PIE_COLORS[mi % SA_PIE_COLORS.length] + '"></span>' + kbEsc(m.method) + '</td><td style="text-align:right;">' + m.count + '</td><td style="text-align:right;">' + saPct(m.count, sv.total) + '</td></tr>';
+        return '<tr id="sa-mrow-' + si + '-' + mi + '" onclick="Admin.saBkToggleCust(' + si + ',' + mi + ')"><td><span class="sa-dot" style="background:' + SA_PIE_COLORS[mi % SA_PIE_COLORS.length] + '"></span>' + kbEsc(m.method) + '</td><td style="text-align:right;">' + m.count + '</td><td style="text-align:right;">' + saPct(m.count, sv.total) + '</td></tr>';
       }).join('');
-      return '<div class="cust-search-card">'
+      return '<div class="sa-svc-card">'
         + '<div class="sa-svc-head">' + kbEsc(sv.service) + '<span class="sa-svc-total">共 ' + sv.total + ' 筆</span></div>'
-        + '<div class="sa-svc-body"><div class="sa-pie-wrap"><canvas id="sa-pie-' + si + '"></canvas></div>'
-        + '<div class="sa-method-tbl"><table class="sa-table"><thead><tr><th>方式</th><th>筆數</th><th>佔比</th></tr></thead><tbody>' + methodRows + '</tbody></table>'
-        + '<p class="sa-hint">點某個方式 → 看客戶清單與戶型分布</p></div></div>'
-        + '<div class="sa-cust-list hidden" id="sa-cust-' + si + '"></div></div>';
+        + '<div class="sa-pie-wrap"><canvas id="sa-pie-' + si + '"></canvas></div>'
+        + '<table class="sa-table sa-method-mini"><thead><tr><th>方式</th><th>筆數</th><th>佔比</th></tr></thead><tbody>' + methodRows + '</tbody></table>'
+        + '<p class="sa-hint">點方式可展開／收回客戶清單與戶型</p></div>';
     }).join('');
     if (typeof Chart === 'function') {
+      saBkRegisterDL();
       services.forEach(function(sv, si) {
         var ctx = document.getElementById('sa-pie-' + si).getContext('2d');
         saBkState.charts.push(new Chart(ctx, {
           type: 'doughnut',
           data: { labels: sv.methods.map(function(m) { return m.method; }), datasets: [{ data: sv.methods.map(function(m) { return m.count; }), backgroundColor: sv.methods.map(function(m, mi) { return SA_PIE_COLORS[mi % SA_PIE_COLORS.length]; }) }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+              datalabels: {
+                color: '#fff', font: { weight: 'bold', size: 12 }, textAlign: 'center',
+                formatter: function(v, ctx) {
+                  var arr = ctx.chart.data.datasets[0].data, sum = arr.reduce(function(a, b) { return a + b; }, 0);
+                  var pct = sum ? Math.round(v / sum * 100) : 0;
+                  if (pct < 6) return '';
+                  return ctx.chart.data.labels[ctx.dataIndex] + '\n' + pct + '%';
+                }
+              }
+            }
+          }
         }));
       });
     }
   }
-  function saBkShowCust(si, mi) {
+  var saDLReg = false;
+  function saBkRegisterDL() {
+    if (!saDLReg && window.ChartDataLabels && typeof Chart !== 'undefined') { Chart.register(window.ChartDataLabels); saDLReg = true; }
+  }
+  function saBkToggleCust(si, mi) {
+    var box = document.getElementById('sa-bk-cust');
+    if (saBkState.open && saBkState.open[0] === si && saBkState.open[1] === mi) {
+      box.innerHTML = ''; box.classList.add('hidden'); saBkState.open = null; saBkMark(null);
+      return;
+    }
     var sv = (saBkState.data.services || [])[si]; if (!sv) return;
     var m = sv.methods[mi]; if (!m) return;
-    var box = document.getElementById('sa-cust-' + si);
+    saBkState.open = [si, mi];
     var typeStr = Object.keys(m.byType || {}).sort(function(a, b) { return m.byType[b] - m.byType[a]; }).map(function(t) { return (t || '—') + '：' + m.byType[t] + ' 戶'; }).join('　');
     var rows = m.customers.map(function(c, i) {
       return '<tr><td>' + (i + 1) + '</td><td>' + kbEsc(c.name || '—') + '</td><td>' + kbEsc(c.unit || '—') + '</td><td>' + kbEsc(c.unitType || '—') + '</td><td>' + kbEsc(c.project || '—') + '</td><td>' + kbEsc(c.date || '—') + '</td><td>' + kbEsc(c.status || '—') + '</td></tr>';
     }).join('');
-    box.innerHTML = '<div class="sa-cust-head">' + kbEsc(sv.service) + ' － ' + kbEsc(m.method) + '（' + m.count + ' 筆）　戶型分布：' + (typeStr || '—') + '</div>'
+    box.innerHTML = '<div class="sa-cust-head">' + kbEsc(sv.service) + ' － ' + kbEsc(m.method) + '（' + m.count + ' 筆）　戶型分布：' + (typeStr || '—')
+      + ' <button class="btn-reset" style="margin-left:.5rem;padding:.2rem .7rem;" onclick="Admin.saBkToggleCust(' + si + ',' + mi + ')">收回</button></div>'
       + '<div class="table-scroll"><table class="sa-table"><thead><tr><th>#</th><th>姓名</th><th>戶號</th><th>戶型</th><th>建案</th><th>預約日期</th><th>狀態</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     box.classList.remove('hidden');
+    saBkMark(si, mi);
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function saBkMark(si, mi) {
+    var prev = document.querySelectorAll('#sa-bk-content tr.sa-row-active');
+    Array.prototype.forEach.call(prev, function(t) { t.classList.remove('sa-row-active'); });
+    if (si != null) { var el = document.getElementById('sa-mrow-' + si + '-' + mi); if (el) el.classList.add('sa-row-active'); }
   }
 
   // ---- B. 選材選色分析 ----
@@ -4811,6 +4846,7 @@ var Admin = (function() {
   }
   function saDrawChart(it) {
     if (typeof Chart !== 'function') return;
+    saBkRegisterDL();
     var labels = it.options.map(function(o) { return o.choice; });
     var data = it.options.map(function(o) { return o.count; });
     if (it.optOut) { labels.push('退選／未選'); data.push(it.optOut); }
@@ -4822,7 +4858,17 @@ var Admin = (function() {
       data: { labels: labels, datasets: [{ label: '選擇次數', data: data, backgroundColor: '#1690C2' }] },
       options: {
         indexAxis: horizontal ? 'y' : 'x', responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        layout: { padding: { top: 18, right: 44 } },
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            anchor: 'end', align: 'end', clamp: true, color: '#1a2a4a', font: { size: 10, weight: 'bold' },
+            formatter: function(v, ctx) {
+              var arr = ctx.chart.data.datasets[0].data, sum = arr.reduce(function(a, b) { return a + b; }, 0);
+              return v + (sum ? ' (' + Math.round(v / sum * 100) + '%)' : '');
+            }
+          }
+        },
         scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { beginAtZero: true, ticks: { precision: 0 } } }
       }
     });
@@ -4869,7 +4915,7 @@ var Admin = (function() {
            kbOpenSignPad, kbSignPadClear, kbSignPadConfirm, kbSignPadCancel,
            kbtplLoad, kbtplSelSection, kbtplSelSpaceIdx, kbtplAddSpace, kbtplDelSpace, kbtplRenameSpace, kbtplMoveSpace, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave, kbrecLoad,
            crmSearch, crmSelect, crmSelTab, crmSaveBasic, crmTotalCalc, crmBillImport, crmImportFile, crmBillAddEng, crmBillDelEng, crmBillAddOth, crmBillDelOth, crmBillSave, crmBillRecalc,
-           saSub, saBkQuery, saBkReset, saBkShowCust,
+           saSub, saBkQuery, saBkReset, saBkToggleCust,
            saQuery, saResetFilter, saRenderOverview, saDrill, saBackToOverview, saExport };
 })();
 
