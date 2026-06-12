@@ -7,6 +7,7 @@
 <title>新濠建設機構 | 後台管理</title>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --primary:#B01020;--primary-dk:#8C0D19;
@@ -4226,6 +4227,8 @@ var Admin = (function() {
       + '<td><input class="ce-pl" type="number" inputmode="numeric" value="' + (Number(r.paidLand) || 0) + '"/></td>'
       + '<td><input class="ce-inv" value="' + kbEsc(r.invoiceNo || '') + '"/></td>'
       + '<td><input class="ce-invdate" type="date" value="' + kbEsc(r.invoiceDate || '') + '"/></td>'
+      + '<td><input class="ce-inv2" value="' + kbEsc(r.invoiceNo2 || '') + '"/></td>'
+      + '<td><input class="ce-invdate2" type="date" value="' + kbEsc(r.invoiceDate2 || '') + '"/></td>'
       + '<td><input class="ce-note" value="' + kbEsc(r.note || '') + '"/></td>'
       + '<td><button class="btn-mini-del" onclick="Admin.crmBillDelEng(' + i + ')">刪</button></td></tr>';
   }
@@ -4250,9 +4253,12 @@ var Admin = (function() {
     var othDue = _crmSum(b.others, _crmDue), othPaid = _crmSum(b.others, _crmPaid), othUn = crmUnpaid(b.others);
     body.innerHTML = '<div class="crm-card">'
       + '<div class="crm-total-box">合約總價：房屋款 <input class="cb-house" type="number" inputmode="numeric" value="' + (Number(t.house) || 0) + '" oninput="Admin.crmTotalCalc()"/> ＋ 車位款 <input class="cb-park" type="number" inputmode="numeric" value="' + (Number(t.parking) || 0) + '" oninput="Admin.crmTotalCalc()"/> ＝ 總金額 <b id="cb-totalsum">' + crmMoney((Number(t.house) || 0) + (Number(t.parking) || 0)) + '</b></div>'
-      + '<div class="crm-bill-head"><strong>工程期款（繳款期）</strong><span><button class="btn-reset" onclick="Admin.crmBillImport()">↧ 帶入工程期</button> <button class="btn-reset" onclick="Admin.crmBillAddEng()">＋ 新增一列</button></span></div>'
-      + '<div class="table-wrap"><table class="crm-bill-table" style="min-width:1200px;"><thead><tr><th>期數</th><th style="min-width:150px;">名稱</th><th>應收房屋款</th><th>應收土地款</th><th>繳款期限</th><th>繳款日期</th><th>已繳房屋款</th><th>已繳土地款</th><th>發票號碼</th><th>發票日期</th><th>備註</th><th>刪</th></tr></thead><tbody>'
-      + (engRows || '<tr class="empty-row"><td colspan="12">尚無工程期款</td></tr>') + '</tbody></table></div>'
+      + '<div class="crm-bill-head"><strong>工程期款（繳款期）</strong><span>'
+      + '<button class="btn-reset" onclick="document.getElementById(\'crm-import-file\').click()">📥 匯入Excel/CSV</button> '
+      + '<input type="file" id="crm-import-file" accept=".xls,.xlsx,.csv" style="display:none;" onchange="Admin.crmImportFile(this)"/>'
+      + '<button class="btn-reset" onclick="Admin.crmBillImport()">↧ 帶入工程期</button> <button class="btn-reset" onclick="Admin.crmBillAddEng()">＋ 新增一列</button></span></div>'
+      + '<div class="table-wrap"><table class="crm-bill-table" style="min-width:1500px;"><thead><tr><th>期數</th><th style="min-width:150px;">名稱</th><th>應收房屋款</th><th>應收土地款</th><th>繳款期限</th><th>繳款日期</th><th>已繳房屋款</th><th>已繳土地款</th><th>房屋發票號</th><th>房屋發票日</th><th>土地發票號</th><th>土地發票日</th><th>備註</th><th>刪</th></tr></thead><tbody>'
+      + (engRows || '<tr class="empty-row"><td colspan="14">尚無工程期款</td></tr>') + '</tbody></table></div>'
       + '<div class="crm-bill-sub">工程期小計　應收 <b>' + crmMoney(engDue) + '</b>　已繳 <b>' + crmMoney(engPaid) + '</b>　未繳(已到期) <b class="' + (engUn > 0 ? 'crm-unpaid' : '') + '">' + crmMoney(engUn) + '</b></div>'
       + '<div class="crm-bill-head" style="margin-top:1.3rem;"><strong>其他款項</strong><span><button class="btn-reset" onclick="Admin.crmBillAddOth()">＋ 新增一列</button></span></div>'
       + '<div class="table-wrap"><table class="crm-bill-table" style="min-width:820px;"><thead><tr><th style="min-width:150px;">項目</th><th>金額</th><th>繳款期限</th><th>繳款日期</th><th>已繳</th><th>發票號碼</th><th>發票日期</th><th>備註</th><th>刪</th></tr></thead><tbody>'
@@ -4268,7 +4274,7 @@ var Admin = (function() {
     var total = { house: h ? (Number(h.value) || 0) : 0, parking: p ? (Number(p.value) || 0) : 0 };
     var eng = [];
     Array.prototype.forEach.call(document.querySelectorAll('.crm-eng-row'), function(tr) {
-      eng.push({ seq: _crmV(tr, 'ce-seq'), name: _crmV(tr, 'ce-name'), dueHouse: _crmN(tr, 'ce-dh'), dueLand: _crmN(tr, 'ce-dl'), dueDate: _crmV(tr, 'ce-duedate'), paidDate: _crmV(tr, 'ce-paiddate'), paidHouse: _crmN(tr, 'ce-ph'), paidLand: _crmN(tr, 'ce-pl'), invoiceNo: _crmV(tr, 'ce-inv'), invoiceDate: _crmV(tr, 'ce-invdate'), note: _crmV(tr, 'ce-note') });
+      eng.push({ seq: _crmV(tr, 'ce-seq'), name: _crmV(tr, 'ce-name'), dueHouse: _crmN(tr, 'ce-dh'), dueLand: _crmN(tr, 'ce-dl'), dueDate: _crmV(tr, 'ce-duedate'), paidDate: _crmV(tr, 'ce-paiddate'), paidHouse: _crmN(tr, 'ce-ph'), paidLand: _crmN(tr, 'ce-pl'), invoiceNo: _crmV(tr, 'ce-inv'), invoiceDate: _crmV(tr, 'ce-invdate'), invoiceNo2: _crmV(tr, 'ce-inv2'), invoiceDate2: _crmV(tr, 'ce-invdate2'), note: _crmV(tr, 'ce-note') });
     });
     var oth = [];
     Array.prototype.forEach.call(document.querySelectorAll('.crm-oth-row'), function(tr) {
@@ -4301,6 +4307,73 @@ var Admin = (function() {
       if (res && res.success) showToast('帳務已儲存', 'success');
       else showToast((res && res.message) || '儲存失敗', 'error');
     });
+  }
+
+  // ── 匯入 Excel/CSV（繳款狀況表）──
+  function _rocToWest(s) {
+    var m = String(s || '').trim().match(/(\d{2,3})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+    if (!m) return '';
+    var y = Number(m[1]); if (y < 1000) y += 1911;
+    return y + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  }
+  function _impNum(s) { return Number(String(s == null ? '' : s).replace(/[^\d.\-]/g, '')) || 0; }
+  function crmImportFile(input) {
+    var f = input.files && input.files[0]; if (!f) return;
+    if (typeof XLSX === 'undefined') { showToast('匯入元件載入中，請稍候再試', 'error'); input.value = ''; return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var wb = XLSX.read(e.target.result, { type: 'binary' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+        crmParseBilling(rows);
+      } catch (err) { showToast('解析失敗：' + (err.message || err), 'error'); }
+      input.value = '';
+    };
+    reader.readAsBinaryString(f);
+  }
+  function crmParseBilling(rows) {
+    crmBillSync();
+    // 找表頭列（含「序列」「名稱」）
+    var hi = -1;
+    for (var i = 0; i < rows.length; i++) {
+      var line = (rows[i] || []).join('');
+      if (line.indexOf('序列') >= 0 || (line.indexOf('名稱') >= 0 && line.indexOf('應收') >= 0)) { hi = i; break; }
+    }
+    // 表頭資訊：房屋售價/車位售價/簽約日
+    var headText = rows.slice(0, hi < 0 ? rows.length : hi).map(function(r) { return (r || []).join(' '); }).join(' ');
+    var mh = headText.match(/房屋售價[:：]?\s*([\d,]+)/);
+    var mp = headText.match(/車位售價[:：]?\s*([\d,]+)/);
+    var msign = headText.match(/簽約日[:：]?\s*([\d\/\-.]+)/);
+    if (mh || mp) crmState.billing.total = { house: mh ? _impNum(mh[1]) : 0, parking: mp ? _impNum(mp[1]) : 0 };
+    var signDate = msign ? _rocToWest(msign[1]) : '';
+    // 明細列
+    var added = 0;
+    if (hi >= 0) {
+      for (var j = hi + 1; j < rows.length; j++) {
+        var r = rows[j] || [];
+        var name = String(r[1] || '').trim();
+        if (!name || name.indexOf('合計') >= 0 || name.indexOf('合计') >= 0) continue;
+        crmState.billing.engineering.push({
+          seq: String(r[0] || '').trim(), name: name,
+          dueHouse: _impNum(r[2]), dueLand: _impNum(r[3]),
+          dueDate: _rocToWest(r[4]), paidDate: _rocToWest(r[5]),
+          paidHouse: _impNum(r[6]), paidLand: _impNum(r[7]),
+          invoiceNo: String(r[8] || '').trim(), invoiceDate: _rocToWest(r[9]),
+          invoiceNo2: String(r[10] || '').trim(), invoiceDate2: _rocToWest(r[11]),
+          note: ''
+        });
+        added++;
+      }
+    }
+    crmBillRender();
+    // 簽約日寫回基本資料（自動存）
+    if (signDate && crmState.customer && crmState.customer.idCard) {
+      crmState.customer.signDate = signDate;
+      crmRenderHead();
+      callServer('serverAdminSaveCustomer', crmState.project, crmState.customer.unit, crmState.customer.idCard, crmState.customer.name, undefined, undefined, signDate);
+    }
+    showToast('已匯入 ' + added + ' 期' + (signDate ? '、簽約日 ' + signDate : '') + '，請確認後按「儲存帳務」', 'success');
   }
 
   // ── 只讀：客變 / 預約 / 上傳 ──
@@ -4356,7 +4429,7 @@ var Admin = (function() {
            kbCloseModal, kbClearSign, kbSave,
            kbOpenSignPad, kbSignPadClear, kbSignPadConfirm, kbSignPadCancel,
            kbtplLoad, kbtplSelSection, kbtplSelSpaceIdx, kbtplAddSpace, kbtplDelSpace, kbtplRenameSpace, kbtplMoveSpace, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave, kbrecLoad,
-           crmSearch, crmSelect, crmSelTab, crmSaveBasic, crmTotalCalc, crmBillImport, crmBillAddEng, crmBillDelEng, crmBillAddOth, crmBillDelOth, crmBillSave, crmBillRecalc };
+           crmSearch, crmSelect, crmSelTab, crmSaveBasic, crmTotalCalc, crmBillImport, crmImportFile, crmBillAddEng, crmBillDelEng, crmBillAddOth, crmBillDelOth, crmBillSave, crmBillRecalc };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);
