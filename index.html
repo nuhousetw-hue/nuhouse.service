@@ -1354,8 +1354,10 @@ var App = (function() {
 
   function billMoney(n) { n = Number(n) || 0; return 'NT$' + n.toLocaleString('en-US'); }
   function billRoc(s) { if (!s) return '—'; var m = String(s).match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); if (m) return (Number(m[1]) - 1911) + '/' + ('0' + m[2]).slice(-2) + '/' + ('0' + m[3]).slice(-2); return s; }
-  function _billSum(rows, key) { var s = 0; (rows || []).forEach(function(r) { s += Number(r[key]) || 0; }); return s; }
-  function _billUnpaid(rows) { var t = new Date(); t.setHours(0, 0, 0, 0); var u = 0; (rows || []).forEach(function(r) { var owe = (Number(r.due) || 0) - (Number(r.paid) || 0); if (owe > 0 && r.dueDate) { var d = new Date(r.dueDate); if (!isNaN(d.getTime()) && d <= t) u += owe; } }); return u; }
+  function _billDue(r) { return (Number(r.dueHouse) || 0) + (Number(r.dueLand) || 0) + (Number(r.due) || 0); }
+  function _billPaid(r) { return (Number(r.paidHouse) || 0) + (Number(r.paidLand) || 0) + (Number(r.paid) || 0); }
+  function _billSum(rows, fn) { var s = 0; (rows || []).forEach(function(r) { s += fn(r); }); return s; }
+  function _billUnpaid(rows) { var t = new Date(); t.setHours(0, 0, 0, 0); var u = 0; (rows || []).forEach(function(r) { var owe = _billDue(r) - _billPaid(r); if (owe > 0 && r.dueDate) { var d = new Date(r.dueDate); if (!isNaN(d.getTime()) && d <= t) u += owe; } }); return u; }
   function loadBilling() {
     var el = document.getElementById('billing-content');
     el.innerHTML = '<p class="text-muted text-center">載入中…</p>';
@@ -1366,16 +1368,16 @@ var App = (function() {
         el.innerHTML = '<div class="billing-placeholder"><h3>目前尚無帳務資料</h3><p>若有帳務問題，請透過 LINE@ 洽詢客服。</p></div>'; return;
       }
       var today = new Date();
-      var engDue = _billSum(eng, 'due'), engPaid = _billSum(eng, 'paid'), engUn = _billUnpaid(eng);
-      var othDue = _billSum(oth, 'due'), othPaid = _billSum(oth, 'paid'), othUn = _billUnpaid(oth);
+      var engDue = _billSum(eng, _billDue), engPaid = _billSum(eng, _billPaid), engUn = _billUnpaid(eng);
+      var othDue = _billSum(oth, _billDue), othPaid = _billSum(oth, _billPaid), othUn = _billUnpaid(oth);
       function rowsHtml(list, isEng) {
         var h = '';
         list.forEach(function(r) {
-          var owe = (Number(r.due) || 0) - (Number(r.paid) || 0);
+          var dueV = _billDue(r), paidV = _billPaid(r), owe = dueV - paidV;
           var overdue = owe > 0 && r.dueDate && new Date(r.dueDate) <= today;
           var unCell = overdue ? '<td class="bill-unpaid">' + billMoney(owe) + '</td>' : '<td>—</td>';
-          if (isEng) h += '<tr><td>' + esc(r.seq) + '</td><td>' + esc(r.name) + '</td><td>' + billMoney(r.due) + '</td><td>' + billMoney(r.paid) + '</td>' + unCell + '<td>' + billRoc(r.dueDate) + '</td><td>' + esc(r.invoiceNo || '—') + '</td></tr>';
-          else h += '<tr><td>' + esc(r.name) + '</td><td>' + billMoney(r.due) + '</td><td>' + billMoney(r.paid) + '</td>' + unCell + '<td>' + billRoc(r.dueDate) + '</td><td>' + esc(r.note || '—') + '</td></tr>';
+          if (isEng) h += '<tr><td>' + esc(r.seq) + '</td><td>' + esc(r.name) + '</td><td>' + billMoney(dueV) + '</td><td>' + billMoney(paidV) + '</td>' + unCell + '<td>' + billRoc(r.dueDate) + '</td><td>' + esc(r.invoiceNo || '—') + '</td></tr>';
+          else h += '<tr><td>' + esc(r.name) + '</td><td>' + billMoney(dueV) + '</td><td>' + billMoney(paidV) + '</td>' + unCell + '<td>' + billRoc(r.dueDate) + '</td><td>' + esc(r.note || '—') + '</td></tr>';
         });
         return h;
       }
