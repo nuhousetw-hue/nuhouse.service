@@ -68,6 +68,30 @@ input,select{font:inherit;}
 .btn-hamburger{background:none;border:none;color:#fff;cursor:pointer;padding:.3rem;line-height:0;}
 #sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:490;}
 #sidebar-overlay.visible{display:block;}
+/* 頂部功能列 */
+#topbar{position:sticky;top:0;z-index:480;display:flex;align-items:center;justify-content:space-between;gap:1rem;height:var(--nav-h);background:#fff;border-bottom:1.5px solid var(--border);padding:0 1.1rem;box-shadow:0 1px 5px rgba(0,0,0,.05);margin-bottom:1.1rem;}
+.tb-left{display:flex;align-items:center;gap:.65rem;min-width:0;}
+.tb-burger{background:none;border:none;cursor:pointer;color:var(--primary);padding:.3rem;line-height:0;border-radius:6px;}
+.tb-burger:hover{background:#f0f7fb;}
+.tb-title{font-size:1.05rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-right{display:flex;align-items:center;gap:.85rem;min-width:0;}
+.tb-project{display:flex;align-items:center;gap:.4rem;}
+.tb-proj-label{font-size:.8rem;color:var(--text-muted);font-weight:700;white-space:nowrap;}
+.tb-project select{border:1.5px solid var(--border);border-radius:7px;padding:.4rem .6rem;font-size:.9rem;background:#fff;cursor:pointer;max-width:190px;outline:none;}
+.tb-project select:focus{border-color:var(--primary);}
+.tb-user{display:flex;align-items:center;gap:.5rem;padding-left:.85rem;border-left:1px solid var(--border);}
+.tb-user-icon{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.tb-user-name{font-size:.9rem;font-weight:600;color:var(--text);white-space:nowrap;}
+.tb-logout{background:#f5f5f5;border:1.5px solid var(--border);border-radius:7px;color:var(--text-muted);padding:.35rem .8rem;font-size:.83rem;cursor:pointer;white-space:nowrap;}
+.tb-logout:hover{border-color:var(--danger);color:var(--danger);}
+@media(max-width:640px){
+  .tb-proj-label,.tb-user-name{display:none;}
+  .tb-title{font-size:.98rem;}
+  .tb-right{gap:.55rem;}
+  .tb-project select{max-width:140px;}
+  .tb-user{padding-left:.55rem;gap:.35rem;}
+  #topbar{padding:0 .7rem;gap:.5rem;}
+}
 
 /* Customer search panels */
 .cust-search-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:1.25rem 1.5rem;margin-bottom:.85rem;}
@@ -114,7 +138,7 @@ input,select{font:inherit;}
 .btn-login:hover{background:var(--primary-dk);}
 
 /* Main */
-#screen-main{margin-left:var(--sidebar-w);padding-top:1.25rem;padding-bottom:2rem;transition:margin-left .25s ease;}
+#screen-main{margin-left:var(--sidebar-w);padding-top:0;padding-bottom:2rem;transition:margin-left .25s ease;}
 #desk-burger{display:none;position:fixed;top:.6rem;left:calc(var(--sidebar-w) - 50px);z-index:560;background:rgba(255,255,255,.85);border:1px solid var(--border);color:var(--primary);cursor:pointer;width:34px;height:34px;border-radius:8px;font-size:1.15rem;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:left .25s ease;}
 @media(min-width:769px) and (pointer:fine){#desk-burger{display:flex;align-items:center;justify-content:center;}}
 body.sb-collapsed #desk-burger{left:.5rem;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.18);}
@@ -444,21 +468,17 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 @media(max-width:768px){
   #sidebar{transform:translateX(-100%);transition:transform .25s ease;z-index:601;}
   #sidebar.visible.open{transform:translateX(0);}
-  #screen-main{margin-left:0!important;padding-top:calc(var(--nav-h) + 1.25rem);}
-  #current-project-badge{top:calc(var(--nav-h) + .4rem);right:.75rem;font-size:.78rem;padding:.24rem .8rem;}
+  #screen-main{margin-left:0!important;}
 }
 @media(min-width:769px){
-  #mobile-topbar{display:none!important;}
   #sidebar-overlay{display:none!important;}
 }
-/* 觸控平板（含 iPad）也用手機模式：側欄收起、改用上方漢堡選單；桌機鼠標不受影響 */
+/* 觸控平板（含 iPad）也用手機模式：側欄收起、改用上方漢堡選單；桌機鼠標不受影響（後台僅選材作業會用平板） */
 @media (min-width:769px) and (max-width:1400px) and (pointer:coarse){
-  #mobile-topbar.visible{display:flex!important;}
   #sidebar{transform:translateX(-100%);transition:transform .25s ease;z-index:601;}
   #sidebar.visible.open{transform:translateX(0);}
   #sidebar-overlay.visible{display:block!important;}
-  #screen-main{margin-left:0!important;padding-top:calc(var(--nav-h) + 1.25rem)!important;}
-  #current-project-badge{top:calc(var(--nav-h) + .4rem);right:.75rem;font-size:.78rem;padding:.24rem .8rem;}
+  #screen-main{margin-left:0!important;}
 }
 
 /* 複選下拉 */
@@ -482,30 +502,13 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 </div>
 <div id="toast" class="toast hidden"></div>
 
-<!-- Mobile Topbar -->
-<div id="mobile-topbar">
-  <span class="mb-brand">新濠建設機構 後台</span>
-  <button class="btn-hamburger" onclick="Admin.toggleSidebar()" aria-label="選單">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-  </button>
-</div>
 <div id="sidebar-overlay" onclick="Admin.toggleSidebar()"></div>
-
-<!-- 桌面側欄收合鈕 -->
-<button id="desk-burger" onclick="Admin.toggleSidebar()" aria-label="收合選單">☰</button>
 
 <!-- Sidebar -->
 <aside id="sidebar">
   <div class="sb-brand">
     <div class="sb-brand-name">新濠建設機構</div>
     <div class="sb-brand-sub">後台管理系統</div>
-  </div>
-  <div class="sb-project">
-    <label class="sb-project-label">建案選擇</label>
-    <select id="select-project">
-      <option value="">— 請選擇建案 —</option>
-    </select>
-    <span id="current-project-name" class="hidden"></span>
   </div>
   <nav class="sb-nav">
     <div class="sb-group" id="sb-group-customer">
@@ -585,10 +588,6 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
   </nav>
-  <div class="sb-footer">
-    <div class="sb-footer-user" id="nav-admin-info"></div>
-    <button class="btn-sb-logout" onclick="Admin.logout()">登出</button>
-  </div>
 </aside>
 
 <!-- 登入畫面 -->
@@ -614,7 +613,28 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 
 <!-- 主畫面 -->
 <div id="screen-main" class="hidden">
-  <div id="current-project-badge"></div>
+  <!-- 頂部功能列：左漢堡＋頁面標題；右建案選擇＋帳號＋登出 -->
+  <header id="topbar">
+    <div class="tb-left">
+      <button class="tb-burger" onclick="Admin.toggleSidebar()" aria-label="選單">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="tb-title" id="tb-title">後台管理</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-project">
+        <span class="tb-proj-label">建案</span>
+        <select id="select-project">
+          <option value="">— 請選擇建案 —</option>
+        </select>
+      </div>
+      <div class="tb-user">
+        <span class="tb-user-icon">👤</span>
+        <span class="tb-user-name" id="nav-admin-info"></span>
+        <button class="tb-logout" onclick="Admin.logout()">登出</button>
+      </div>
+    </div>
+  </header>
   <div class="main-inner">
 
     <!-- 預約篩選 -->
@@ -1586,9 +1606,8 @@ var Admin = (function() {
     state.username = null; state.role = 'user'; state.perms = []; state.allowedProjects = []; state.data = [];
     var sb = document.getElementById('sidebar');
     sb.classList.remove('visible'); sb.classList.remove('open');
-    document.getElementById('mobile-topbar').classList.remove('visible');
+    document.body.classList.remove('sb-collapsed');
     document.getElementById('sidebar-overlay').classList.remove('visible');
-    document.getElementById('current-project-badge').classList.remove('visible');
     document.getElementById('input-username').value = '';
     document.getElementById('input-password').value = '';
     showScreen('login');
@@ -1668,10 +1687,20 @@ var Admin = (function() {
     return null;
   }
 
+  var TAB_TITLES = {
+    crm: '客戶管理', progress: '工程進度', calendar: '行事曆',
+    booking: '預約查詢', upload: '上傳查詢', unbooked: '未預約', kbrec: '選材紀錄',
+    proxy: '代客預約', kebian: '客變選材', kbtpl: '範本編輯',
+    settings: '設定', accounts: '帳號權限管理', stats: '統計分析'
+  };
+  function setTbTitle(tab) {
+    var el = document.getElementById('tb-title');
+    if (el) el.textContent = TAB_TITLES[tab] || '後台管理';
+  }
+
   function enterMain() {
     document.getElementById('nav-admin-info').textContent = state.username;
     document.getElementById('sidebar').classList.add('visible');
-    document.getElementById('mobile-topbar').classList.add('visible');
     showScreen('main');
     applyRolePermissions();
     loadProjects();
@@ -1738,6 +1767,7 @@ var Admin = (function() {
 
   function switchTab(tab) {
     state.tab = tab;
+    setTbTitle(tab);
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
