@@ -1101,13 +1101,9 @@ var App = (function() {
       h += '<div class="booking-detail-row"><span class="booking-detail-label">方式</span><span class="booking-detail-value">' + esc(booking.method) + '</span></div>';
     }
     h += '</div>';
-    if (booking.serviceType.indexOf('客變') >= 0) {
-      h += '<div class="booking-notice">';
-      h += '<div class="booking-notice-title">【重要】</div>';
-      h += '<p>客變地點：新濠一滙工務所一樓</p>';
-      h += '<p>客變每組時段 1.5小時（依預約時間起算），請您 <strong>準時抵達</strong>完成報到。若遲到，將不順延、不補時，遲到時間將直接計入您的客變時段，敬請準時到場。</p>';
-      h += '<p><strong>客變規則：</strong><br>當日客變與選材選色完成後，將會在圖面或表格上簽認，簽認後將視同客變完成，若有需要再次變動，視為二次客變，將收取手續費3萬元，依次類推。</p>';
-      h += '</div>';
+    var svcNotice = getServiceNotice(booking.serviceType);
+    if (svcNotice) {
+      h += '<div class="booking-notice"><div class="booking-notice-title">【提醒事項】</div><p>' + esc(svcNotice).replace(/\n/g, '<br>') + '</p></div>';
     }
     if (isPending) {
       h += '<div class="cancel-confirm-box"><p>確定要取消「' + svc + '」的預約嗎？</p><div class="btn-row">';
@@ -1121,6 +1117,12 @@ var App = (function() {
     }
     h += '</div>';
     return h;
+  }
+
+  function getServiceNotice(svc) {
+    var n = '';
+    (bState.bookingSettings || []).forEach(function(s) { if (s.serviceType === svc) n = s.notice || ''; });
+    return n;
   }
 
   function checkBookingWindow(svc) {

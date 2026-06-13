@@ -332,6 +332,10 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
 .btn-save-settings{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.5rem 1.5rem;font-size:.92rem;font-weight:600;}
 .btn-save-settings:hover{background:var(--primary-dk);}
 .settings-empty{color:var(--text-muted);font-size:.9rem;text-align:center;padding:2rem 0;}
+.settings-notice-row{padding:0 0 .9rem;border-bottom:1px solid var(--border);margin-bottom:.2rem;}
+.settings-notice-row label{display:block;font-size:.78rem;color:var(--text-muted);margin-bottom:.3rem;}
+.settings-notice-row textarea{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:.5rem .6rem;font-size:.85rem;font-family:inherit;line-height:1.6;resize:vertical;outline:none;}
+.settings-notice-row textarea:focus{border-color:var(--primary);}
 @media(max-width:640px){
   .settings-row{grid-template-columns:1fr;gap:.4rem;}
   .settings-svc{font-size:.85rem;}
@@ -2896,11 +2900,14 @@ var Admin = (function() {
       currentSettings.forEach(function(s) { if (s.serviceType === svc) cur = s; });
       var openVal  = cur ? storedToInput(cur.openTime)  : '';
       var closeVal = cur ? storedToInput(cur.closeTime) : '';
+      var noticeVal = cur ? (cur.notice || '') : '';
       html += '<div class="settings-row">';
       html += '<div class="settings-svc">' + esc(svc) + '</div>';
       html += '<div class="settings-field"><label>開放預約時間</label><input type="datetime-local" id="st-open-' + idx + '" value="' + openVal + '"/></div>';
       html += '<div class="settings-field"><label>結束預約時間</label><input type="datetime-local" id="st-close-' + idx + '" value="' + closeVal + '"/></div>';
       html += '</div>';
+      html += '<div class="settings-notice-row"><label>提醒事項（前台預約此服務時顯示；留空則不顯示）</label>'
+        + '<textarea id="st-notice-' + idx + '" rows="3" placeholder="例：客變地點、時段規則、注意事項…可多行">' + esc(noticeVal) + '</textarea></div>';
     });
     document.getElementById('settings-form').innerHTML = html;
   }
@@ -2919,10 +2926,12 @@ var Admin = (function() {
     state.settingsServiceTypes.forEach(function(svc, idx) {
       var openEl  = document.getElementById('st-open-'  + idx);
       var closeEl = document.getElementById('st-close-' + idx);
+      var noticeEl = document.getElementById('st-notice-' + idx);
       settings.push({
         serviceType: svc,
         openTime:    openEl  ? inputToStored(openEl.value)  : '',
         closeTime:   closeEl ? inputToStored(closeEl.value) : '',
+        notice:      noticeEl ? noticeEl.value.trim() : '',
       });
     });
     showLoading(true);
