@@ -74,6 +74,12 @@ input,select{font:inherit;}
 .home-msg-body{min-width:0;}
 .home-msg-text{font-size:.9rem;color:var(--text);word-break:break-word;}
 .home-msg-meta{font-size:.76rem;color:var(--text-muted);margin-top:.15rem;}
+/* 檔案上傳/管理 */
+.doc-upload{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;padding:.9rem;border:1.5px dashed var(--border);border-radius:8px;background:#fafbfc;}
+.doc-status{font-size:.85rem;color:var(--text-muted);}
+.doc-link{color:var(--primary);text-decoration:none;font-size:.85rem;margin-right:.3rem;}
+.doc-link:hover{text-decoration:underline;}
+.doc-cat{margin:.6rem 0 .3rem;font-weight:700;color:var(--primary);font-size:.9rem;}
 .sb-group-items.collapsed{display:none;}
 .sb-item{display:block;width:100%;text-align:left;background:none;border:none;border-left:3px solid transparent;padding:.55rem .7rem .55rem 1.1rem;font-size:.92rem;color:var(--text);cursor:pointer;transition:background .13s,color .13s,border-color .13s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sb-item:hover:not(.active){background:#f5f5f5;color:var(--primary);}
@@ -612,6 +618,7 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       <div class="sb-group-items" id="sg-config">
         <button class="sb-item" id="tab-settings" onclick="Admin.switchTab('settings')">預約設定</button>
         <button class="sb-item" id="tab-kbtpl" onclick="Admin.switchTab('kbtpl')">客變編輯</button>
+        <button class="sb-item" id="tab-docsmgr" onclick="Admin.switchTab('docsmgr')">公告管理</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-stats">
@@ -1189,6 +1196,28 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
       </div>
     </div>
 
+    <!-- 公告管理 -->
+    <div id="docsmgr-panel" class="hidden">
+      <div class="cust-search-card">
+        <div class="cust-search-title">最新公告管理</div>
+        <p style="font-size:.85rem;color:var(--text-muted);margin:.4rem 0 .8rem;">上傳到此的檔案，前台客戶在「最新公告」會看到。請先選上方建案。單檔建議 ≤ 25MB。</p>
+        <div class="doc-upload" id="docsmgr-upload">
+          <input type="file" id="docsmgr-file" multiple style="display:none" onchange="Admin.docsUpload(event)"/>
+          <button class="btn-query" onclick="document.getElementById('docsmgr-file').click()">＋ 選擇檔案上傳</button>
+          <span id="docsmgr-status" class="doc-status"></span>
+        </div>
+      </div>
+      <div class="cust-search-card">
+        <div class="cust-search-title" style="font-size:.95rem;">目前公告檔案</div>
+        <div class="table-scroll">
+          <table class="sa-table">
+            <thead><tr><th>檔名</th><th>大小</th><th>上傳日期</th><th>操作</th></tr></thead>
+            <tbody id="docsmgr-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);">請先選擇建案</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- 工程進度管理 -->
     <div id="progress-panel" class="hidden">
       <div class="cust-search-card">
@@ -1731,7 +1760,7 @@ var Admin = (function() {
         { tab: 'booking', perm: 'query' }, { tab: 'upload', perm: 'query' },
         { tab: 'unbooked', perm: 'query' }, { tab: 'kbrec', perm: 'query|kebian' } ] },
     { box: 'sb-group-service', items: [{ tab: 'proxy', perm: 'proxy' }, { tab: 'kebian', perm: 'kebian' }] },
-    { box: 'sb-group-config', items: [{ tab: 'settings', perm: 'settings' }, { tab: 'kbtpl', perm: 'admin' }] },
+    { box: 'sb-group-config', items: [{ tab: 'settings', perm: 'settings' }, { tab: 'kbtpl', perm: 'admin' }, { tab: 'docsmgr', perm: 'admin' }] },
     { box: 'sb-group-stats', items: [{ tab: 'stats', perm: 'admin' }] },
     { box: 'sb-group-system', items: [{ tab: 'accounts', perm: 'admin' }] }
   ];
@@ -1773,7 +1802,7 @@ var Admin = (function() {
     crm: '客戶CRM', progress: '進度管理', calendar: '預約行事曆',
     booking: '預約紀錄', upload: '上傳紀錄', unbooked: '未預約客戶', kbrec: '選材紀錄',
     proxy: '代客預約', kebian: '選材作業', kbtpl: '客變編輯',
-    settings: '預約設定', accounts: '帳號權限', stats: '數據分析'
+    settings: '預約設定', accounts: '帳號權限', stats: '數據分析', docsmgr: '公告管理'
   };
   function setTbTitle(tab) {
     var el = document.getElementById('tb-title');
@@ -1845,6 +1874,76 @@ var Admin = (function() {
     if (homeGrid) homeGrid.load(HOME_DEFAULT);
   }
 
+  // ── 後台檔案上傳共用 ──
+  var MAX_UPLOAD = 25 * 1024 * 1024;
+  function _fileToBase64(file) {
+    return new Promise(function(resolve, reject) {
+      var r = new FileReader();
+      r.onload = function() { resolve(String(r.result).split(',')[1]); };
+      r.onerror = function() { reject(new Error('讀取失敗')); };
+      r.readAsDataURL(file);
+    });
+  }
+  function _fmtSize(n) {
+    if (n == null) return '—';
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(0) + ' KB';
+    return (n / 1048576).toFixed(1) + ' MB';
+  }
+
+  // ── 公告管理 ──
+  var docsMgrState = { list: [] };
+  function loadDocsMgr() {
+    var pc = document.getElementById('select-project').value;
+    var body = document.getElementById('docsmgr-body');
+    if (!pc) { body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">請先選擇建案</td></tr>'; return; }
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">載入中…</td></tr>';
+    callServer('serverAdminListDocs', pc).then(function(list) {
+      docsMgrState.list = Array.isArray(list) ? list : [];
+      if (!docsMgrState.list.length) { body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">尚無公告檔案</td></tr>'; return; }
+      body.innerHTML = docsMgrState.list.map(function(f, i) {
+        return '<tr><td>' + kbEsc(f.name) + '</td><td style="text-align:right;">' + _fmtSize(f.size) + '</td><td>' + kbEsc(f.date || '—') + '</td>'
+          + '<td style="white-space:nowrap;"><a href="' + f.previewUrl + '" target="_blank" class="doc-link">預覽</a> '
+          + '<button class="btn-mini-del" onclick="Admin.docsDelete(' + i + ')">刪除</button></td></tr>';
+      }).join('');
+    }).catch(function() { body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--danger);">載入失敗</td></tr>'; });
+  }
+  function docsUpload(ev) {
+    var pc = document.getElementById('select-project').value;
+    if (!pc) { showToast('請先選擇建案', 'error'); ev.target.value = ''; return; }
+    var files = Array.prototype.slice.call(ev.target.files || []);
+    ev.target.value = '';
+    if (!files.length) return;
+    var statusEl = document.getElementById('docsmgr-status');
+    var done = 0, fail = 0;
+    function next(i) {
+      if (i >= files.length) {
+        statusEl.textContent = '完成：成功 ' + done + (fail ? '、失敗/略過 ' + fail : '') + ' 個';
+        loadDocsMgr();
+        return;
+      }
+      var f = files[i];
+      if (f.size > MAX_UPLOAD) { fail++; showToast(f.name + ' 超過 25MB，略過', 'error'); next(i + 1); return; }
+      statusEl.textContent = '上傳中… (' + (i + 1) + '/' + files.length + ') ' + f.name;
+      _fileToBase64(f).then(function(b64) {
+        return callServer('serverAdminUploadDocs', pc, f.name, f.type || 'application/octet-stream', b64);
+      }).then(function(res) {
+        if (res && res.success) done++; else { fail++; showToast(f.name + ' 上傳失敗', 'error'); }
+        next(i + 1);
+      }).catch(function() { fail++; showToast(f.name + ' 上傳失敗', 'error'); next(i + 1); });
+    }
+    next(0);
+  }
+  function docsDelete(idx) {
+    var f = docsMgrState.list[idx]; if (!f) return;
+    if (!confirm('確定刪除公告檔「' + f.name + '」？')) return;
+    var pc = document.getElementById('select-project').value;
+    callServer('serverAdminDeleteDoc', pc, f.fileId).then(function(res) {
+      if (res && res.success) { showToast('已刪除', 'success'); loadDocsMgr(); }
+      else showToast((res && res.message) || '刪除失敗', 'error');
+    }).catch(function() { showToast('刪除失敗', 'error'); });
+  }
+
   function updateProjectBadge() {
     var sel   = document.getElementById('select-project');
     var badge = document.getElementById('current-project-badge');
@@ -1894,6 +1993,8 @@ var Admin = (function() {
           kbrecLoad();
         } else if (state.tab === 'crm') {
           crmEnter();
+        } else if (state.tab === 'docsmgr') {
+          loadDocsMgr();
         } else {
           resetTable();
         }
@@ -1912,7 +2013,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['home','booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','crm','progress','kebian','kbtpl','kbrec','stats','accounts'];
+    var ALL_TABS = ['home','booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','crm','progress','kebian','kbtpl','kbrec','stats','accounts','docsmgr'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -1931,7 +2032,8 @@ var Admin = (function() {
     var isStats       = tab === 'stats';
     var isAccounts    = tab === 'accounts';
     var isHome        = tab === 'home';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isKbrec && !isCrm && !isStats && !isAccounts && !isHome;
+    var isDocsmgr     = tab === 'docsmgr';
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isKbrec && !isCrm && !isStats && !isAccounts && !isHome && !isDocsmgr;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -1949,6 +2051,7 @@ var Admin = (function() {
     document.getElementById('stats-panel').classList.toggle('hidden', !isStats);
     document.getElementById('accounts-panel').classList.toggle('hidden', !isAccounts);
     document.getElementById('home-panel').classList.toggle('hidden', !isHome);
+    document.getElementById('docsmgr-panel').classList.toggle('hidden', !isDocsmgr);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
     var showStats = (tab === 'booking' || tab === 'upload');
@@ -1994,6 +2097,8 @@ var Admin = (function() {
     } else if (isHome) {
       loadDashboard();
       initHomeGrid();
+    } else if (isDocsmgr) {
+      loadDocsMgr();
     } else if (isTable) {
       resetTable();
     }
@@ -4391,7 +4496,8 @@ var Admin = (function() {
   var crmState = { project: '', customer: null, tab: 'basic', billing: null };
   var CRM_TABS = [
     { key: 'basic', label: '基本資料' }, { key: 'billing', label: '帳務資料' },
-    { key: 'kebian', label: '客變紀錄' }, { key: 'booking', label: '預約紀錄' }, { key: 'upload', label: '上傳紀錄' }
+    { key: 'kebian', label: '客變紀錄' }, { key: 'booking', label: '預約紀錄' }, { key: 'upload', label: '上傳紀錄' },
+    { key: 'docs', label: '文件' }
   ];
 
   function crmEnter() {
@@ -4464,6 +4570,7 @@ var Admin = (function() {
     if (crmState.tab === 'kebian') return crmRenderKebian(body);
     if (crmState.tab === 'booking') return crmRenderBooking(body);
     if (crmState.tab === 'upload') return crmRenderUpload(body);
+    if (crmState.tab === 'docs') return crmRenderDocs(body);
   }
 
   // ── 基本資料 ──
@@ -4723,6 +4830,69 @@ var Admin = (function() {
       }).join('');
       body.innerHTML = '<div class="crm-card"><div class="table-wrap"><table><thead><tr><th>上傳時間</th><th>檔名</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
     });
+  }
+
+  // ── CRM 文件管理（上傳/刪除到客戶資料夾）──
+  function crmRenderDocs(body) {
+    var c = crmState.customer;
+    if (!c.folderId) { body.innerHTML = '<div class="crm-card crm-hint">此戶尚無資料夾（通常為未售戶或尚未建立），無法上傳文件。</div>'; return; }
+    body.innerHTML = '<div class="crm-card">'
+      + '<div class="doc-upload"><label style="font-size:.85rem;color:var(--text-muted);">分類'
+      + '<input id="crmdoc-cat" list="crmdoc-cats" placeholder="客變圖資" style="border:1.5px solid var(--border);border-radius:6px;padding:.35rem .5rem;font-size:.88rem;margin-left:.3rem;">'
+      + '<datalist id="crmdoc-cats"><option value="客變圖資"></option><option value="繳款通知書"></option><option value="選材紀錄"></option></datalist></label>'
+      + '<input type="file" id="crmdoc-file" multiple style="display:none" onchange="Admin.crmDocUpload(event)">'
+      + '<button class="btn-query" onclick="document.getElementById(\'crmdoc-file\').click()">＋ 選檔上傳到此戶</button>'
+      + '<span id="crmdoc-status" class="doc-status"></span></div>'
+      + '<div id="crmdoc-list"><p class="crm-hint">載入中…</p></div></div>';
+    crmDocLoad();
+  }
+  function crmDocLoad() {
+    var c = crmState.customer;
+    callServer('serverAdminListCustomerDocs', c.folderId).then(function(cats) {
+      crmState.docCats = Array.isArray(cats) ? cats : [];
+      var el = document.getElementById('crmdoc-list');
+      if (!el) return;
+      if (!crmState.docCats.length) { el.innerHTML = '<p class="crm-hint">此戶尚無文件。</p>'; return; }
+      el.innerHTML = crmState.docCats.map(function(cat, ci) {
+        var rows = cat.files.length ? cat.files.map(function(f, fi) {
+          return '<tr><td>' + kbEsc(f.name) + '</td><td style="text-align:right;">' + _fmtSize(f.size) + '</td><td>' + kbEsc(f.date || '—') + '</td>'
+            + '<td style="white-space:nowrap;"><a href="' + f.previewUrl + '" target="_blank" class="doc-link">預覽</a> '
+            + '<button class="btn-mini-del" onclick="Admin.crmDocDelete(' + ci + ',' + fi + ')">刪除</button></td></tr>';
+        }).join('') : '<tr><td colspan="4" style="color:var(--text-muted);">（空）</td></tr>';
+        return '<div class="doc-cat">' + kbEsc(cat.category) + '</div><div class="table-scroll"><table class="sa-table"><thead><tr><th>檔名</th><th>大小</th><th>日期</th><th>操作</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      }).join('');
+    });
+  }
+  function crmDocUpload(ev) {
+    var c = crmState.customer;
+    var cat = (document.getElementById('crmdoc-cat').value || '其他').trim() || '其他';
+    var files = Array.prototype.slice.call(ev.target.files || []);
+    ev.target.value = '';
+    if (!files.length) return;
+    var statusEl = document.getElementById('crmdoc-status');
+    var done = 0, fail = 0;
+    function next(i) {
+      if (i >= files.length) { statusEl.textContent = '完成：成功 ' + done + (fail ? '、失敗/略過 ' + fail : '') + ' 個'; crmDocLoad(); return; }
+      var f = files[i];
+      if (f.size > MAX_UPLOAD) { fail++; showToast(f.name + ' 超過 25MB，略過', 'error'); next(i + 1); return; }
+      statusEl.textContent = '上傳中… (' + (i + 1) + '/' + files.length + ') ' + f.name;
+      _fileToBase64(f).then(function(b64) {
+        return callServer('serverAdminUploadCustomerDoc', c.folderId, cat, f.name, f.type || 'application/octet-stream', b64);
+      }).then(function(res) {
+        if (res && res.success) done++; else { fail++; showToast(f.name + ' 上傳失敗', 'error'); }
+        next(i + 1);
+      }).catch(function() { fail++; showToast(f.name + ' 上傳失敗', 'error'); next(i + 1); });
+    }
+    next(0);
+  }
+  function crmDocDelete(ci, fi) {
+    var cat = crmState.docCats[ci]; if (!cat) return;
+    var f = cat.files[fi]; if (!f) return;
+    if (!confirm('確定刪除「' + f.name + '」？')) return;
+    callServer('serverAdminDeleteCustomerDoc', f.fileId, crmState.customer.folderId).then(function(res) {
+      if (res && res.success) { showToast('已刪除', 'success'); crmDocLoad(); }
+      else showToast((res && res.message) || '刪除失敗', 'error');
+    }).catch(function() { showToast('刪除失敗', 'error'); });
   }
 
   // ════════ 統計分析（預約數據 ＋ 選材選色） ════════
@@ -5039,8 +5209,8 @@ var Admin = (function() {
            kbCloseModal, kbClearSign, kbSave,
            kbOpenSignPad, kbSignPadClear, kbSignPadConfirm, kbSignPadCancel,
            kbtplLoad, kbtplSelSection, kbtplSelSpaceIdx, kbtplAddSpace, kbtplDelSpace, kbtplRenameSpace, kbtplMoveSpace, kbtplAdd, kbtplDelete, kbtplMove, kbtplSave, kbrecLoad,
-           crmSearch, crmSelect, crmSelTab, crmSaveBasic, crmTotalCalc, crmBillImport, crmImportFile, crmBillAddEng, crmBillDelEng, crmBillAddOth, crmBillDelOth, crmBillSave, crmBillRecalc,
-           homeResetLayout,
+           crmSearch, crmSelect, crmSelTab, crmSaveBasic, crmTotalCalc, crmBillImport, crmImportFile, crmBillAddEng, crmBillDelEng, crmBillAddOth, crmBillDelOth, crmBillSave, crmBillRecalc, crmDocUpload, crmDocDelete,
+           homeResetLayout, docsUpload, docsDelete,
            saSub, saBkQuery, saBkReset, saBkToggleCust,
            saQuery, saResetFilter, saRenderOverview, saDrill, saBackToOverview, saExport };
 })();
