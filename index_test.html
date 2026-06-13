@@ -134,6 +134,10 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .profile-row:last-child{border-bottom:none;}
 .profile-label{font-size:.82rem;color:var(--text-muted);min-width:6rem;flex-shrink:0;}
 .profile-value{font-size:.95rem;font-weight:600;color:var(--text);flex:1;}
+.profile-input{flex:1;font-size:.95rem;border:1.5px solid var(--border);border-radius:8px;padding:.5rem .7rem;outline:none;font-family:inherit;}
+.profile-input:focus{border-color:var(--primary);}
+.profile-save-row{display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:1rem 1.25rem;}
+.profile-save-status{font-size:.85rem;color:var(--primary);}
 /* ── 帳務資訊 ── */
 .billing-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 1.5rem;text-align:center;gap:1rem;color:var(--text-muted);}
 .billing-placeholder svg{color:#d0d0d0;}
@@ -714,18 +718,22 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
       </div>
       <div class="profile-row">
         <span class="profile-label">戶籍地址</span>
-        <span class="profile-value" id="profile-addr-reg">—</span>
+        <input type="text" class="profile-input" id="profile-addr-reg-in" placeholder="請輸入戶籍地址"/>
       </div>
       <div class="profile-row">
         <span class="profile-label">通訊地址</span>
-        <span class="profile-value" id="profile-addr">—</span>
+        <input type="text" class="profile-input" id="profile-addr-in" placeholder="請輸入通訊地址"/>
       </div>
       <div class="profile-row">
         <span class="profile-label">簽約日期</span>
         <span class="profile-value" id="profile-sign">—</span>
       </div>
+      <div class="profile-save-row">
+        <button class="btn-primary btn-full" id="profile-save-btn" onclick="App.saveProfileAddr()">儲存地址變更</button>
+        <span id="profile-save-status" class="profile-save-status"></span>
+      </div>
     </div>
-    <p style="font-size:.88rem;color:var(--text-muted);text-align:center;line-height:1.9;margin-top:.5rem;">若有任何問題，請於 LINE@ 洽客服人員</p>
+    <p style="font-size:.88rem;color:var(--text-muted);text-align:center;line-height:1.9;margin-top:.5rem;">您可自行修正戶籍地址與通訊地址；其餘資料如需變更，請於 LINE@ 洽客服人員</p>
   </div>
 </section>
 
@@ -989,15 +997,30 @@ var App = (function() {
     document.getElementById('profile-name').textContent = u.name || '—';
     document.getElementById('profile-project').textContent = u.projectName || '—';
     document.getElementById('profile-unit').textContent = u.unit || '—';
-    document.getElementById('profile-addr-reg').textContent = '—';
-    document.getElementById('profile-addr').textContent = '—';
+    document.getElementById('profile-addr-reg-in').value = '';
+    document.getElementById('profile-addr-in').value = '';
     document.getElementById('profile-sign').textContent = '—';
+    document.getElementById('profile-save-status').textContent = '';
     callServer('serverAdminGetCustomerByUnit', u.projectCode, u.unit).then(function(c) {
       if (!c) return;
-      document.getElementById('profile-addr-reg').textContent = c.regAddr || '—';
-      document.getElementById('profile-addr').textContent = c.mailAddr || '—';
+      document.getElementById('profile-addr-reg-in').value = c.regAddr || '';
+      document.getElementById('profile-addr-in').value = c.mailAddr || '';
       document.getElementById('profile-sign').textContent = c.signDate || '—';
     }).catch(function(){});
+  }
+
+  function saveProfileAddr() {
+    var u = state.user; if (!u) return;
+    var reg = document.getElementById('profile-addr-reg-in').value.trim();
+    var mail = document.getElementById('profile-addr-in').value.trim();
+    var btn = document.getElementById('profile-save-btn');
+    var st = document.getElementById('profile-save-status');
+    btn.disabled = true; st.textContent = '儲存中…';
+    callServer('serverCustomerSaveAddress', u.projectCode, u.unit, u.idCard, reg, mail).then(function(res) {
+      btn.disabled = false;
+      if (res && res.success) { st.textContent = '已儲存 ✓'; showToast('地址已更新', 'success'); }
+      else { st.textContent = ''; showToast((res && res.message) || '儲存失敗', 'error'); }
+    }).catch(function() { btn.disabled = false; st.textContent = ''; showToast('儲存失敗，請稍後再試', 'error'); });
   }
 
   function enterApp() {
@@ -1816,7 +1839,7 @@ var App = (function() {
            switchService, selectSlot, selectMethod, confirmBooking, showCancelConfirm, clearCancel, doCancelBooking,
            modifyBooking, cancelModify, switchCalMonth, selectDate,
            togglePhotos, openLightbox, closeLightbox,
-           openPdfPreview, closePdfPreview };
+           openPdfPreview, closePdfPreview, saveProfileAddr };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
