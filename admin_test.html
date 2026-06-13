@@ -53,6 +53,8 @@ input,select{font:inherit;}
 .sb-group-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;padding:.7rem .78rem .55rem;font-size:.95rem;font-weight:700;color:var(--text);cursor:pointer;text-align:left;}
 .sb-group-btn:hover{color:var(--primary);background:#fafafa;}
 .sb-group-arrow{font-size:.72rem;color:var(--text-muted);flex-shrink:0;margin-left:.4rem;}
+.sb-g-left{display:flex;align-items:center;gap:.5rem;min-width:0;}
+.sb-ico{width:16px;height:16px;flex-shrink:0;}
 .sb-group-items.collapsed{display:none;}
 .sb-item{display:block;width:100%;text-align:left;background:none;border:none;border-left:3px solid transparent;padding:.55rem .7rem .55rem 1.1rem;font-size:.92rem;color:var(--text);cursor:pointer;transition:background .13s,color .13s,border-color .13s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sb-item:hover:not(.active){background:#f5f5f5;color:var(--primary);}
@@ -539,78 +541,71 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
   <nav class="sb-nav">
     <div class="sb-group" id="sb-group-customer">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('customer')">
-        <span>客戶管理</span><span class="sb-group-arrow" id="sg-arrow-customer">▼</span>
+        <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>客戶管理</span><span class="sb-group-arrow" id="sg-arrow-customer">▼</span>
       </button>
       <div class="sb-group-items" id="sg-customer">
-        <button class="sb-item" id="tab-crm" onclick="Admin.switchTab('crm')">客戶管理</button>
+        <button class="sb-item" id="tab-crm" onclick="Admin.switchTab('crm')">客戶CRM</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-progress">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('progress-sub')">
-        <span>工程進度</span><span class="sb-group-arrow" id="sg-arrow-progress-sub">▼</span>
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('progress')">
+        <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>工程管理</span><span class="sb-group-arrow" id="sg-arrow-progress">▼</span>
       </button>
-      <div class="sb-group-items" id="sg-progress-sub">
+      <div class="sb-group-items" id="sg-progress">
         <button class="sb-item" id="tab-progress" onclick="Admin.switchTab('progress')">進度管理</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-calendar">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('calendar')">
-        <span>行事曆</span><span class="sb-group-arrow" id="sg-arrow-calendar">▼</span>
+        <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>行事曆</span><span class="sb-group-arrow" id="sg-arrow-calendar">▼</span>
       </button>
       <div class="sb-group-items" id="sg-calendar">
-        <button class="sb-item" id="tab-calendar" onclick="Admin.switchTab('calendar')">行事曆</button>
+        <button class="sb-item" id="tab-calendar" onclick="Admin.switchTab('calendar')">預約行事曆</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-query">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('query')">
-        <span>查詢</span><span class="sb-group-arrow" id="sg-arrow-query">▼</span>
+        <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>各式查詢</span><span class="sb-group-arrow" id="sg-arrow-query">▼</span>
       </button>
       <div class="sb-group-items" id="sg-query">
-        <button class="sb-item active" id="tab-booking" onclick="Admin.switchTab('booking')">預約紀錄</button>
+        <button class="sb-item" id="tab-booking" onclick="Admin.switchTab('booking')">預約紀錄</button>
         <button class="sb-item" id="tab-upload" onclick="Admin.switchTab('upload')">上傳紀錄</button>
         <button class="sb-item" id="tab-unbooked" onclick="Admin.switchTab('unbooked')">未預約客戶</button>
         <button class="sb-item" id="tab-kbrec" onclick="Admin.switchTab('kbrec')">選材紀錄</button>
       </div>
     </div>
-    <div class="sb-group" id="sb-group-proxy">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('proxy')">
-        <span>代客預約</span><span class="sb-group-arrow" id="sg-arrow-proxy">▼</span>
+    <div class="sb-group" id="sb-group-service">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('service')">
+        <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>客戶服務</span><span class="sb-group-arrow" id="sg-arrow-service">▼</span>
       </button>
-      <div class="sb-group-items" id="sg-proxy">
+      <div class="sb-group-items" id="sg-service">
         <button class="sb-item" id="tab-proxy" onclick="Admin.switchTab('proxy')">代客預約</button>
-      </div>
-    </div>
-    <div class="sb-group" id="sb-group-kebian">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('kebian-sub')">
-        <span>客變選材</span><span class="sb-group-arrow" id="sg-arrow-kebian-sub">▼</span>
-      </button>
-      <div class="sb-group-items" id="sg-kebian-sub">
         <button class="sb-item" id="tab-kebian" onclick="Admin.switchTab('kebian')">選材作業</button>
-        <button class="sb-item" id="tab-kbtpl" onclick="Admin.switchTab('kbtpl')">範本編輯</button>
       </div>
     </div>
-    <div class="sb-group" id="sb-group-settings">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('settings-sub')">
-        <span>設定</span><span class="sb-group-arrow" id="sg-arrow-settings-sub">▼</span>
+    <div class="sb-group" id="sb-group-config">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('config')">
+        <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>功能設定</span><span class="sb-group-arrow" id="sg-arrow-config">▼</span>
       </button>
-      <div class="sb-group-items" id="sg-settings-sub">
+      <div class="sb-group-items" id="sg-config">
         <button class="sb-item" id="tab-settings" onclick="Admin.switchTab('settings')">預約設定</button>
-      </div>
-    </div>
-    <div class="sb-group" id="sb-group-accounts">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('accounts-sub')">
-        <span>帳號權限</span><span class="sb-group-arrow" id="sg-arrow-accounts-sub">▼</span>
-      </button>
-      <div class="sb-group-items" id="sg-accounts-sub">
-        <button class="sb-item" id="tab-accounts" onclick="Admin.switchTab('accounts')">帳號權限管理</button>
+        <button class="sb-item" id="tab-kbtpl" onclick="Admin.switchTab('kbtpl')">客變編輯</button>
       </div>
     </div>
     <div class="sb-group" id="sb-group-stats">
-      <button class="sb-group-btn" onclick="Admin.toggleGroup('stats-sub')">
-        <span>統計分析</span><span class="sb-group-arrow" id="sg-arrow-stats-sub">▼</span>
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('stats')">
+        <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>統計分析</span><span class="sb-group-arrow" id="sg-arrow-stats">▼</span>
       </button>
-      <div class="sb-group-items" id="sg-stats-sub">
-        <button class="sb-item" id="tab-stats" onclick="Admin.switchTab('stats')">統計分析</button>
+      <div class="sb-group-items" id="sg-stats">
+        <button class="sb-item" id="tab-stats" onclick="Admin.switchTab('stats')">數據分析</button>
+      </div>
+    </div>
+    <div class="sb-group" id="sb-group-system">
+      <button class="sb-group-btn" onclick="Admin.toggleGroup('system')">
+        <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>系統設定</span><span class="sb-group-arrow" id="sg-arrow-system">▼</span>
+      </button>
+      <div class="sb-group-items" id="sg-system">
+        <button class="sb-item" id="tab-accounts" onclick="Admin.switchTab('accounts')">帳號權限</button>
       </div>
     </div>
   </nav>
@@ -1681,72 +1676,57 @@ var Admin = (function() {
   }
 
   // 群組代碼 → 側邊欄群組元素 id、預設分頁
-  var GROUP_MAP = {
-    query:    { box: 'sb-group-query',    tab: 'booking' },
-    calendar: { box: 'sb-group-calendar', tab: 'calendar' },
-    proxy:    { box: 'sb-group-proxy',    tab: 'proxy' },
-    customer: { box: 'sb-group-customer', tab: 'crm' },
-    progress: { box: 'sb-group-progress', tab: 'progress' },
-    kebian:   { box: 'sb-group-kebian',   tab: 'kebian' },
-    settings: { box: 'sb-group-settings', tab: 'settings' },
-    stats:    { box: 'sb-group-stats',    tab: 'stats' }
-  };
-
-  function applyRolePermissions() {
+  // 側欄群組與項目；perm：'admin'=僅管理員，'a|b'=任一權限即可
+  var NAV = [
+    { box: 'sb-group-customer', items: [{ tab: 'crm', perm: 'customer' }] },
+    { box: 'sb-group-progress', items: [{ tab: 'progress', perm: 'progress' }] },
+    { box: 'sb-group-calendar', items: [{ tab: 'calendar', perm: 'calendar' }] },
+    { box: 'sb-group-query', items: [
+        { tab: 'booking', perm: 'query' }, { tab: 'upload', perm: 'query' },
+        { tab: 'unbooked', perm: 'query' }, { tab: 'kbrec', perm: 'query|kebian' } ] },
+    { box: 'sb-group-service', items: [{ tab: 'proxy', perm: 'proxy' }, { tab: 'kebian', perm: 'kebian' }] },
+    { box: 'sb-group-config', items: [{ tab: 'settings', perm: 'settings' }, { tab: 'kbtpl', perm: 'admin' }] },
+    { box: 'sb-group-stats', items: [{ tab: 'stats', perm: 'admin' }] },
+    { box: 'sb-group-system', items: [{ tab: 'accounts', perm: 'admin' }] }
+  ];
+  function hasPerm(perm) {
     var isAdmin = state.role === 'admin';
-    var perms = isAdmin ? Object.keys(GROUP_MAP) : (state.perms || []);
-    var firstVisibleTab = null;
-    // 6 大功能群組依權限顯示
-    Object.keys(GROUP_MAP).forEach(function(g) {
-      var box = document.getElementById(GROUP_MAP[g].box);
-      if (!box) return;
-      var allowed = perms.indexOf(g) >= 0;
-      box.classList.toggle('hidden', !allowed);
-      if (allowed && !firstVisibleTab) firstVisibleTab = GROUP_MAP[g].tab;
-    });
-    // 帳號權限管理：僅 admin
-    var accGroup = document.getElementById('sb-group-accounts');
-    if (accGroup) accGroup.classList.toggle('hidden', !isAdmin);
-    // 客變範本編輯：僅 admin（一般客變帳號只做選材作業）
-    var kbtplBtn = document.getElementById('tab-kbtpl');
-    if (kbtplBtn) kbtplBtn.classList.toggle('hidden', !isAdmin);
-    // 選材紀錄：有「查詢」或「客變」任一權限即可見
-    var hasQuery  = isAdmin || perms.indexOf('query') >= 0;
-    var canKbrec  = hasQuery || perms.indexOf('kebian') >= 0;
-    var kbrecBtn  = document.getElementById('tab-kbrec');
-    if (kbrecBtn) kbrecBtn.classList.toggle('hidden', !canKbrec);
-    // 查詢群組的其他子項只在有「查詢」權限時顯示
-    ['booking', 'upload', 'unbooked'].forEach(function(t) {
-      var b = document.getElementById('tab-' + t);
-      if (b) b.classList.toggle('hidden', !hasQuery);
-    });
-    // 若只有客變、沒有查詢，仍讓「查詢」群組露出（只顯示選材紀錄）
-    var queryBox = document.getElementById('sb-group-query');
-    if (queryBox && canKbrec) queryBox.classList.remove('hidden');
-    // 若目前所在分頁無權限，切到第一個有權限的分頁
-    var curGroup = tabToGroup(state.tab);
-    if (curGroup && perms.indexOf(curGroup) < 0 && !(state.tab === 'accounts' && isAdmin)) {
-      if (firstVisibleTab) switchTab(firstVisibleTab);
-    }
+    if (perm === 'admin') return isAdmin;
+    if (isAdmin) return true;
+    var perms = state.perms || [];
+    return perm.split('|').some(function(p) { return perms.indexOf(p) >= 0; });
   }
-
-  function tabToGroup(tab) {
-    if (['booking','upload','unbooked','kbrec'].indexOf(tab) >= 0) return 'query';
-    if (tab === 'calendar') return 'calendar';
-    if (tab === 'proxy') return 'proxy';
-    if (['profile','billing','addcustomer','crm'].indexOf(tab) >= 0) return 'customer';
-    if (tab === 'progress') return 'progress';
-    if (tab === 'kebian' || tab === 'kbtpl') return 'kebian';
-    if (tab === 'settings') return 'settings';
-    if (tab === 'stats') return 'stats';
-    return null;
+  function tabVisible(tab) {
+    for (var i = 0; i < NAV.length; i++) {
+      for (var j = 0; j < NAV[i].items.length; j++) {
+        if (NAV[i].items[j].tab === tab) return hasPerm(NAV[i].items[j].perm);
+      }
+    }
+    if (['profile', 'billing', 'addcustomer'].indexOf(tab) >= 0) return hasPerm('customer');
+    return true;
+  }
+  function applyRolePermissions() {
+    var firstVisibleTab = null;
+    NAV.forEach(function(g) {
+      var anyVisible = false;
+      g.items.forEach(function(it) {
+        var vis = hasPerm(it.perm);
+        var el = document.getElementById('tab-' + it.tab);
+        if (el) el.classList.toggle('hidden', !vis);
+        if (vis) { anyVisible = true; if (!firstVisibleTab) firstVisibleTab = it.tab; }
+      });
+      var box = document.getElementById(g.box);
+      if (box) box.classList.toggle('hidden', !anyVisible);
+    });
+    // 若目前所在分頁無權限，切到第一個有權限的分頁
+    if (firstVisibleTab && !tabVisible(state.tab)) switchTab(firstVisibleTab);
   }
 
   var TAB_TITLES = {
-    crm: '客戶管理', progress: '工程進度', calendar: '行事曆',
-    booking: '預約查詢', upload: '上傳查詢', unbooked: '未預約', kbrec: '選材紀錄',
-    proxy: '代客預約', kebian: '客變選材', kbtpl: '範本編輯',
-    settings: '設定', accounts: '帳號權限管理', stats: '統計分析'
+    crm: '客戶CRM', progress: '進度管理', calendar: '預約行事曆',
+    booking: '預約紀錄', upload: '上傳紀錄', unbooked: '未預約客戶', kbrec: '選材紀錄',
+    proxy: '代客預約', kebian: '選材作業', kbtpl: '客變編輯',
+    settings: '預約設定', accounts: '帳號權限', stats: '數據分析'
   };
   function setTbTitle(tab) {
     var el = document.getElementById('tb-title');
@@ -2355,8 +2335,8 @@ var Admin = (function() {
 
   // ── 帳號權限管理 ──────────────────────────────────────────
   var GROUP_LABELS = {
-    query: '查詢', calendar: '行事曆', proxy: '代客預約',
-    customer: '客戶管理', progress: '工程進度', kebian: '客變選材', settings: '設定'
+    customer: '客戶管理（CRM）', progress: '工程管理', calendar: '行事曆',
+    query: '各式查詢', proxy: '代客預約', kebian: '選材作業', settings: '預約設定'
   };
   var acctState = { accounts: [], editing: null };
 
