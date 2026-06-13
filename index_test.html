@@ -136,8 +136,12 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 .profile-value{font-size:.95rem;font-weight:600;color:var(--text);flex:1;}
 .profile-input{flex:1;font-size:.95rem;border:1.5px solid var(--border);border-radius:8px;padding:.5rem .7rem;outline:none;font-family:inherit;}
 .profile-input:focus{border-color:var(--primary);}
-.profile-save-row{display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:1rem 1.25rem;}
-.profile-save-status{font-size:.85rem;color:var(--primary);}
+.profile-save-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:.5rem;padding:1rem 1.25rem;}
+.profile-save-status{font-size:.85rem;color:var(--primary);flex-basis:100%;text-align:center;}
+.pf-edit{display:none;}
+#profile-card.editing .pf-view{display:none;}
+#profile-card.editing input.pf-edit{display:block;}
+#profile-card.editing button.pf-edit{display:inline-block;}
 /* ── 帳務資訊 ── */
 .billing-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 1.5rem;text-align:center;gap:1rem;color:var(--text-muted);}
 .billing-placeholder svg{color:#d0d0d0;}
@@ -699,7 +703,7 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
 <!-- 基本資料 -->
 <section id="screen-profile" class="screen">
   <div class="container">
-    <div class="profile-card">
+    <div class="profile-card" id="profile-card">
       <div class="profile-card-header">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         個人資訊
@@ -718,18 +722,22 @@ select:focus,input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0
       </div>
       <div class="profile-row">
         <span class="profile-label">戶籍地址</span>
-        <input type="text" class="profile-input" id="profile-addr-reg-in" placeholder="請輸入戶籍地址"/>
+        <span class="profile-value pf-view" id="profile-addr-reg">—</span>
+        <input type="text" class="profile-input pf-edit" id="profile-addr-reg-in" placeholder="請輸入戶籍地址"/>
       </div>
       <div class="profile-row">
         <span class="profile-label">通訊地址</span>
-        <input type="text" class="profile-input" id="profile-addr-in" placeholder="請輸入通訊地址"/>
+        <span class="profile-value pf-view" id="profile-addr">—</span>
+        <input type="text" class="profile-input pf-edit" id="profile-addr-in" placeholder="請輸入通訊地址"/>
       </div>
       <div class="profile-row">
         <span class="profile-label">簽約日期</span>
         <span class="profile-value" id="profile-sign">—</span>
       </div>
       <div class="profile-save-row">
-        <button class="btn-primary btn-full" id="profile-save-btn" onclick="App.saveProfileAddr()">儲存地址變更</button>
+        <button class="btn-outline btn-full pf-view" id="profile-edit-btn" onclick="App.editProfileAddr()">變更地址</button>
+        <button class="btn-primary pf-edit" id="profile-save-btn" onclick="App.saveProfileAddr()">儲存</button>
+        <button class="btn-ghost pf-edit" id="profile-cancel-btn" onclick="App.cancelProfileAddr()">取消</button>
         <span id="profile-save-status" class="profile-save-status"></span>
       </div>
     </div>
@@ -992,23 +1000,40 @@ var App = (function() {
     document.getElementById('input-id').value = '';
   }
 
+  var _profileAddr = { reg: '', mail: '' };
+  function _setProfileView() {
+    document.getElementById('profile-card').classList.remove('editing');
+    document.getElementById('profile-addr-reg').textContent = _profileAddr.reg || '—';
+    document.getElementById('profile-addr').textContent = _profileAddr.mail || '—';
+    document.getElementById('profile-addr-reg-in').value = _profileAddr.reg || '';
+    document.getElementById('profile-addr-in').value = _profileAddr.mail || '';
+  }
   function renderProfile() {
     var u = state.user; if (!u) return;
     document.getElementById('profile-name').textContent = u.name || '—';
     document.getElementById('profile-project').textContent = u.projectName || '—';
     document.getElementById('profile-unit').textContent = u.unit || '—';
-    document.getElementById('profile-addr-reg-in').value = '';
-    document.getElementById('profile-addr-in').value = '';
     document.getElementById('profile-sign').textContent = '—';
     document.getElementById('profile-save-status').textContent = '';
+    _profileAddr = { reg: '', mail: '' };
+    _setProfileView();
     callServer('serverAdminGetCustomerByUnit', u.projectCode, u.unit).then(function(c) {
       if (!c) return;
-      document.getElementById('profile-addr-reg-in').value = c.regAddr || '';
-      document.getElementById('profile-addr-in').value = c.mailAddr || '';
+      _profileAddr = { reg: c.regAddr || '', mail: c.mailAddr || '' };
+      _setProfileView();
       document.getElementById('profile-sign').textContent = c.signDate || '—';
     }).catch(function(){});
   }
 
+  function editProfileAddr() {
+    document.getElementById('profile-save-status').textContent = '';
+    document.getElementById('profile-card').classList.add('editing');
+    document.getElementById('profile-addr-reg-in').focus();
+  }
+  function cancelProfileAddr() {
+    document.getElementById('profile-save-status').textContent = '';
+    _setProfileView();   // 還原並退出編輯
+  }
   function saveProfileAddr() {
     var u = state.user; if (!u) return;
     var reg = document.getElementById('profile-addr-reg-in').value.trim();
@@ -1018,8 +1043,11 @@ var App = (function() {
     btn.disabled = true; st.textContent = '儲存中…';
     callServer('serverCustomerSaveAddress', u.projectCode, u.unit, u.idCard, reg, mail).then(function(res) {
       btn.disabled = false;
-      if (res && res.success) { st.textContent = '已儲存 ✓'; showToast('地址已更新', 'success'); }
-      else { st.textContent = ''; showToast((res && res.message) || '儲存失敗', 'error'); }
+      if (res && res.success) {
+        _profileAddr = { reg: reg, mail: mail };
+        _setProfileView();
+        st.textContent = '已更新 ✓'; showToast('地址已更新', 'success');
+      } else { st.textContent = ''; showToast((res && res.message) || '儲存失敗', 'error'); }
     }).catch(function() { btn.disabled = false; st.textContent = ''; showToast('儲存失敗，請稍後再試', 'error'); });
   }
 
@@ -1839,7 +1867,7 @@ var App = (function() {
            switchService, selectSlot, selectMethod, confirmBooking, showCancelConfirm, clearCancel, doCancelBooking,
            modifyBooking, cancelModify, switchCalMonth, selectDate,
            togglePhotos, openLightbox, closeLightbox,
-           openPdfPreview, closePdfPreview, saveProfileAddr };
+           openPdfPreview, closePdfPreview, editProfileAddr, cancelProfileAddr, saveProfileAddr };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
