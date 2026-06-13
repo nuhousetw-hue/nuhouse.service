@@ -55,6 +55,11 @@ input,select{font:inherit;}
 .sb-group-arrow{font-size:.72rem;color:var(--text-muted);flex-shrink:0;margin-left:.4rem;}
 .sb-g-left{display:flex;align-items:center;gap:.5rem;min-width:0;}
 .sb-ico{width:16px;height:16px;flex-shrink:0;}
+.sb-home-btn{border-bottom:1px solid var(--border);}
+.sb-home-btn.active{color:var(--primary);background:#eaf6fb;}
+.home-sugg-list{display:flex;flex-direction:column;gap:.5rem;}
+.home-sugg{display:flex;align-items:center;gap:.6rem;background:#fff8e8;border:1px solid #f0d9a0;border-radius:8px;padding:.6rem .85rem;font-size:.92rem;color:#7a5a10;}
+.home-sugg-ic{font-size:1.1rem;}
 .sb-group-items.collapsed{display:none;}
 .sb-item{display:block;width:100%;text-align:left;background:none;border:none;border-left:3px solid transparent;padding:.55rem .7rem .55rem 1.1rem;font-size:.92rem;color:var(--text);cursor:pointer;transition:background .13s,color .13s,border-color .13s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sb-item:hover:not(.active){background:#f5f5f5;color:var(--primary);}
@@ -539,6 +544,9 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     <div class="sb-brand-sub">後台管理系統</div>
   </div>
   <nav class="sb-nav">
+    <button class="sb-group-btn sb-home-btn" id="tab-home" onclick="Admin.switchTab('home')">
+      <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>首頁</span>
+    </button>
     <div class="sb-group" id="sb-group-customer">
       <button class="sb-group-btn" onclick="Admin.toggleGroup('customer')">
         <span class="sb-g-left"><svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>客戶管理</span><span class="sb-group-arrow" id="sg-arrow-customer">▼</span>
@@ -657,6 +665,37 @@ tbody td{padding:.62rem 1rem;border-bottom:1px solid #f0f0f0;white-space:nowrap;
     </div>
   </header>
   <div class="main-inner">
+
+    <!-- 首頁儀表板 -->
+    <div id="home-panel" class="hidden">
+      <div id="home-kpis" class="sa-summary"></div>
+      <div id="home-suggest" class="cust-search-card"></div>
+      <div class="cust-search-card">
+        <div class="cust-search-title">今日預約狀況<span id="home-today-date" style="font-size:.85rem;color:var(--text-muted);font-weight:400;margin-left:.5rem;"></span></div>
+        <div class="table-scroll">
+          <table class="sa-table">
+            <thead><tr><th>時段</th><th>客戶</th><th>戶號</th><th>建案</th><th>服務</th><th>方式</th><th>狀態</th></tr></thead>
+            <tbody id="home-today-body"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);">載入中…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sa-svc-row">
+        <div class="sa-svc-card">
+          <div class="sa-svc-head">昨日新預約<span class="sa-svc-total" id="home-yb-cnt"></span></div>
+          <div class="table-scroll">
+            <table class="sa-table"><thead><tr><th>客戶</th><th>戶號</th><th>建案</th><th>服務</th><th>方式</th></tr></thead>
+              <tbody id="home-yb-body"></tbody></table>
+          </div>
+        </div>
+        <div class="sa-svc-card">
+          <div class="sa-svc-head">昨日上傳<span class="sa-svc-total" id="home-up-cnt"></span></div>
+          <div class="table-scroll">
+            <table class="sa-table"><thead><tr><th>時間</th><th>客戶</th><th>戶號</th><th>建案</th><th>檔名</th></tr></thead>
+              <tbody id="home-up-body"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 預約篩選 -->
     <div id="filter-booking" class="filter-bar">
@@ -1723,6 +1762,7 @@ var Admin = (function() {
   }
 
   var TAB_TITLES = {
+    home: '首頁',
     crm: '客戶CRM', progress: '進度管理', calendar: '預約行事曆',
     booking: '預約紀錄', upload: '上傳紀錄', unbooked: '未預約客戶', kbrec: '選材紀錄',
     proxy: '代客預約', kebian: '選材作業', kbtpl: '客變編輯',
@@ -1740,6 +1780,50 @@ var Admin = (function() {
     applyRolePermissions();
     collapseAllGroups();
     loadProjects();
+    switchTab('home');   // 登入後直接進首頁
+  }
+
+  // ── 首頁儀表板 ──────────────────────────────────────────
+  function loadDashboard() {
+    document.getElementById('home-today-body').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">載入中…</td></tr>';
+    // 建案清單尚未載入：先顯示載入中，等 loadProjects 完成會再呼叫一次（避免用空清單誤抓全部建案）
+    if (!state.projectsLoaded) return;
+    var codes = (state.projects || []).map(function(p) { return p.code; });
+    if (!codes.length) { renderDashboard({ today: '', kpi: {}, todayBookings: [], ydayBookings: [], ydayUploads: [], suggestions: [] }); return; }
+    document.getElementById('home-yb-body').innerHTML = '';
+    document.getElementById('home-up-body').innerHTML = '';
+    callServer('serverDashboard', codes).then(function(d) {
+      renderDashboard(d || {});
+    }).catch(function() {
+      document.getElementById('home-today-body').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger);">載入失敗，請稍後再試</td></tr>';
+    });
+  }
+  function _kpiCard(num, lbl) {
+    return '<div class="sa-kpi"><div class="sa-kpi-num">' + (num != null ? num : '—') + '</div><div class="sa-kpi-lbl">' + lbl + '</div></div>';
+  }
+  function renderDashboard(d) {
+    var k = d.kpi || {};
+    document.getElementById('home-kpis').innerHTML =
+      _kpiCard(k.todayBookings, '今日預約') + _kpiCard(k.ydayBookings, '昨日新預約') + _kpiCard(k.ydayUploads, '昨日上傳') + _kpiCard(k.todoCount, '待辦提醒');
+    var sg = d.suggestions || [];
+    document.getElementById('home-suggest').innerHTML = '<div class="cust-search-title">建議／提醒</div>'
+      + (sg.length ? '<div class="home-sugg-list">' + sg.map(function(s) { return '<div class="home-sugg"><span class="home-sugg-ic">' + (s.icon || '🔔') + '</span>' + kbEsc(s.text) + '</div>'; }).join('') + '</div>'
+        : '<p style="color:var(--text-muted);margin:0;">目前沒有待辦提醒 👍</p>');
+    document.getElementById('home-today-date').textContent = d.today ? '（' + d.today + '）' : '';
+    var tb = d.todayBookings || [];
+    document.getElementById('home-today-body').innerHTML = tb.length
+      ? tb.map(function(b) { return '<tr><td>' + kbEsc(b.time || '—') + '</td><td>' + kbEsc(b.name || '—') + '</td><td>' + kbEsc(b.unit || '—') + '</td><td>' + kbEsc(b.project || '—') + '</td><td>' + kbEsc(b.service || '—') + '</td><td>' + kbEsc(b.method || '—') + '</td><td>' + kbEsc(b.status || '—') + '</td></tr>'; }).join('')
+      : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">今日無預約</td></tr>';
+    var yb = d.ydayBookings || [];
+    document.getElementById('home-yb-cnt').textContent = '　' + yb.length + ' 筆';
+    document.getElementById('home-yb-body').innerHTML = yb.length
+      ? yb.map(function(b) { return '<tr><td>' + kbEsc(b.name || '—') + '</td><td>' + kbEsc(b.unit || '—') + '</td><td>' + kbEsc(b.project || '—') + '</td><td>' + kbEsc(b.service || '—') + '</td><td>' + kbEsc(b.method || '—') + '</td></tr>'; }).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">無</td></tr>';
+    var up = d.ydayUploads || [];
+    document.getElementById('home-up-cnt').textContent = '　' + up.length + ' 筆';
+    document.getElementById('home-up-body').innerHTML = up.length
+      ? up.map(function(u) { return '<tr><td>' + kbEsc(u.time || '—') + '</td><td>' + kbEsc(u.name || '—') + '</td><td>' + kbEsc(u.unit || '—') + '</td><td>' + kbEsc(u.project || '—') + '</td><td>' + kbEsc(u.file || '—') + '</td></tr>'; }).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">無</td></tr>';
   }
 
   function updateProjectBadge() {
@@ -1763,6 +1847,8 @@ var Admin = (function() {
         projects = projects.filter(function(p) { return allowed.indexOf(p.code) >= 0; });
       }
       state.projects = projects;
+      state.projectsLoaded = true;
+      if (state.tab === 'home') loadDashboard();   // 建案載入後刷新首頁（用正確的權限建案）
       var sel = document.getElementById('select-project');
       sel.innerHTML = '<option value="">— 請選擇建案 —</option>';
       projects.forEach(function(p) {
@@ -1807,7 +1893,7 @@ var Admin = (function() {
     // Close mobile sidebar on navigation
     var sb = document.getElementById('sidebar');
     if (sb.classList.contains('open')) toggleSidebar();
-    var ALL_TABS = ['booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','crm','progress','kebian','kbtpl','kbrec','stats','accounts'];
+    var ALL_TABS = ['home','booking','upload','unbooked','settings','calendar','profile','billing','proxy','addcustomer','crm','progress','kebian','kbtpl','kbrec','stats','accounts'];
     ALL_TABS.forEach(function(t) {
       var el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
@@ -1825,7 +1911,8 @@ var Admin = (function() {
     var isCrm         = tab === 'crm';
     var isStats       = tab === 'stats';
     var isAccounts    = tab === 'accounts';
-    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isKbrec && !isCrm && !isStats && !isAccounts;
+    var isHome        = tab === 'home';
+    var isTable    = !isSettings && !isCalendar && !isProfile && !isBilling && !isProxy && !isAddCustomer && !isProgress && !isKebian && !isKbtpl && !isKbrec && !isCrm && !isStats && !isAccounts && !isHome;
     document.getElementById('filter-booking').classList.toggle('hidden', tab !== 'booking');
     document.getElementById('filter-upload').classList.toggle('hidden', tab !== 'upload');
     document.getElementById('filter-unbooked').classList.toggle('hidden', tab !== 'unbooked');
@@ -1842,6 +1929,7 @@ var Admin = (function() {
     document.getElementById('crm-panel').classList.toggle('hidden', !isCrm);
     document.getElementById('stats-panel').classList.toggle('hidden', !isStats);
     document.getElementById('accounts-panel').classList.toggle('hidden', !isAccounts);
+    document.getElementById('home-panel').classList.toggle('hidden', !isHome);
     document.getElementById('result-bar').classList.toggle('hidden', !isTable);
     document.getElementById('table-wrap').classList.toggle('hidden', !isTable);
     var showStats = (tab === 'booking' || tab === 'upload');
@@ -1884,6 +1972,8 @@ var Admin = (function() {
       saEnter();
     } else if (isAccounts) {
       loadAccounts();
+    } else if (isHome) {
+      loadDashboard();
     } else if (isTable) {
       resetTable();
     }
