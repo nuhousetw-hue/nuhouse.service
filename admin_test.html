@@ -64,6 +64,7 @@ input,select{font:inherit;}
 .hw-add-menu{position:absolute;top:calc(100% + .3rem);right:0;z-index:50;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:.3rem;min-width:140px;display:flex;flex-direction:column;}
 .hw-add-item{background:none;border:none;text-align:left;padding:.5rem .7rem;border-radius:6px;cursor:pointer;font-size:.88rem;color:var(--text);}
 .hw-add-item:hover{background:#f0f7fb;color:var(--primary);}
+.hw-add-empty{padding:.55rem .7rem;font-size:.85rem;color:var(--text-muted);text-align:center;}
 #home-grid .grid-stack-item-content{overflow:visible;border-radius:10px;}
 /* 小工具 */
 .hw{display:flex;flex-direction:column;height:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-sm);overflow:hidden;}
@@ -1942,11 +1943,16 @@ var Admin = (function() {
     if (ev) ev.stopPropagation();
     var m = document.getElementById('hw-add-menu');
     if (!m.classList.contains('hidden')) { m.classList.add('hidden'); return; }
-    m.innerHTML = Object.keys(HW_DEFS).map(function(t) { return '<button class="hw-add-item" onclick="Admin.hwAdd(\'' + t + '\')">' + HW_DEFS[t] + '</button>'; }).join('');
+    var existing = homeWidgets.map(function(w) { return w.type; });
+    var avail = Object.keys(HW_DEFS).filter(function(t) { return existing.indexOf(t) < 0; });
+    m.innerHTML = avail.length
+      ? avail.map(function(t) { return '<button class="hw-add-item" onclick="Admin.hwAdd(\'' + t + '\')">' + HW_DEFS[t] + '</button>'; }).join('')
+      : '<div class="hw-add-empty">已全部加入</div>';
     m.classList.remove('hidden');
   }
   function hwAdd(type) {
     document.getElementById('hw-add-menu').classList.add('hidden');
+    if (homeWidgets.some(function(w) { return w.type === type; })) return;   // 同類型只能有一個
     var w = { id: 'w' + (hwSeq++), type: type, color: HW_COLORS[homeWidgets.length % HW_COLORS.length], collapsed: false,
       autoPos: true, w: type === 'calendar' ? 7 : 5, h: type === 'calendar' ? 9 : 3 };
     homeWidgets.push(w);
